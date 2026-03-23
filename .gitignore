@@ -1,0 +1,79 @@
+# Visual Studio cache/options
+.vs/
+.vscode/
+
+# Build results
+bin/
+obj/
+Debug/
+Release/
+x64/
+x86/
+
+# User-specific files
+*.csproj.user
+*.rsuser
+*.suo
+*.sln.docstates
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# ReSharper
+.resharper
+.resharper.user
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# dotCover
+.dotCover
+
+# Coverage results
+coverage/
+opencoverage/
+
+# Test Results
+TestResults/
+*.trx
+
+# Local environment
+.env
+.env.local
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+*.lnk
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+*.dll
+*.exe
+*.o
+*.so
+
+# Logs
+logs/
+*.log
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# OS files
+.AppleDouble
+.DS_Store
+ehthumbs.db

@@ -1,0 +1,6 @@
+@PomodoraBack_HostAddress = http://localhost:5265
+
+GET {{PomodoraBack_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
