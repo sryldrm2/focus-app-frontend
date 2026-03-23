@@ -8,15 +8,16 @@ import 'package:focus_app/features/auth/screens/forgot_password_screen.dart';
 import 'package:focus_app/features/auth/providers/auth_providers.dart';
 import 'package:focus_app/features/auth/notifiers/auth_state.dart';
 import 'package:focus_app/features/home/screens/home_screen.dart';
+import 'package:focus_app/features/pomodoro/screens/pomodoro_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authNotifierProvider);
 
   return GoRouter(
-    initialLocation: '/splash', 
+    initialLocation: '/splash',     //başlangıç şu an direkt home olarak ayarlandı daha sonra splash olarak güncelleyeceğim
     refreshListenable: authNotifier,
     redirect: (context, state) {
-    
+      /* aynı şekilde bu auth kontrolü sonra aktifleştirilecek */
       final status = authNotifier.state.status;
       final loc = state.matchedLocation;
 
@@ -42,6 +43,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (authed && isAuthRoute) {
         return '/home';
       }
+      
 
       return null;
     },
@@ -72,7 +74,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/pomodoro',
-            builder: (_, __) => const Text("yakında"),
+            builder: (_, __) => const PomodoroScreen(),
           ),
           GoRoute(
             path: '/stats',
