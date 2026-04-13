@@ -5,11 +5,11 @@ import 'app/router.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: FokusApp()));
+  runApp(const ProviderScope(child: FocusApp()));
 }
 
-class FokusApp extends ConsumerWidget {
-  const FokusApp({super.key});
+class FocusApp extends ConsumerWidget {
+  const FocusApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
