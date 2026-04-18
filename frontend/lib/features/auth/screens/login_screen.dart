@@ -27,10 +27,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _onLogin() async {
     if (!_formKey.currentState!.validate()) return;
-    await ref.read(authNotifierProvider).login(
+    final success = await ref.read(authNotifierProvider).login(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
+    if (!success && mounted) {
+      final error = ref.read(authNotifierProvider).state.errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error ?? 'Giriş Başarısız.'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
   }
 
   @override
