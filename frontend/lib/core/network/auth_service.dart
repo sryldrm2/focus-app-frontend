@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:focus_app/core/network/api_base_url.dart';
 
 class AuthService {
-  static const String _baseUrl = "http://10.0.2.2:5000/api";
+  String get _baseUrl => apiBaseUrl();
 
   // ─── LOGIN ────────────────────────────────────────────────
   Future <Map<String, dynamic>> login({
