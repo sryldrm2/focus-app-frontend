@@ -1,0 +1,17 @@
+info:
+  name: Get User by ID (Kullanıcı Bilgisi)
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{base_url}}/api/users/{{user_id}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Belirli bir kullanıcının bilgisini getir (Auth gerekli değil)

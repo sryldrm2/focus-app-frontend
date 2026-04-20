@@ -1,0 +1,20 @@
+info:
+  name: Accept Friend Request (İstek Kabul Et)
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{base_url}}/api/friendrequest/{{friend_request_id}}/accept"
+  headers:
+    - name: Authorization
+      value: Bearer {{access_token}}
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Gelen arkadaş isteğini kabul et

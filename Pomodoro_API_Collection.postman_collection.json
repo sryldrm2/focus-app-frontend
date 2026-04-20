@@ -1,0 +1,434 @@
+{
+  "info": {
+    "_postman_id": "pomodoro-backend-api-collection",
+    "name": "Pomodoro Backend API",
+    "description": "Pomodoro Uygulaması Backend API - Tüm endpoint'ler",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register (Kayıt Ol)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmet\",\n  \"surname\": \"Yılmaz\",\n  \"nickname\": \"ahmetyilmaz\",\n  \"email\": \"ahmet@example.com\",\n  \"password\": \"Securepass123\",\n  \"confirmPassword\": \"Securepass123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Yeni kullanıcı kaydı oluştur"
+          }
+        },
+        {
+          "name": "Login (Giriş Yap)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrNickname\": \"ahmetyilmaz\",\n  \"password\": \"Securepass123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Kullanıcı girişi yap, access token ve refresh token al"
+          }
+        },
+        {
+          "name": "Refresh Token (Token Yenile)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh-token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh-token"]
+            },
+            "description": "Refresh token kullanarak yeni access token al"
+          }
+        },
+        {
+          "name": "Logout (Çıkış Yap)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Kullanıcı çıkışı yap, tüm refresh token'ları revoke et"
+          }
+        },
+        {
+          "name": "Get Current User (Mevcut Kullanıcı)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Oturum açmış kullanıcının bilgisini getir"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Users",
+      "item": [
+        {
+          "name": "Get All Users (Tüm Kullanıcıları Listele)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"]
+            },
+            "description": "Tüm kullanıcıları listele (Auth gerekli değil)"
+          }
+        },
+        {
+          "name": "Get User by ID (Kullanıcı Bilgisi)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_id}}"]
+            },
+            "description": "Belirli bir kullanıcının bilgisini getir (Auth gerekli değil)"
+          }
+        },
+        {
+          "name": "Update User (Kullanıcı Güncelle)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmet\",\n  \"surname\": \"Kaya\",\n  \"nickname\": \"ahmetkaya\",\n  \"email\": \"ahmetkaya@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_id}}"]
+            },
+            "description": "Kullanıcı bilgilerini güncelle (Auth gerekli)"
+          }
+        },
+        {
+          "name": "Delete User (Kullanıcı Sil)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_id}}"]
+            },
+            "description": "Kullanıcıyı sil (Auth gerekli)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👫 Friend Requests",
+      "item": [
+        {
+          "name": "Send Friend Request (İstek Gönder)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverId\": \"{{target_user_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/friendrequest/send",
+              "host": ["{{base_url}}"],
+              "path": ["api", "friendrequest", "send"]
+            },
+            "description": "Belirtilen kullanıcıya arkadaş isteği gönder"
+          }
+        },
+        {
+          "name": "Accept Friend Request (İstek Kabul Et)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/friendrequest/{{friend_request_id}}/accept",
+              "host": ["{{base_url}}"],
+              "path": ["api", "friendrequest", "{{friend_request_id}}", "accept"]
+            },
+            "description": "Gelen arkadaş isteğini kabul et"
+          }
+        },
+        {
+          "name": "Reject Friend Request (İstek Reddet)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/friendrequest/{{friend_request_id}}/reject",
+              "host": ["{{base_url}}"],
+              "path": ["api", "friendrequest", "{{friend_request_id}}", "reject"]
+            },
+            "description": "Gelen arkadaş isteğini reddet"
+          }
+        },
+        {
+          "name": "Get Pending Requests (Beklemede İstekler)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/friendrequest/pending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "friendrequest", "pending"]
+            },
+            "description": "Gelen beklemede arkadaş isteklerini getir"
+          }
+        },
+        {
+          "name": "Get Sent Requests (Gönderilen İstekler)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/friendrequest/sent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "friendrequest", "sent"]
+            },
+            "description": "Gönderilen beklemede arkadaş isteklerini getir"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤝 Friendships",
+      "item": [
+        {
+          "name": "Get My Friends (Benim Arkadaşlarım)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/friendship/my-friends",
+              "host": ["{{base_url}}"],
+              "path": ["api", "friendship", "my-friends"]
+            },
+            "description": "Oturum açmış kullanıcının tüm arkadaşlarını getir"
+          }
+        },
+        {
+          "name": "Get User Friends (Kullanıcının Arkadaşları)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/friendship/{{target_user_id}}/friends",
+              "host": ["{{base_url}}"],
+              "path": ["api", "friendship", "{{target_user_id}}", "friends"]
+            },
+            "description": "Belirtilen kullanıcının arkadaşlarını getir"
+          }
+        },
+        {
+          "name": "Check Friendship (Arkadaşlık Kontrol Et)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/friendship/{{friend_id}}/check",
+              "host": ["{{base_url}}"],
+              "path": ["api", "friendship", "{{friend_id}}", "check"]
+            },
+            "description": "İki kullanıcı arasında arkadaşlık ilişkisini kontrol et"
+          }
+        },
+        {
+          "name": "Are Friends (Arkadaş Mı)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/friendship/{{friend_id}}/are-friends",
+              "host": ["{{base_url}}"],
+              "path": ["api", "friendship", "{{friend_id}}", "are-friends"]
+            },
+            "description": "İki kullanıcının arkadaş olup olmadığını kontrol et (true/false)"
+          }
+        },
+        {
+          "name": "Remove Friend (Arkadaş Kaldır)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/friendship/{{friend_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "friendship", "{{friend_id}}"]
+            },
+            "description": "Arkadaşlık ilişkisini kaldır"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string",
+      "description": "API Base URL"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string",
+      "description": "JWT Access Token (Login sonrası otomatik set edilir)"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string",
+      "description": "JWT Refresh Token (Login sonrası otomatik set edilir)"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string",
+      "description": "Test kullanıcı ID'si"
+    },
+    {
+      "key": "target_user_id",
+      "value": "",
+      "type": "string",
+      "description": "Hedef kullanıcı ID'si"
+    },
+    {
+      "key": "friend_id",
+      "value": "",
+      "type": "string",
+      "description": "Arkadaş ID'si"
+    },
+    {
+      "key": "friend_request_id",
+      "value": "",
+      "type": "string",
+      "description": "Arkadaş isteği ID'si"
+    }
+  ]
+}

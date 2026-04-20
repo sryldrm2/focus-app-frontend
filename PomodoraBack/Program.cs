@@ -27,11 +27,14 @@ builder.Services.AddAutoMapper(typeof(Program));
 // Repositories
 builder.Services.AddScoped<IUserDal, UserDal>();
 builder.Services.AddScoped<IRefreshTokenDal, RefreshTokenDal>();
+builder.Services.AddScoped<IFriendRequestDal, FriendRequestDal>();
+builder.Services.AddScoped<IFriendShipDal, FriendShipDal>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IFriendRequest, FriendRequestService>();
 
 // JWT Authentication
 builder.Services.AddAuthentication(options =>

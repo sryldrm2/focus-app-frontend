@@ -1,0 +1,28 @@
+info:
+  name: Send Friend Request (İstek Gönder)
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/api/friendrequest/send"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: Bearer {{access_token}}
+  body:
+    type: json
+    data: |-
+      {
+        "receiverId": "{{target_user_id}}"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Belirtilen kullanıcıya arkadaş isteği gönder

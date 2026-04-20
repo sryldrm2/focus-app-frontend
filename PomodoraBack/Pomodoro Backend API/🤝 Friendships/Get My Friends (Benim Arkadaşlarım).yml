@@ -1,0 +1,20 @@
+info:
+  name: Get My Friends (Benim Arkadaşlarım)
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{base_url}}/api/friendship/my-friends"
+  headers:
+    - name: Authorization
+      value: Bearer {{access_token}}
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Oturum açmış kullanıcının tüm arkadaşlarını getir

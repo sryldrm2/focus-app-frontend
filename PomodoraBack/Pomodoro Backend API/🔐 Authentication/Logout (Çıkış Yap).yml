@@ -1,0 +1,20 @@
+info:
+  name: Logout (Çıkış Yap)
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{base_url}}/api/auth/logout"
+  headers:
+    - name: Authorization
+      value: Bearer {{access_token}}
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Kullanıcı çıkışı yap, tüm refresh token'ları revoke et

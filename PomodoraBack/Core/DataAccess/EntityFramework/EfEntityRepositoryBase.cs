@@ -34,11 +34,44 @@ namespace PomodoraBack.Core.DataAccess.EntityFramework
             return await _context.Set<TEntity>().SingleOrDefaultAsync(filter);
         }
 
+        /// <summary>
+        /// Navigation property'leri de yüklemeyi destekleyen GetAsync aşırı yüklemesi
+        /// </summary>
+        public async Task<TEntity> GetAsync(
+            Expression<Func<TEntity, bool>> filter,
+            Func<IQueryable<TEntity>, IQueryable<TEntity>> includeProperties = null)
+        {
+            IQueryable<TEntity> query = _context.Set<TEntity>();
+
+            if (includeProperties != null)
+                query = includeProperties(query);
+
+            return await query.SingleOrDefaultAsync(filter);
+        }
+
         public async Task<IList<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> filter = null)
         {
             return filter == null
                 ? await _context.Set<TEntity>().ToListAsync()
                 : await _context.Set<TEntity>().Where(filter).ToListAsync();
+        }
+
+        /// <summary>
+        /// Navigation property'leri de yüklemeyi destekleyen GetListAsync aşırı yüklemesi
+        /// </summary>
+        public async Task<IList<TEntity>> GetListAsync(
+            Expression<Func<TEntity, bool>> filter,
+            Func<IQueryable<TEntity>, IQueryable<TEntity>> includeProperties)
+        {
+            IQueryable<TEntity> query = _context.Set<TEntity>();
+
+            if (includeProperties != null)
+                query = includeProperties(query);
+
+            if (filter != null)
+                query = query.Where(filter);
+
+            return await query.ToListAsync();
         }
 
         public async Task UpdateAsync(TEntity entity)
