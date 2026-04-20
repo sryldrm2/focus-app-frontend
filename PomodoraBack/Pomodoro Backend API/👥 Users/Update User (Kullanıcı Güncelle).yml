@@ -1,0 +1,31 @@
+info:
+  name: Update User (Kullanıcı Güncelle)
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{base_url}}/api/users/{{user_id}}"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: Bearer {{access_token}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Ahmet",
+        "surname": "Kaya",
+        "nickname": "ahmetkaya",
+        "email": "ahmetkaya@example.com"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Kullanıcı bilgilerini güncelle (Auth gerekli)

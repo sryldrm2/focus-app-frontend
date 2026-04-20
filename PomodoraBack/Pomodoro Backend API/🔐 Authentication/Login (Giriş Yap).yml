@@ -1,0 +1,27 @@
+info:
+  name: Login (Giriş Yap)
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{base_url}}/api/auth/login"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "emailOrNickname": "ahmetyilmaz",
+        "password": "Securepass123"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Kullanıcı girişi yap, access token ve refresh token al

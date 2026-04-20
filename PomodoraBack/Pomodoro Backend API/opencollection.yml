@@ -1,0 +1,42 @@
+opencollection: 1.0.0
+
+info:
+  name: Pomodoro Backend API
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  variables:
+    - name: base_url
+      value: http://localhost:5265
+    - name: access_token
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3YjhiZTdkZC03MGQ5LTRmMmUtYjU5NC02N2ZkMTFhYTQyYzYiLCJlbWFpbCI6ImJhdHVha2JheUBnbWFpbC5jb20iLCJuaWNrbmFtZSI6InJhZGJhc3MiLCJqdGkiOiI0M2YxYTNkMi02NWYzLTQ1OTMtYjM4Ny03MTBhNGNkNjU5NWIiLCJpYXQiOiIxNzc2NTIxMDMwIiwiZXhwIjoxNzc2NTI0NjMwLCJpc3MiOiJQb21vZG9yb0JhY2tBUEkiLCJhdWQiOiJQb21vZG9yb0JhY2tDbGllbnRzIn0.nOBy5MtAU6yhPCw9Hn8sngb6ohZNedw-EiqOUvZAFr4
+    - name: refresh_token
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3YjhiZTdkZC03MGQ5LTRmMmUtYjU5NC02N2ZkMTFhYTQyYzYiLCJlbWFpbCI6ImJhdHVha2JheUBnbWFpbC5jb20iLCJuaWNrbmFtZSI6InJhZGJhc3MiLCJqdGkiOiIxNWRjZmEzMi1mYzQyLTQwY2MtYjhiMS02N2QzMWI1ZmExNDQiLCJpYXQiOiIxNzc2NTE2Njc4IiwiZXhwIjoxNzc2NTIwMjc4LCJpc3MiOiJQb21vZG9yb0JhY2tBUEkiLCJhdWQiOiJQb21vZG9yb0JhY2tDbGllbnRzIn0.RNBbV0DXk1aJ3ra0cGL2uYJ7W-4VUmnUKPiErbwn-rk
+    - name: user_id
+      value: 7b8be7dd-70d9-4f2e-b594-67fd11aa42c6
+    - name: target_user_id
+      value: de6b3051-be7d-44d3-bc29-fe14ecba161a
+    - name: friend_id
+      value: de6b3051-be7d-44d3-bc29-fe14ecba161a
+    - name: friend_request_id
+      value: dce48ed0-e04b-43e4-a178-3d5bffa98775
+
+docs:
+  content: Pomodoro Uygulaması Backend API - Tüm endpoint'ler
+  type: text/markdown
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git
