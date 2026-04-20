@@ -9,44 +9,24 @@ import 'package:focus_app/features/auth/providers/auth_providers.dart';
 import 'package:focus_app/features/auth/notifiers/auth_state.dart';
 import 'package:focus_app/features/home/screens/home_screen.dart';
 import 'package:focus_app/features/pomodoro/screens/pomodoro_screen.dart';
+import 'package:focus_app/features/stats/screens/stats_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authNotifierProvider);
 
   return GoRouter(
-    initialLocation: '/splash',     //başlangıç şu an direkt home olarak ayarlandı daha sonra splash olarak güncelleyeceğim
+    // Geliştirme sürecinde kolaylık olması için başlangıç ekranı Pomodoro olarak ayarlandı.
+    // TODO: Arayüz geliştirme aşaması bittiğinde '/splash' olarak geri güncellenmelidir.
+    initialLocation: '/pomodoro',
     refreshListenable: authNotifier,
+
+    // Uygulama içi sayfa yönlendirme mantığı (Auth kontrolü)
+    // TODO: Backend entegrasyonu başladığında aşağıdaki yönlendirme mantığı tekrar aktif edilmelidir.
     redirect: (context, state) {
-      /* aynı şekilde bu auth kontrolü sonra aktifleştirilecek */
-      final status = authNotifier.state.status;
-      final loc = state.matchedLocation;
-
-      // 1. Henüz kontrol aşamasındaysak Splash'te kal
-      if (status == AuthStatus.initial || status == AuthStatus.loading) {
-        return loc == '/splash' ? null : '/splash';
-      }
-
-      final authed = status == AuthStatus.authenticated;
-
-      // 2. Splash ekranındaysak ve kontrol bittiyse (auth durumuna göre yönlendir)
-      if (loc == '/splash') {
-        return authed ? '/home' : '/auth/login';
-      }
-
-      // 3. Giriş yapmamış kullanıcıyı korumalı sayfalardan Login'e at
-      final isAuthRoute = loc.startsWith('/auth');
-      if (!authed && !isAuthRoute) {
-        return '/auth/login';
-      }
-
-      // 4. Giriş yapmış kullanıcıyı Login/Register sayfalarından Home'a at
-      if (authed && isAuthRoute) {
-        return '/home';
-      }
-      
-
+      // Geliştirme aşamasında tüm sayfaları görebilmek için yönlendirme geçici olarak devre dışı bırakıldı.
       return null;
     },
+
     routes: [
       GoRoute(
         path: '/splash',
@@ -65,6 +45,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const ForgotPasswordScreen(),
       ),
 
+      // Uygulamanın ana iskeletini (BottomNavigationBar) oluşturan ShellRoute
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
@@ -78,15 +59,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/stats',
-            builder: (_, __) => const Text("yakında"),
+            builder: (_, __) => const StatsScreen(),
           ),
           GoRoute(
             path: '/social',
-            builder: (_, __) => const Text("yakında"),
+            builder: (_, __) => const Text("Sosyal sayfa hazırlık aşamasında"),
           ),
           GoRoute(
             path: '/profile',
-            builder: (_, __) => const Text("yakında"),
+            builder: (_, __) => const Text("Profil sayfa hazırlık aşamasında"),
           ),
         ],
       ),
@@ -106,11 +87,11 @@ class MainShell extends StatelessWidget {
     '/profile',
   ];
 
-  @override 
+  @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     final currentIndex = _tabs.indexWhere(
-      (t) => location.startsWith(t),
+          (t) => location.startsWith(t),
     ).clamp(0, 4);
 
     return Scaffold(
