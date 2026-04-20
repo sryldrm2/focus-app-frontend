@@ -18,6 +18,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  /// API bittikten sonra redirect/`/home` yüklenene kadar spinner kaybolmasın diye.
+  bool _isSubmitting = false;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -27,11 +30,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _onLogin() async {
     if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
     final success = await ref.read(authNotifierProvider).login(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
-    if (!success && mounted) {
+    if (!mounted) return;
+    if (!success) {
+      setState(() => _isSubmitting = false);
       final error = ref.read(authNotifierProvider).state.errorMessage;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -39,12 +45,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           backgroundColor: Colors.red.shade700,
         ),
       );
+      return;
     }
+    // Başarı: authenticated olunca auth.isLoading false olur; _isSubmitting ile spinner sürer.
+    if (mounted) context.go('/home');
+    // _isSubmitting true kalsın; route değişince bu widget dispose olur
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(authNotifierProvider).state.isLoading;
+    final authLoading = ref.watch(authNotifierProvider).state.isLoading;
+    final isBusy = _isSubmitting || authLoading;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -187,11 +198,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            elevation: isLoading ? 0 : 4,
+                            elevation: isBusy ? 0 : 4,
                             shadowColor: AppColors.primary.withOpacity(0.4),
                           ),
-                          onPressed: isLoading ? null : _onLogin,
-                          child: isLoading
+                          onPressed: isBusy ? null : _onLogin,
+                          child: isBusy
                               ? const SizedBox(
                                   width: 22,
                                   height: 22,

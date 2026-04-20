@@ -10,20 +10,66 @@ import 'package:focus_app/features/auth/notifiers/auth_state.dart';
 import 'package:focus_app/features/home/screens/home_screen.dart';
 import 'package:focus_app/features/pomodoro/screens/pomodoro_screen.dart';
 import 'package:focus_app/features/stats/screens/stats_screen.dart';
+import 'package:focus_app/features/social/screens/social_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authNotifierProvider);
 
   return GoRouter(
-    // Geliştirme sürecinde kolaylık olması için başlangıç ekranı Pomodoro olarak ayarlandı.
-    // TODO: Arayüz geliştirme aşaması bittiğinde '/splash' olarak geri güncellenmelidir.
-    initialLocation: '/pomodoro',
+    initialLocation: '/splash',
     refreshListenable: authNotifier,
 
-    // Uygulama içi sayfa yönlendirme mantığı (Auth kontrolü)
-    // TODO: Backend entegrasyonu başladığında aşağıdaki yönlendirme mantığı tekrar aktif edilmelidir.
     redirect: (context, state) {
-      // Geliştirme aşamasında tüm sayfaları görebilmek için yönlendirme geçici olarak devre dışı bırakıldı.
+      final auth = ref.read(authNotifierProvider).state;
+      final loc = state.matchedLocation;
+
+      const shellPrefixes = [
+        '/home',
+        '/pomodoro',
+        '/stats',
+        '/social',
+        '/profile',
+      ];
+
+      // Splash: checkAuth bitene kadar bekle; sonra home veya login
+      if (loc == '/splash') {
+        if (auth.status == AuthStatus.initial ||
+            auth.status == AuthStatus.loading) {
+          return null;
+        }
+        if (auth.status == AuthStatus.authenticated) {
+          return '/home';
+        }
+        if (auth.status == AuthStatus.unauthenticated) {
+          return '/auth/login';
+        }
+      }
+
+      // Giriş yapmışken login/register'a düşmesin
+      if (loc.startsWith('/auth/login') || loc.startsWith('/auth/register')) {
+        if (auth.status == AuthStatus.authenticated) {
+          return '/home';
+        }
+      }
+
+      if (loc.startsWith('/auth/forgot')) {
+        if (auth.status == AuthStatus.authenticated) {
+          return '/home';
+        }
+        return null;
+      }
+
+      // Shell: sadece oturum açıkken; aksi halde login veya splash (token kontrolü için)
+      if (shellPrefixes.any((p) => loc.startsWith(p))) {
+        if (auth.status == AuthStatus.authenticated) {
+          return null;
+        }
+        if (auth.status == AuthStatus.unauthenticated) {
+          return '/auth/login';
+        }
+        return '/splash';
+      }
+
       return null;
     },
 
@@ -63,7 +109,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/social',
-            builder: (_, __) => const Text("Sosyal sayfa hazırlık aşamasında"),
+            builder: (_, __) => const SocialScreen(),
           ),
           GoRoute(
             path: '/profile',

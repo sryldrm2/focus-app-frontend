@@ -22,6 +22,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _confirmController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -36,6 +37,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _onRegister() async {
     if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
     final success = await ref
         .read(authNotifierProvider)
         .register(
@@ -46,7 +48,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           password: _passwordController.text,
           confirmPassword: _confirmController.text,
         );
-    if (!success && mounted) {
+    if (!mounted) return;
+    if (!success) {
+      setState(() => _isSubmitting = false);
       final error = ref.read(authNotifierProvider).state.errorMessage;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -54,12 +58,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           backgroundColor: Colors.red.shade700,
         ),
       );
+      return;
     }
+    if (mounted) context.go('/home');
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(authNotifierProvider).state.isLoading;
+    final authLoading = ref.watch(authNotifierProvider).state.isLoading;
+    final isBusy = _isSubmitting || authLoading;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -179,8 +186,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: isLoading ? null : _onRegister,
-                  child: isLoading
+                  onPressed: isBusy ? null : _onRegister,
+                  child: isBusy
                       ? const SizedBox(
                           width: 22,
                           height: 22,
