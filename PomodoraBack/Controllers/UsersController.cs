@@ -8,11 +8,11 @@ using IResult = Core.Utilities.Results.IResults;
 namespace PomodoraBack.Controllers
 {
     /// <summary>
-    /// User management endpoints (CRUD operations - requires authentication)
+    /// User management endpoints (CRUD operations)
+    /// GET: Public access | PUT/DELETE: Authentication required
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     [Produces("application/json")]
     public class UsersController : BaseController
     {
@@ -24,17 +24,15 @@ namespace PomodoraBack.Controllers
         }
 
         /// <summary>
-        /// Get user by ID
+        /// Get user by ID (Public)
         /// </summary>
         /// <param name="id">User ID</param>
         /// <returns>User information</returns>
         /// <response code="200">User found</response>
         /// <response code="204">User not found</response>
-        /// <response code="401">Unauthorized</response>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(UserDto), 200)]
         [ProducesResponseType(204)]
-        [ProducesResponseType(401)]
         public async Task<IActionResult> GetById(string id)
         {
             var result = await _userService.GetByIdAsync(id);
@@ -42,16 +40,14 @@ namespace PomodoraBack.Controllers
         }
 
         /// <summary>
-        /// Get all users
+        /// Get all users (Public)
         /// </summary>
         /// <returns>List of all users</returns>
         /// <response code="200">Users retrieved successfully</response>
         /// <response code="204">No users found</response>
-        /// <response code="401">Unauthorized</response>
         [HttpGet]
         [ProducesResponseType(typeof(List<UserDto>), 200)]
         [ProducesResponseType(204)]
-        [ProducesResponseType(401)]
         public async Task<IActionResult> GetAll()
         {
             var result = await _userService.GetAllAsync();
@@ -59,7 +55,7 @@ namespace PomodoraBack.Controllers
         }
 
         /// <summary>
-        /// Update user information
+        /// Update user information (Authentication required)
         /// </summary>
         /// <param name="id">User ID</param>
         /// <param name="updateUserDto">Updated user information</param>
@@ -68,6 +64,7 @@ namespace PomodoraBack.Controllers
         /// <response code="400">Invalid input or user not found</response>
         /// <response code="401">Unauthorized</response>
         [HttpPut("{id}")]
+        [Authorize]
         [ProducesResponseType(typeof(UserDto), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
@@ -78,7 +75,7 @@ namespace PomodoraBack.Controllers
         }
 
         /// <summary>
-        /// Delete user
+        /// Delete user (Authentication required)
         /// </summary>
         /// <param name="id">User ID</param>
         /// <returns>Deletion confirmation</returns>
@@ -86,6 +83,7 @@ namespace PomodoraBack.Controllers
         /// <response code="400">User not found</response>
         /// <response code="401">Unauthorized</response>
         [HttpDelete("{id}")]
+        [Authorize]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
