@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
+import 'package:focus_app/features/auth/providers/auth_providers.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authNotifierProvider).state.user;
+    final firstName = user == null
+        ? ''
+        : user.name.trim().isNotEmpty
+            ? user.name.trim()
+            : user.nickname.trim();
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
@@ -22,7 +30,9 @@ class HomeAppBar extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  'Merhaba, Esra 👋',
+                  firstName.isEmpty
+                      ? 'Merhaba 👋'
+                      : 'Merhaba, $firstName 👋',
                   style: GoogleFonts.nunito(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,

@@ -42,6 +42,7 @@ TestResults/
 # Local environment
 .env
 .env.local
+appsettings.json
 
 # MacOS
 .DS_Store
