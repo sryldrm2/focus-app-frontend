@@ -33,31 +33,45 @@ namespace PomodoraBack.Services.Concrete
         /// </summary>
         public async Task<IDataResult<FriendRequestDto>> SendFriendRequestAsync(string senderId, SendFriendRequestDto friendRequest)
         {
-            // Gönderici ve alıcı var mı kontrol et
+            // Gönderici var mı kontrol et
             var sender = await _userDal.GetAsync(u => u.UserId == senderId);
             if (sender == null)
                 return new ErrorDataResult<FriendRequestDto>("Gönderici kullanıcı bulunamadı.");
 
-            var receiver = await _userDal.GetAsync(u => u.UserId == friendRequest.ReceiverId);
+            // Alıcıyı ID veya Nickname ile bul
+            User receiver = null;
+            
+            if (!string.IsNullOrEmpty(friendRequest.ReceiverId))
+            {
+                receiver = await _userDal.GetAsync(u => u.UserId == friendRequest.ReceiverId);
+            }
+            else if (!string.IsNullOrEmpty(friendRequest.ReceiverNickname))
+            {
+                receiver = await _userDal.GetAsync(u => u.Nickname == friendRequest.ReceiverNickname);
+            }
+            
             if (receiver == null)
                 return new ErrorDataResult<FriendRequestDto>("Alıcı kullanıcı bulunamadı.");
 
+            // ReceiverId'yi belirle
+            var receiverId = receiver.UserId;
+
             // Aynı kişiye istek gönderemez
-            if (senderId == friendRequest.ReceiverId)
+            if (senderId == receiverId)
                 return new ErrorDataResult<FriendRequestDto>("Kendinize arkadaş isteği gönderemezsiniz.");
 
-            // Zaten arkadaş mı kontrol et
+            // Zaten arkadaş mı kontrol et (soft delete kontrolü ile)
             var existingFriendship = await _friendshipDal.GetAsync(f =>
-                (f.FirstUserId == senderId && f.SecondUserId == friendRequest.ReceiverId) ||
-                (f.FirstUserId == friendRequest.ReceiverId && f.SecondUserId == senderId));
+                ((f.FirstUserId == senderId && f.SecondUserId == receiverId) ||
+                (f.FirstUserId == receiverId && f.SecondUserId == senderId)) && f.DeletedAt == null);
 
             if (existingFriendship != null)
                 return new ErrorDataResult<FriendRequestDto>("Zaten bu kullanıcının arkadaşısınız.");
 
             // Zaten beklemede bir istek var mı kontrol et
             var existingRequest = await _friendRequestDal.GetAsync(fr =>
-                (fr.ConsignerId == senderId && fr.ReceiverId == friendRequest.ReceiverId && !fr.Status) ||
-                (fr.ConsignerId == friendRequest.ReceiverId && fr.ReceiverId == senderId && !fr.Status));
+                (fr.ConsignerId == senderId && fr.ReceiverId == receiverId && !fr.Status) ||
+                (fr.ConsignerId == receiverId && fr.ReceiverId == senderId && !fr.Status));
 
             if (existingRequest != null)
                 return new ErrorDataResult<FriendRequestDto>("Bu kullanıcıya zaten bir istek gönderilmiş veya sizden bir istek bekleniyor.");
@@ -67,7 +81,7 @@ namespace PomodoraBack.Services.Concrete
             {
                 FriendRequestId = Guid.NewGuid().ToString(),
                 ConsignerId = senderId,
-                ReceiverId = friendRequest.ReceiverId,
+                ReceiverId = receiverId,
                 Status = false,
                 CreatedAt = DateTime.UtcNow
             };
@@ -167,8 +181,8 @@ namespace PomodoraBack.Services.Concrete
         public async Task<IDataResult<FriendshipDto>> GetFriendshipAsync(string userId, string friendId)
         {
             var friendship = await _friendshipDal.GetAsync(
-                f => (f.FirstUserId == userId && f.SecondUserId == friendId) ||
-                     (f.FirstUserId == friendId && f.SecondUserId == userId),
+                f => ((f.FirstUserId == userId && f.SecondUserId == friendId) ||
+                     (f.FirstUserId == friendId && f.SecondUserId == userId)) && f.DeletedAt == null,
                 q => q.Include(x => x.FirstUser).Include(x => x.SecondUser));
 
             if (friendship == null)
@@ -218,8 +232,8 @@ namespace PomodoraBack.Services.Concrete
         public async Task<IDataResult<bool>> AreFriendsAsync(string userId, string friendId)
         {
             var friendship = await _friendshipDal.GetAsync(f =>
-                (f.FirstUserId == userId && f.SecondUserId == friendId) ||
-                (f.FirstUserId == friendId && f.SecondUserId == userId && f.DeletedAt == null));
+                ((f.FirstUserId == userId && f.SecondUserId == friendId) ||
+                (f.FirstUserId == friendId && f.SecondUserId == userId)) && f.DeletedAt == null);
 
             bool areFriends = friendship != null;
             return new SuccessDataResult<bool>(areFriends);
