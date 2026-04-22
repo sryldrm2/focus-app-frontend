@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:focus_app/features/profile/screens/profile_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:focus_app/features/auth/screens/splash_screen.dart';
 import 'package:focus_app/features/auth/screens/login_screen.dart';
@@ -14,13 +15,14 @@ import 'package:focus_app/features/social/screens/social_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authNotifierProvider);
+  final authState = ref.watch(authNotifierProvider.select((n) => n.state));
 
   return GoRouter(
     initialLocation: '/splash',
     refreshListenable: authNotifier,
 
     redirect: (context, state) {
-      final auth = ref.read(authNotifierProvider).state;
+      final auth = authState;
       final loc = state.matchedLocation;
 
       const shellPrefixes = [
@@ -113,7 +115,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/profile',
-            builder: (_, __) => const Text("Profil sayfa hazırlık aşamasında"),
+            builder: (_, __) => const ProfileScreen(),
           ),
         ],
       ),
