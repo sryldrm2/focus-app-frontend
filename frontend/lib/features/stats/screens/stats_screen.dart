@@ -14,7 +14,11 @@ class StatsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Çalışma Raporum',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontFamily: 'Nunito'),
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Nunito',
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -50,7 +54,11 @@ class StatsScreen extends StatelessWidget {
             // Haftalık Performans Grafiği Bölümü
             const Text(
               'Günlük Çalışma Süreleri (Saat)',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Nunito'),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Nunito',
+              ),
             ),
             const SizedBox(height: 15),
             Container(
@@ -60,7 +68,11 @@ class StatsScreen extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
                 ],
               ),
               child: BarChart(
@@ -76,7 +88,11 @@ class StatsScreen extends StatelessWidget {
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         return BarTooltipItem(
                           '${rod.toY.toStringAsFixed(1)}s',
-                          const TextStyle(color: primaryOrange, fontWeight: FontWeight.bold, fontSize: 12),
+                          const TextStyle(
+                            color: primaryOrange,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         );
                       },
                     ),
@@ -87,17 +103,37 @@ class StatsScreen extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         getTitlesWidget: (value, meta) {
-                          const days = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+                          const days = [
+                            'Pzt',
+                            'Sal',
+                            'Çar',
+                            'Per',
+                            'Cum',
+                            'Cmt',
+                            'Paz',
+                          ];
                           return Padding(
                             padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(days[value.toInt() % 7], style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                            child: Text(
+                              days[value.toInt() % 7],
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 11,
+                              ),
+                            ),
                           );
                         },
                       ),
                     ),
-                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
                   gridData: const FlGridData(show: false),
                   borderData: FlBorderData(show: false),
@@ -119,7 +155,11 @@ class StatsScreen extends StatelessWidget {
             // Ders Bazlı Dağılım Bölümü
             const Text(
               'Derslere Göre Dağılım',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Nunito'),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Nunito',
+              ),
             ),
             const SizedBox(height: 15),
             // Statik ders verileri, lise müfredatına göre düzenlendi.
@@ -136,7 +176,13 @@ class StatsScreen extends StatelessWidget {
   }
 
   // Özet kartlarını oluşturan yardımcı widget
-  Widget _buildSummaryCard({required String title, required String value, required IconData icon, required Color color, required String subtitle}) {
+  Widget _buildSummaryCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+    required String subtitle,
+  }) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -150,13 +196,30 @@ class StatsScreen extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
               child: Icon(icon, color: color, size: 20),
             ),
             const SizedBox(height: 12),
-            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.black87)),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500)),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),
@@ -164,22 +227,42 @@ class StatsScreen extends StatelessWidget {
   }
 
   // Ders ilerleme satırlarını oluşturan yardımcı widget
-  Widget _buildSubjectRow(String name, String time, double progress, Color color) {
+  Widget _buildSubjectRow(
+    String name,
+    String time,
+    double progress,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5),
+        ],
       ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              Text(time, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 13)),
+              Text(
+                name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                time,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
