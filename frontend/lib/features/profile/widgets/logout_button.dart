@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,7 +14,7 @@ class LogoutButton extends ConsumerWidget {
       onTap: () {
         showDialog(
           context: context,
-          builder: (_) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -32,7 +33,7 @@ class LogoutButton extends ConsumerWidget {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(dialogContext),
                 child: Text(
                   'İptal',
                   style: GoogleFonts.nunito(
@@ -43,8 +44,11 @@ class LogoutButton extends ConsumerWidget {
               ),
               TextButton(
                 onPressed: () async {
-                  Navigator.pop(context);
+                  Navigator.pop(dialogContext);
                   await ref.read(authNotifierProvider).logout();
+
+                  if (!context.mounted) return;
+                  context.go('/auth/login');
                 },
                 child: Text(
                   'Çıkış Yap',
