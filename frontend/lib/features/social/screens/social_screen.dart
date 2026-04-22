@@ -32,7 +32,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
 
   @override
   Widget build(BuildContext context) {
-    final userId = ref.watch(authNotifierProvider).state.user?.userId ?? '';
+    final nickname = ref.watch(authNotifierProvider).state.user?.nickname ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -61,7 +61,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  if (userId.isNotEmpty) ...[
+                  if (nickname.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Container(
                       width: double.infinity,
@@ -91,7 +91,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Kullanıcı kimliğin',
+                                  'Kullanıcı adın',
                                   style: GoogleFonts.dmSans(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -101,7 +101,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                                 ),
                                 const SizedBox(height: 4),
                                 SelectableText(
-                                  userId,
+                                  nickname,
                                   style: GoogleFonts.dmMono(
                                     fontSize: 12,
                                     color: AppColors.textPrimary,
@@ -110,7 +110,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Arkadaş eklerken bu metni paylaş.',
+                                  'Arkadaş eklerken bunu paylaş.',
                                   style: GoogleFonts.dmSans(
                                     fontSize: 11,
                                     color: AppColors.textSecondary,
@@ -122,14 +122,17 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                           IconButton(
                             tooltip: 'Kopyala',
                             onPressed: () async {
+                              final toCopy = nickname.startsWith('@')
+                                  ? nickname
+                                  : '@$nickname';
                               await Clipboard.setData(
-                                ClipboardData(text: userId),
+                                ClipboardData(text: toCopy),
                               );
                               if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'Kullanıcı kimliği kopyalandı',
+                                    'Kullanıcı adı kopyalandı',
                                     style: GoogleFonts.dmSans(fontSize: 14),
                                   ),
                                   behavior: SnackBarBehavior.floating,
@@ -149,7 +152,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                   ] else ...[
                     const SizedBox(height: 8),
                     Text(
-                      'Kullanıcı kimliğin için giriş yap.',
+                      'Kullanıcı adın için giriş yap.',
                       style: GoogleFonts.dmSans(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -161,7 +164,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
             ),
             const SizedBox(height: 16),
 
-// ── Tab Bar ──────────────────────────────
+            // ── Tab Bar ──────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
@@ -208,10 +211,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: const [
-                  FriendsTab(),
-                  StudyRoomsTab(),
-                ],
+                children: const [FriendsTab(), StudyRoomsTab()],
               ),
             ),
           ],

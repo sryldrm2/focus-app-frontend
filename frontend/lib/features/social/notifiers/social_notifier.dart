@@ -38,10 +38,10 @@ class SocialNotifier extends ChangeNotifier {
     }
   }
 
-  Future<void> sendRequest(String receiverId) async {
+  Future<void> sendRequest(String receiverNickname) async {
     _emit(_state.copyWith(isLoading: true, errorMessage: null));
     try {
-      await _service.sendFriendRequest(receiverId: receiverId);
+      await _service.sendFriendRequest(receiverNickname: receiverNickname);
       final sent = await _service.getSentRequests();
       _emit(_state.copyWith(isLoading: false, sentRequests: sent.data ?? const []));
     } catch (e) {

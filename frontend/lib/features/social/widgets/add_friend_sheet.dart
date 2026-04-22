@@ -19,14 +19,18 @@ class _AddFriendSheetState extends ConsumerState<AddFriendSheet> {
     super.dispose();
   }
   Future<void> _sendRequest() async {
-    final receiverId = _controller.text.trim();
-    if (receiverId.isEmpty) return;
+    final raw = _controller.text.trim();
+    if (raw.isEmpty) return;
+
+    final receiverNickname = raw.startsWith('@') ? raw.substring(1) : raw;
+if (receiverNickname.isEmpty) return;
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     try {
-      await ref.read(socialNotifierProvider).sendRequest(receiverId);
+      await ref.read(socialNotifierProvider).sendRequest(receiverNickname);
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (e) {
@@ -73,7 +77,7 @@ class _AddFriendSheetState extends ConsumerState<AddFriendSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Alıcının UserId değerini gir (veritabanındaki kullanıcı kimliği).',
+              'Alıcının kullanıcı adını (nickname) gir.',
               style: GoogleFonts.dmSans(
                 fontSize: 13,
                 color: AppColors.textSecondary,
@@ -96,15 +100,15 @@ class _AddFriendSheetState extends ConsumerState<AddFriendSheet> {
                 autofocus: true,
                 style: GoogleFonts.dmSans(fontSize: 15),
                 decoration: InputDecoration(
-                  hintText: 'Örn. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+                  hintText: 'Örn. kullaniciadi',
                   hintStyle: GoogleFonts.dmSans(
                     color: Colors.grey.shade400,
                   ),
                   prefixIcon: const Icon(
-                    Icons.badge_outlined,
-                    size: 20,
-                    color: Colors.grey,
-                  ),
+  Icons.alternate_email,
+  size: 20,
+  color: Colors.grey,
+),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,

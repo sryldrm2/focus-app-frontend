@@ -32,12 +32,12 @@ class SocialService {
 
   // -------- FriendRequest --------
   Future<ApiResult<FriendRequestModel>> sendFriendRequest({
-    required String receiverId,
+    required String receiverNickname,
   }) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/FriendRequest/send'),
       headers: await _authHeaders(),
-      body: jsonEncode({'receiverId': receiverId}),
+      body: jsonEncode({'receiverNickname': receiverNickname}),
     );
     final json = _decodeBody(response);
     if (response.statusCode >= 200 && response.statusCode < 300) {
