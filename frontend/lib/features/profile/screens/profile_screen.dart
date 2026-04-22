@@ -1,118 +1,228 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
+import 'package:focus_app/features/auth/providers/auth_providers.dart';
+import 'package:focus_app/features/profile/providers/profile_providers.dart';
 import 'package:focus_app/features/profile/widgets/profile_header.dart';
-import 'package:focus_app/features/profile/widgets/stats_card.dart';
-import 'package:focus_app/features/profile/widgets/badges_section.dart';
 import 'package:focus_app/features/profile/widgets/settings_section.dart';
 import 'package:focus_app/features/profile/widgets/logout_button.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  // Mock — backend gelince API'den çekilecek
-  final _user = mockUserProfile;
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = ref.read(authNotifierProvider).state.user?.userId ?? '';
+      if (userId.isEmpty) return;
+      ref.read(profileNotifierProvider).load(userId);
+    });
+  }
 
-  void _showEditSheet() {
+  void _showEditSheet({
+    required String userId,
+    required String name,
+    required String surname,
+    required String nickname,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _EditProfileSheet(user: _user),
+      builder: (_) => _EditProfileSheet(
+        userId: userId,
+        initialName: name,
+        initialSurname: surname,
+        initialNickname: nickname,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authNotifierProvider).state;
+    final userId = auth.user?.userId ?? '';
+    final profile = ref.watch(profileStateProvider);
+
+    if (userId.isEmpty) {
+      return Scaffold(
+        backgroundColor: AppColors.backgroundLight,
+        body: Center(
+          child: Text(
+            'Profil için giriş yapmalısın',
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final user = profile.user;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      body: CustomScrollView(
-        slivers: [
-          // Header gradient area
-          SliverToBoxAdapter(
-            child: ProfileHeader(
-              user: _user,
-              onEditTap: _showEditSheet,
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(profileNotifierProvider).load(userId),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: user == null
+                  ? _LoadingHeader(message: profile.errorMessage)
+                  : ProfileHeader(
+                      user: user,
+                      friendCount: profile.friendCount,
+                      onEditTap: () => _showEditSheet(
+                        userId: user.userId,
+                        name: user.name,
+                        surname: user.surname,
+                        nickname: user.nickname,
+                      ),
+                    ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  if (profile.errorMessage != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        profile.errorMessage!,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SettingsSection(),
+                  const SizedBox(height: 16),
+                  const LogoutButton(),
+                ]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class _LoadingHeader extends StatelessWidget {
+  final String? message;
+  const _LoadingHeader({this.message});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 48, 20, 28),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.secondary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Profil',
+            style: GoogleFonts.nunito(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
             ),
           ),
-
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                // İstatistikler
-                const StatsCard(),
-                const SizedBox(height: 16),
-
-                // Rozetler
-                const BadgesSection(),
-                const SizedBox(height: 16),
-
-                // Ayarlar
-                const SettingsSection(),
-                const SizedBox(height: 16),
-
-                // Çıkış
-                const LogoutButton(),
-              ]),
+          const SizedBox(height: 16),
+          const CircularProgressIndicator(color: Colors.white),
+          if (message != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              message!,
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                color: Colors.white70,
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 }
-
-// ── Profil Düzenleme Sheet ───────────────────────────────
-class _EditProfileSheet extends StatefulWidget {
-  final UserProfile user;
-
-  const _EditProfileSheet({required this.user});
-
+class _EditProfileSheet extends ConsumerStatefulWidget {
+  final String userId;
+  final String initialName;
+  final String initialSurname;
+  final String initialNickname;
+  const _EditProfileSheet({
+    required this.userId,
+    required this.initialName,
+    required this.initialSurname,
+    required this.initialNickname,
+  });
   @override
-  State<_EditProfileSheet> createState() => _EditProfileSheetState();
+  ConsumerState<_EditProfileSheet> createState() => _EditProfileSheetState();
 }
-
-class _EditProfileSheetState extends State<_EditProfileSheet> {
-  late TextEditingController _nameController;
-  String _selectedEmoji = '';
+class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
+  late final TextEditingController _name;
+  late final TextEditingController _surname;
+  late final TextEditingController _nickname;
   bool _isLoading = false;
-
-  final _avatarOptions = [
-    '🦋', '🦊', '🐻', '🐯', '🦁', '🐼',
-    '🐨', '🦄', '🐺', '🦅', '🐬', '🦋',
-  ];
-
+  String? _error;
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.user.displayName);
-    _selectedEmoji = widget.user.avatarEmoji;
+    _name = TextEditingController(text: widget.initialName);
+    _surname = TextEditingController(text: widget.initialSurname);
+    _nickname = TextEditingController(text: widget.initialNickname);
   }
-
   @override
   void dispose() {
-    _nameController.dispose();
+    _name.dispose();
+    _surname.dispose();
+    _nickname.dispose();
     super.dispose();
   }
-
   Future<void> _save() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (mounted) Navigator.pop(context);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      await ref.read(profileNotifierProvider).updateProfile(
+            widget.userId,
+            name: _name.text.trim(),
+            surname: _surname.text.trim(),
+            nickname: _nickname.text.trim(),
+          );
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
   }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
         decoration: const BoxDecoration(
@@ -134,7 +244,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               ),
             ),
             const SizedBox(height: 24),
-
             Center(
               child: Text(
                 'Profili Düzenle',
@@ -145,87 +254,26 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-
-            // Avatar seçimi
-            Text(
-              'Avatar',
-              style: GoogleFonts.nunito(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+            const SizedBox(height: 18),
+            Text('Ad', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            _Field(controller: _name),
+            const SizedBox(height: 12),
+            Text('Soyad', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            _Field(controller: _surname),
+            const SizedBox(height: 12),
+            Text('Kullanıcı adı', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            _Field(controller: _nickname),
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _error!,
+                style: GoogleFonts.dmSans(color: AppColors.error, fontSize: 13),
               ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 56,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _avatarOptions.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (_, i) {
-                  final emoji = _avatarOptions[i];
-                  final isSelected = _selectedEmoji == emoji;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedEmoji = emoji),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primary.withOpacity(0.1)
-                            : AppColors.backgroundLight,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColors.primary
-                              : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          emoji,
-                          style: const TextStyle(fontSize: 26),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Ad
-            Text(
-              'Ad Soyad',
-              style: GoogleFonts.nunito(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.backgroundLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TextField(
-                controller: _nameController,
-                style: GoogleFonts.dmSans(fontSize: 15),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
+            ],
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -258,6 +306,27 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+class _Field extends StatelessWidget {
+  final TextEditingController controller;
+  const _Field({required this.controller});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.backgroundLight,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        style: GoogleFonts.dmSans(fontSize: 15),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
     );

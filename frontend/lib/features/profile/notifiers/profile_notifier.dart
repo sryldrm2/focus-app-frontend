@@ -17,14 +17,27 @@ class ProfileNotifier extends ChangeNotifier {
 
   Future<void> load(String userId) async {
     _emit(_state.copyWith(isLoading: true, errorMessage: null));
+
     try {
       final userRes = await _users.getById(userId);
-      final friendsRes = await _social.getMyFriends();
+
+      if (userRes.data == null) {
+        _emit(
+          _state.copyWith(
+            isLoading: false,
+            user: null,
+            friendCount: 0,
+            errorMessage: 'Kullanıcı bulunamadı.',
+          ),
+        );
+        return;
+      }
+
       _emit(
         _state.copyWith(
-          isLoading: false,
+          isLoading: true,
           user: userRes.data,
-          friendCount: friendsRes.data?.length ?? 0,
+          errorMessage: null,
         ),
       );
     } catch (e) {
@@ -34,6 +47,19 @@ class ProfileNotifier extends ChangeNotifier {
           errorMessage: e.toString().replaceFirst('Exception: ', ''),
         ),
       );
+      return;
+    }
+
+    try {
+      final friendsRes = await _social.getMyFriends();
+      _emit(
+        _state.copyWith(
+          isLoading: false,
+          friendCount: friendsRes.data?.length ?? 0,
+        ),
+      );
+    } catch (_) {
+      _emit(_state.copyWith(isLoading: false, friendCount: 0));
     }
   }
 
