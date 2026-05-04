@@ -294,11 +294,11 @@ class AppTextField extends StatelessWidget {
         keyboardType: keyboardType,
         validator: validator,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        style: GoogleFonts.dmSans(fontSize: 15),
+        style: GoogleFonts.dmSans(fontSize: 15, color: AppColors.textPrimary),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.dmSans(color: Colors.grey.shade400),
-          prefixIcon: Icon(icon, color: Colors.grey.shade400, size: 20),
+          hintStyle: GoogleFonts.dmSans(color: AppColors.textSecondary),
+prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
           suffixIcon: suffixIcon,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),

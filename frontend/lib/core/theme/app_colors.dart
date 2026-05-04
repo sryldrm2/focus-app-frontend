@@ -18,8 +18,8 @@ class AppColors {
   static const backgroundDark = Color(0xFF0F0D0A);
 
   // Metin
-  static const textPrimary   = Color(0xFF1A1612);  
-  static const textSecondary = Color(0xFF8A8078); 
+  static const textPrimary   = Color(0xFF2D2016);  
+  static const textSecondary = Color(0xFF5C4F45); 
 
   // Semantik
   static const success = Color(0xFF2ECC71);
