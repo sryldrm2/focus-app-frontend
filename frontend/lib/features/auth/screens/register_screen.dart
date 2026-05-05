@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_providers.dart';
+import 'package:focus_app/features/auth/screens/login_screen.dart' show AppTextField;
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -109,6 +110,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 style: GoogleFonts.nunito(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
               Text(
@@ -117,7 +119,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
               const SizedBox(height: 32),
               _buildInputLabel("Ad"),
-              _buildTextField(
+              AppTextField(
                 controller: _nameController,
                 hint: "Adınızı girin",
                 icon: Icons.person_outline,
@@ -125,7 +127,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
               const SizedBox(height: 16),
               _buildInputLabel("Soyad"),
-              _buildTextField(
+              AppTextField(
                 controller: _surnameController,
                 hint: "Soyadınızı girin",
                 icon: Icons.person_outline,
@@ -133,7 +135,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
               const SizedBox(height: 16),
               _buildInputLabel("Kullanıcı Adı"),
-              _buildTextField(
+              AppTextField(
                 controller: _nicknameController,
                 hint: "kullaniciadi",
                 icon: Icons.alternate_email,
@@ -141,7 +143,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
               const SizedBox(height: 16),
               _buildInputLabel("E-posta"),
-              _buildTextField(
+              AppTextField(
                 controller: _emailController,
                 hint: "ornek@mail.com",
                 icon: Icons.mail_outline,
@@ -151,30 +153,38 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
               const SizedBox(height: 16),
               _buildInputLabel("Şifre"),
-              _buildTextField(
-                controller: _passwordController,
-                hint: "••••••••",
-                icon: Icons.lock_outline,
-                isPassword: true,
-                obscureToggle: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
-                obscure: _obscurePassword,
-                validator: (v) => v!.length < 6 ? 'En az 6 karakter' : null,
-              ),
+              AppTextField(
+  controller: _passwordController,
+  hint: "••••••••",
+  icon: Icons.lock_outline,
+  obscureText: _obscurePassword,
+  suffixIcon: IconButton(
+    icon: Icon(
+      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+      color: Colors.grey,
+      size: 20,
+    ),
+    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+  ),
+  validator: (v) => v!.length < 6 ? 'En az 6 karakter' : null,
+),
               const SizedBox(height: 16),
               _buildInputLabel("Şifre Tekrar"),
-              _buildTextField(
-                controller: _confirmController,
-                hint: "••••••••",
-                icon: Icons.lock_outline,
-                isPassword: true,
-                obscureToggle: () =>
-                    setState(() => _obscureConfirm = !_obscureConfirm),
-                obscure: _obscureConfirm,
-                validator: (v) => v != _passwordController.text
-                    ? 'Şifreler eşleşmiyor'
-                    : null,
-              ),
+              AppTextField(
+  controller: _confirmController,
+  hint: "••••••••",
+  icon: Icons.lock_outline,
+  obscureText: _obscureConfirm,
+  suffixIcon: IconButton(
+    icon: Icon(
+      _obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+      color: Colors.grey,
+      size: 20,
+    ),
+    onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+  ),
+  validator: (v) => v != _passwordController.text ? 'Şifreler eşleşmiyor' : null,
+),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -236,54 +246,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     padding: const EdgeInsets.only(left: 4, bottom: 6),
     child: Text(
       label,
-      style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+      style: const TextStyle(
+        fontWeight: FontWeight.w500, 
+        fontSize: 14,
+        color: AppColors.textPrimary,
+      ),
     ),
   );
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    bool isPassword = false,
-    bool obscure = false,
-    VoidCallback? obscureToggle,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 0),
-      child: TextFormField(
-        controller: controller,
-        obscureText: isPassword ? obscure : false,
-        keyboardType: keyboardType,
-        validator: validator,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: Icon(icon),
-          suffixIcon: isPassword && obscureToggle != null
-              ? IconButton(
-                  icon: Icon(
-                    obscure
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    color: Colors.grey,
-                    size: 20,
-                  ),
-                  onPressed: obscureToggle,
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.black12),
-          ),
-          filled: true,
-          fillColor: Colors.white,
-        ),
-      ),
-    );
-  }
-
+  
   Widget _buildSocialDivider() => const Row(
     children: [
       Expanded(child: Divider()),

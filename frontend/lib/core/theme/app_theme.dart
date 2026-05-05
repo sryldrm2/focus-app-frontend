@@ -18,6 +18,13 @@ class AppTheme {
           elevation: 0,
           foregroundColor: AppColors.textPrimary,
         ),
+
+        inputDecorationTheme: InputDecorationTheme(
+          labelStyle: TextStyle(color: AppColors.textSecondary),
+          hintStyle: TextStyle(color: AppColors.textSecondary),
+          prefixIconColor: AppColors.textSecondary,
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
+        ),
       );
 
   static ThemeData get dark => ThemeData(
