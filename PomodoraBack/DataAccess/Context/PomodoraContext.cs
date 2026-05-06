@@ -13,6 +13,8 @@ namespace PomodoraBack.DataAccess.Context
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<FriendRequest> FriendRequests { get; set; }
         public DbSet<FriendShip> Friendships { get; set; }
+        public DbSet<Entities.Task> Tasks{ get; set; }
+        public DbSet <PomodoroSession> PomodoroSessions{ get; set; } 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -86,6 +88,37 @@ namespace PomodoraBack.DataAccess.Context
 
                 // Index: Aynı iki kişi arasında sadece bir friendship olabilir
                 entity.HasIndex(e => new { e.FirstUserId, e.SecondUserId }).IsUnique();
+            });
+            // Task Configuration
+            modelBuilder.Entity<Entities.Task>(entity =>
+            {
+                entity.HasKey(e => e.TaskId);
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict); // Cascade yerine Restrict
+
+                entity.HasIndex(e => new { e.UserId, e.Status });
+            });
+
+            // PomodoroSession Configuration
+            modelBuilder.Entity<PomodoroSession>(entity =>
+            {
+                entity.HasKey(e => e.PomoId);
+
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict); // Cascade yerine Restrict
+
+                entity.HasOne(e => e.Task)
+                    .WithMany()
+                    .HasForeignKey(e => e.TaskId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => new { e.UserId, e.Status, e.StartedAt });
+                entity.HasIndex(e => e.TaskId);
             });
         }
     }

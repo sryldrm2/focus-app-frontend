@@ -1,0 +1,29 @@
+
+
+info:
+  name: Get Total Points (Toplam Puanı Getir)
+  desc: Kullanıcının toplam kazandığı puanı getirir
+  seq: 7
+  type: http
+
+http:
+  method: GET
+  url: "{{base_url}}/api/pomodoro-session/total-points"
+  auth:
+    mode: bearer
+    bearer: "{{access_token}}"
+
+body:
+  mode: none
+
+tests:
+  - name: Status is 200
+    assert: res.getStatus() == 200
+  - name: Data is number
+    assert: typeof res.body.data === 'number'
+  - name: Points >= 0
+    assert: res.body.data >= 0
+
+script:
+  post-response: |
+    bru.setVar("total_points", res.body.data);

@@ -1,0 +1,21 @@
+
+
+info:
+  name: Get Ongoing Session (Devam Eden Seansı Getir)
+  desc: Kullanıcının devam eden seansını getirir (varsa)
+  seq: 5
+  type: http
+
+http:
+  method: GET
+  url: "{{base_url}}/api/pomodoro-session/ongoing"
+  auth:
+    mode: bearer
+    bearer: "{{access_token}}"
+
+body:
+  mode: none
+
+tests:
+  - name: Status is 200
+    assert: res.getStatus() == 200

@@ -1,0 +1,25 @@
+
+info:
+  name: Increment Break Count (Ara Sayısını Artır)
+  desc: Seansın ara verilme sayısını artırır (pause tuşu)
+  seq: 11
+  type: http
+
+
+http:
+  method: post
+  url: "{{base_url}}/api/pomodoro-session/{{pomo_id}}/break"
+  auth:
+    mode: bearer
+    bearer: "{{access_token}}"
+
+body:
+  mode: none
+
+tests:
+  - name: Status is 200
+    assert: res.getStatus() == 200
+  - name: BreakCount increased
+    assert: res.body.data.breakCount > 0
+  - name: Status still OnGoing
+    assert: res.body.data.status == 0

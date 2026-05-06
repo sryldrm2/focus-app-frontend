@@ -1,0 +1,31 @@
+
+
+info:
+  name: Get Sessions by Date Range (Tarih Aralığı Seansları)
+  desc: Kullanıcının belirli bir tarih aralığındaki seanslarını getirir
+  seq: 8
+  type: http
+
+http:
+  method: GET
+  url: "{{base_url}}/api/pomodoro-session/date-range?startDate=2024-01-01&endDate=2025-12-31"
+  auth:
+    mode: bearer
+    bearer: "{{access_token}}"
+
+body:
+  mode: none
+
+params:
+  - name: startDate
+    value: "2024-01-01"
+    disabled: false
+  - name: endDate
+    value: "2025-12-31"
+    disabled: false
+
+tests:
+  - name: Status is 200
+    assert: res.getStatus() == 200
+  - name: Response is array
+    assert: Array.isArray(res.body.data)

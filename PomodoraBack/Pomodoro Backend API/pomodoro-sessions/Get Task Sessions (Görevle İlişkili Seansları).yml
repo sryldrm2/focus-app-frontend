@@ -1,0 +1,23 @@
+
+info:
+  name: Get Task Sessions (Görevle İlişkili Seansları Getir)
+  desc: Belirli bir görevle ilişkili tamamlanan seansları getirir
+  seq: 9
+  type: http
+
+
+http:
+  method: GET
+  url: "{{base_url}}/api/pomodoro-session/task/{{task_id}}"
+  auth:
+    mode: bearer
+    bearer: "{{access_token}}"
+
+body:
+  mode: none
+
+tests:
+  - name: Status is 200
+    assert: res.getStatus() == 200
+  - name: Response is array
+    assert: Array.isArray(res.body.data)

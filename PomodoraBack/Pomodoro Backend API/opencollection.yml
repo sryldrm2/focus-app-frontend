@@ -30,6 +30,13 @@ request:
       value: de6b3051-be7d-44d3-bc29-fe14ecba161a
     - name: friend_request_id
       value: dce48ed0-e04b-43e4-a178-3d5bffa98775
+    # 🍅 Pomodoro Session Variables
+    - name: pomo_id
+      value: ""
+    - name: task_id
+      value: ""
+    - name: total_points
+      value: 0
 
 docs:
   content: Pomodoro Uygulaması Backend API - Tüm endpoint'ler

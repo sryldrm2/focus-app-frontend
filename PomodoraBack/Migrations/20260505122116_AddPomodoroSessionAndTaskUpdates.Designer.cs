@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PomodoraBack.DataAccess.Context;
 
@@ -11,9 +12,11 @@ using PomodoraBack.DataAccess.Context;
 namespace PomodoraBack.Migrations
 {
     [DbContext(typeof(PomodoroContext))]
-    partial class PomodoroContextModelSnapshot : ModelSnapshot
+    [Migration("20260505122116_AddPomodoroSessionAndTaskUpdates")]
+    partial class AddPomodoroSessionAndTaskUpdates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -175,6 +178,9 @@ namespace PomodoraBack.Migrations
                     b.Property<string>("TaskId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -182,6 +188,7 @@ namespace PomodoraBack.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("DueDate")

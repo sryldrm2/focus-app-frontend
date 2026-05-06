@@ -29,12 +29,16 @@ builder.Services.AddScoped<IUserDal, UserDal>();
 builder.Services.AddScoped<IRefreshTokenDal, RefreshTokenDal>();
 builder.Services.AddScoped<IFriendRequestDal, FriendRequestDal>();
 builder.Services.AddScoped<IFriendShipDal, FriendShipDal>();
+builder.Services.AddScoped<IPomodoroSessionDal, PomodoroSessionDal>();
+builder.Services.AddScoped<IPomodoroTaskDal, PomodoroTaskDal>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IFriendRequest, FriendRequestService>();
+builder.Services.AddScoped<IPomodoroSessionService, PomodoroSessionService>();
+builder.Services.AddScoped<IPomodoroTaskService, PomodoroTaskService>();
 
 // JWT Authentication
 builder.Services.AddAuthentication(options =>

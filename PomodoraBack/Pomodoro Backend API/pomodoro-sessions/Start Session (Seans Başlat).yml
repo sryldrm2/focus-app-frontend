@@ -1,0 +1,20 @@
+
+info:
+  name: Start Session (Seans Başlat)
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/api/pomodoro-session/start"
+  auth: inherit
+
+body:
+  mode: json
+  json:
+    sessionType: 0
+    durationMinute: 25
+    taskId: null
+    notes: "Kod yazıyorum"
+
+# Response

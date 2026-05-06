@@ -22,7 +22,7 @@ namespace PomodoraBack.Entities
         /// </summary>
         public bool Status { get; set; } = false; 
         
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
         
         // ⭐ Navigation Properties

@@ -44,6 +44,18 @@ TestResults/
 .env.local
 appsettings.json
 
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins-dependencies
+.flutter-plugins
+flutter_export_environment.sh
+.packages
+pubspec.lock
+
+# Generated Flutter files
+frontend/windows/flutter/generated_plugin_registrant.*
+frontend/windows/flutter/generated_plugins.*
+
 # MacOS
 .DS_Store
 .AppleDouble

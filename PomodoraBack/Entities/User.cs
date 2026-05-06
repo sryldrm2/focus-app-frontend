@@ -22,7 +22,7 @@ namespace PomodoraBack.Entities
         public string Password { get; set; } = string.Empty;
         public bool CurrentStatus { get; set; } = false;
         public decimal TotalPoints { get; set; } = 0;
-        public DateTime LastSeen { get; set; } = DateTime.UtcNow;
+        public DateTime LastSeen { get; set; } = DateTime.Now;
         public DateTime? DeletedAt { get; set; } = null;
     }
 }

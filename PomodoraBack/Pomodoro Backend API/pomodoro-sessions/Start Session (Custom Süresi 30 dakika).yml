@@ -1,0 +1,33 @@
+
+info:
+  name: "Start Session (Custom Süresi: 30 dakika)"
+  desc: "30 dakikalık custom seans başlatır"
+  seq: 2
+  type: http
+
+http:
+  method: post
+  url: "{{base_url}}/api/pomodoro-session/start"
+  auth:
+    mode: bearer
+    bearer: "{{access_token}}"
+
+body:
+  mode: json
+  json:
+    sessionType: 0
+    durationMinute: 30
+    taskId: null
+    notes: "30 dakikalık uzun çalışma seansı"
+
+tests:
+  - name: Status is 200
+    assert: res.getStatus() == 200
+  - name: Duration is 30
+    assert: res.body.data.durationMinute == 30
+  - name: Points will be 30
+    assert: res.body.data.pointsEarned == 0
+
+script:
+  post-response: |
+    bru.setVar("pomo_id", res.body.data.pomoId);

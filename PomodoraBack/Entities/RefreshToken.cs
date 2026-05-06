@@ -16,7 +16,7 @@ namespace PomodoraBack.Entities
         
         public DateTime ExpiresAt { get; set; }
         
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         
         public bool IsRevoked { get; set; } = false;
         public User User { get; set; } = null!;

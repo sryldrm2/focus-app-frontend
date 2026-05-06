@@ -1,0 +1,26 @@
+
+info: 
+  name: Complete Session (Seansı Tamamla)
+  desc: Devam eden seansı başarıyla tamamlar ve puanları hesaplar
+  seq: 3
+  type: http
+
+http:
+  method: POST
+  url: "{{base_url}}/api/pomodoro-session/{{pomo_id}}/complete"
+  auth:
+    mode: bearer
+    bearer: "{{access_token}}"
+
+body:
+  mode: none
+
+tests:
+  - name: Status is 200
+    assert: res.getStatus() == 200
+  - name: Status is Successful
+    assert: res.body.data.status == 1
+  - name: Points earned
+    assert: res.body.data.pointsEarned > 0
+  - name: Has completed time
+    assert: res.body.data.completedAt != null
