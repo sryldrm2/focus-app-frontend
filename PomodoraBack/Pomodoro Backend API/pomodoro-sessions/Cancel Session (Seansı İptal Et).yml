@@ -1,0 +1,22 @@
+
+info:
+  name: Cancel Session (Seansı İptal Et)
+  type: http
+  seq: 4
+http:
+  method: POST
+  url: "{{base_url}}/api/pomodoro-session/{{pomo_id}}/cancel"
+  auth:
+    mode: bearer
+    bearer: "{{access_token}}"
+
+body:
+  mode: none
+
+tests:
+  - name: Status is 200
+    assert: res.getStatus() == 200
+  - name: Status is Cancelled
+    assert: res.body.data.status == 3
+  - name: No points earned
+    assert: res.body.data.pointsEarned == 0

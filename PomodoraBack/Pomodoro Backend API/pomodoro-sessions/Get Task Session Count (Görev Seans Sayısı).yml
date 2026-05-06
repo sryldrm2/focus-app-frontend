@@ -1,0 +1,22 @@
+meta:
+  name: Get Task Session Count (Görev Seans Sayısı)
+  desc: Belirli bir görev için yapılan seans sayısını getirir
+  seq: 10
+
+http:
+  method: get
+  url: "{{base_url}}/api/pomodoro-session/task/{{task_id}}/count"
+  auth:
+    mode: bearer
+    bearer: "{{access_token}}"
+
+body:
+  mode: none
+
+tests:
+  - name: Status is 200
+    assert: res.getStatus() == 200
+  - name: Data is number
+    assert: typeof res.body.data === 'number'
+  - name: Count >= 0
+    assert: res.body.data >= 0
