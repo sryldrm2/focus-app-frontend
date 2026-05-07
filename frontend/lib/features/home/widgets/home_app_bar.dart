@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/auth/providers/auth_providers.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeAppBar extends ConsumerWidget {
@@ -64,6 +65,12 @@ class HomeAppBar extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 10),
+
+          IconButton(
+            onPressed: () => context.go('/tasks'),
+            icon: const Icon(Icons.checklist_rounded, size: 24),
+            color: AppColors.textPrimary,
+          ),
 
           Stack(
             children: [
