@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/features/profile/screens/profile_screen.dart';
+import 'package:focus_app/features/tasks/screens/tasks_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:focus_app/features/auth/screens/splash_screen.dart';
 import 'package:focus_app/features/auth/screens/login_screen.dart';
@@ -117,6 +118,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/profile',
             builder: (_, __) => const ProfileScreen(),
           ),
+          GoRoute(
+            path: '/tasks', builder: (_, __) => const TasksScreen()
+          )
         ],
       ),
     ],
