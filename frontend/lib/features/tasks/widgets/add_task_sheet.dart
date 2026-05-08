@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
-import 'package:focus_app/features/tasks/models/task_model.dart';
+import 'package:focus_app/features/tasks/network/task_service.dart';
 import 'package:google_fonts/google_fonts.dart';
  
 class AddTaskSheet extends StatefulWidget {
   final DateTime initialDate;
-  final void Function(TaskModel) onAdd;
+  final Future<bool> Function(CreateTaskDto) onAdd;
  
   const AddTaskSheet({
     super.key,
@@ -23,6 +23,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
   DateTime? _dueDate;
   Color _selectedColor = const Color(0xFFE85D04);
   int? _priority;
+  bool _isLoading = false;
  
   static const _colors = [
     Color(0xFFE74C3C),
@@ -46,20 +47,26 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     super.dispose();
   }
  
-  void _submit() {
+  Future<void> _submit() async {
     if (_titleController.text.trim().isEmpty) return;
-    final task = TaskModel(
-      taskId: DateTime.now().millisecondsSinceEpoch.toString(),
+    setState(() => _isLoading = true);
+
+    final dto = CreateTaskDto(
       title: _titleController.text.trim(),
-      description: _descController.text.trim(),
-      status: TaskStatus.notStarted,
+      description: _descController.text.trim().isEmpty
+        ? null
+        : _descController.text.trim(),
       priority: _priority,
-      createdAt: DateTime.now(),
       dueDate: _dueDate,
-      color: _selectedColor,
     );
-    widget.onAdd(task);
-    Navigator.pop(context);
+
+    final success = await widget.onAdd(dto);
+    if (!mounted) return;
+    if (success) {
+      Navigator.pop(context);
+    } else {
+      setState(() => _isLoading = false);
+    }
   }
  
   @override
@@ -242,15 +249,21 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
-                onPressed: _submit,
-                child: Text(
-                  'Görevi Kaydet',
-                  style: GoogleFonts.nunito(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                onPressed: _isLoading ? null : _submit,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 22, height: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5),
+                      )
+                    : Text(
+                        'Görevi Kaydet',
+                        style: GoogleFonts.nunito(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ),
           ],

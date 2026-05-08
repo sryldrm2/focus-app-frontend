@@ -9,6 +9,11 @@ enum TaskStatus {
  
   final int value;
   const TaskStatus(this.value);
+
+  static TaskStatus fromInt(int v) => TaskStatus.values.firstWhere(
+    (e) => e.value == v,
+    orElse: () => TaskStatus.notStarted,
+  );
  
   String get label {
     switch (this) {
@@ -43,6 +48,18 @@ class TaskModel {
   });
  
   bool get isCompleted => status == TaskStatus.completed;
+
+  factory TaskModel.fromJson(Map<String, dynamic> json) => TaskModel(
+        taskId:      json['taskId'] as String,
+        title:       json['title'] as String,
+        description: json['description'] as String? ?? '',
+        status:      TaskStatus.fromInt(json['status'] as int? ?? 0),
+        priority:    json['priority'] as int?,
+        createdAt:   DateTime.parse(json['createdAt'] as String),
+        dueDate:     json['dueDate'] != null
+            ? DateTime.parse(json['dueDate'] as String)
+            : null,
+      );
  
   TaskModel copyWith({TaskStatus? status, Color? color}) => TaskModel(
         taskId:      taskId,

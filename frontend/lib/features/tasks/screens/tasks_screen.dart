@@ -1,49 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
-import 'package:focus_app/features/tasks/models/task_model.dart';
+import 'package:focus_app/features/tasks/network/task_service.dart';
+import 'package:focus_app/features/tasks/providers/task_provider.dart';
 import 'package:focus_app/features/tasks/widgets/add_task_sheet.dart';
 import 'package:focus_app/features/tasks/widgets/date_selector.dart';
 import 'package:focus_app/features/tasks/widgets/empty_state.dart';
 import 'package:focus_app/features/tasks/widgets/task_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class TasksScreen extends StatefulWidget {
+class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key});
 
   @override
-  State<TasksScreen> createState() => _TasksScreenState();
+  ConsumerState<TasksScreen> createState() => _TasksScreenState();
 }
 
-class _TasksScreenState extends State<TasksScreen> {
+class _TasksScreenState extends ConsumerState<TasksScreen> {
   DateTime _selectedDate = DateTime.now();
 
-  // Mock state — provider eklenince burası kaldırılacak
-  final List<TaskModel> _tasks = List.from(mockTasks);
-
-  List<TaskModel> get _tasksForDate => _tasks.where((t) {
-        if (t.dueDate == null) return false;
-        return t.dueDate!.year == _selectedDate.year &&
-            t.dueDate!.month == _selectedDate.month &&
-            t.dueDate!.day == _selectedDate.day;
-      }).toList();
-
-  void _toggleComplete(TaskModel task) {
-    setState(() {
-      final index = _tasks.indexWhere((t) => t.taskId == task.taskId);
-      if (index == -1) return;
-      final newStatus = task.isCompleted
-          ? TaskStatus.notStarted
-          : TaskStatus.completed;
-      _tasks[index] = task.copyWith(status: newStatus);
-    });
-  }
-
-  void _deleteTask(String taskId) {
-    setState(() => _tasks.removeWhere((t) => t.taskId == taskId));
-  }
-
-  void _addTask(TaskModel task) {
-    setState(() => _tasks.add(task));
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(taskNotifierProvider).loadTasks());
   }
 
   void _showAddSheet() {
@@ -53,14 +32,15 @@ class _TasksScreenState extends State<TasksScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => AddTaskSheet(
         initialDate: _selectedDate,
-        onAdd: _addTask,
+        onAdd: (dto) => ref.read(taskNotifierProvider).addTask(dto),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final tasks = _tasksForDate;
+    final state = ref.watch(taskNotifierProvider).state;
+    final tasks = state.tasksForDate(_selectedDate);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -77,8 +57,11 @@ class _TasksScreenState extends State<TasksScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline,
-                color: AppColors.primary, size: 28),
+            icon: const Icon(
+              Icons.add_circle_outline,
+              color: AppColors.primary,
+              size: 28,
+            ),
             onPressed: _showAddSheet,
           ),
         ],
@@ -89,20 +72,68 @@ class _TasksScreenState extends State<TasksScreen> {
             selectedDate: _selectedDate,
             onDateChanged: (d) => setState(() => _selectedDate = d),
           ),
-          Expanded(
-            child: tasks.isEmpty
-                ? TasksEmptyState(onAdd: _showAddSheet)
-                : ListView.builder(
-                    padding:
-                        const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                    itemCount: tasks.length,
-                    itemBuilder: (_, i) => TaskCard(
-                      task: tasks[i],
-                      onToggle: () => _toggleComplete(tasks[i]),
-                      onDelete: () => _deleteTask(tasks[i].taskId),
+          if (state.isLoading)
+            const Expanded(
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
+            )
+          else if (state.errorMessage != null)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: AppColors.error,
+                      size: 48,
                     ),
-                  ),
-          ),
+                    const SizedBox(height: 12),
+                    Text(
+                      state.errorMessage!,
+                      style: GoogleFonts.dmSans(color: AppColors.textSecondary),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () =>
+                          ref.read(taskNotifierProvider).loadTasks(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Tekrar Dene',
+                        style: GoogleFonts.nunito(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (tasks.isEmpty)
+            Expanded(child: TasksEmptyState(onAdd: _showAddSheet))
+          else
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                itemCount: tasks.length,
+                itemBuilder: (_, i) => TaskCard(
+                  task: tasks[i],
+                  onToggle: () =>
+                      ref.read(taskNotifierProvider).toggleComplete(tasks[i]),
+                  onDelete: () => ref
+                      .read(taskNotifierProvider)
+                      .deleteTask(tasks[i].taskId),
+                ),
+              ),
+            ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -112,7 +143,9 @@ class _TasksScreenState extends State<TasksScreen> {
         label: Text(
           'Görev Ekle',
           style: GoogleFonts.nunito(
-              color: Colors.white, fontWeight: FontWeight.w700),
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );

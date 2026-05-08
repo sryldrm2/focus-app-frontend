@@ -1,46 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/tasks/models/task_model.dart';
+import 'package:focus_app/features/tasks/providers/task_provider.dart';
 import 'package:focus_app/shared/widgets/section_card.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class TodayPlanCard extends StatefulWidget {
+class TodayPlanCard extends ConsumerWidget {
   const TodayPlanCard({super.key});
 
   @override
-  State<TodayPlanCard> createState() => _TodayPlanCardState();
-}
-
-class _TodayPlanCardState extends State<TodayPlanCard> {
-  // Mock state — provider eklenince kaldırılacak
-  final List<TaskModel> _tasks = List.from(mockTasks);
-
-  List<TaskModel> get _todayTasks {
-    final today = DateTime.now();
-    return _tasks.where((t) {
-      if (t.dueDate == null) return false;
-      return t.dueDate!.year == today.year &&
-          t.dueDate!.month == today.month &&
-          t.dueDate!.day == today.day;
-    }).toList();
-  }
-
-  void _toggle(TaskModel task) {
-    setState(() {
-      final i = _tasks.indexWhere((t) => t.taskId == task.taskId);
-      if (i == -1) return;
-      _tasks[i] = task.copyWith(
-        status: task.isCompleted
-            ? TaskStatus.notStarted
-            : TaskStatus.completed,
-      );
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final today = _todayTasks;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(taskNotifierProvider).state;
+    final today = state.todayTasks;
     final completed = today.where((t) => t.isCompleted).length;
     final total = today.length;
     final pct = total == 0 ? 0 : (completed / total * 100).round();
@@ -83,25 +56,30 @@ class _TodayPlanCardState extends State<TodayPlanCard> {
           const SizedBox(height: 14),
 
           // İçerik
-          if (today.isEmpty)
+          if (state.isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: CircularProgressIndicator(
+                  color: AppColors.primary, strokeWidth: 2),
+              ),
+            )
+          else if (today.isEmpty)
             _EmptyPlan(onTap: () => context.go('/tasks'))
           else
-            ...today.map((task) => _PlanRow(
-                  task: task,
-                  onToggle: () => _toggle(task),
-                )),
+            ...today.map((task) => _PlanRow(task: task)),
 
           const SizedBox(height: 10),
           GestureDetector(
             onTap: () => context.go('/tasks'),
             child: Text(
-              'Tüm Görevler →',
+              'Tüm GÖrevler →',
               style: GoogleFonts.dmSans(
                 fontSize: 13,
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
               ),
-            ),
+                        ),
           ),
         ],
       ),
@@ -150,13 +128,12 @@ class _EmptyPlan extends StatelessWidget {
   }
 }
 
-class _PlanRow extends StatelessWidget {
+class _PlanRow extends ConsumerWidget {
   final TaskModel task;
-  final VoidCallback onToggle;
-  const _PlanRow({required this.task, required this.onToggle});
-
+  const _PlanRow({required this.task});
+ 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -208,8 +185,7 @@ class _PlanRow extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: task.isCompleted ? 1.0 : 0.0,
                     backgroundColor: task.color.withOpacity(0.1),
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(task.color),
+                    valueColor: AlwaysStoppedAnimation<Color>(task.color),
                     minHeight: 5,
                   ),
                 ),
@@ -218,7 +194,7 @@ class _PlanRow extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           GestureDetector(
-            onTap: onToggle,
+            onTap: () => ref.read(taskNotifierProvider).toggleComplete(task),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 22, height: 22,
