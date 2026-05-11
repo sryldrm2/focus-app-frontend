@@ -73,7 +73,7 @@ class TodayPlanCard extends ConsumerWidget {
           GestureDetector(
             onTap: () => context.go('/tasks'),
             child: Text(
-              'Tüm GÖrevler →',
+              'Tüm Görevler →',
               style: GoogleFonts.dmSans(
                 fontSize: 13,
                 color: AppColors.primary,
