@@ -81,5 +81,3 @@ class PomodoroSessionModel {
         status: SessionStatus.fromInt(json['status'] as int? ?? 0),
       );
 }
-
-enum TimerStatus { idle, running, paused, breakTime, completed }

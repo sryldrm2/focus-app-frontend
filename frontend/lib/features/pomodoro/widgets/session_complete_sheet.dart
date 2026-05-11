@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
-import 'package:focus_app/features/pomodoro/widgets/pomodoro_models.dart';
+import 'package:focus_app/features/tasks/models/task_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SessionCompleteSheet extends StatelessWidget {
-  final Subject subject;
+  final TaskModel? task;
   final int completedSessions;
   final int breakMinutes;
   final int longBreakMinutes;
+  final int pointsEarned;
   final VoidCallback onStartBreak;
   final VoidCallback onSkipBreak;
 
   const SessionCompleteSheet({
     super.key,
-    required this.subject,
+    required this.task,
     required this.completedSessions,
     required this.breakMinutes,
     required this.longBreakMinutes,
+    required this.pointsEarned,
     required this.onStartBreak,
     required this.onSkipBreak,
   });
@@ -72,34 +74,43 @@ class SessionCompleteSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // Konu ve oturum bilgisi
+          // Task ve oturum bilgisi
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (task != null)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: subject.color.withOpacity(0.1),
+                  color: task!.color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(subject.emoji, style: const TextStyle(fontSize: 13)),
-                    const SizedBox(width: 5),
-                    Text(
-                      subject.name,
-                      style: GoogleFonts.dmSans(
-                        fontSize: 13,
-                        color: subject.color,
-                        fontWeight: FontWeight.w600,
+                    Container(
+                      width: 8, height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: task!.color,
                       ),
                     ),
+                    const SizedBox(width: 6),
+                    Text(
+                      task!.title, 
+                      style: GoogleFonts.dmSans(
+                        fontSize: 13,
+                        color: task!.color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    )
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              if (task != null) const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -142,7 +153,7 @@ class SessionCompleteSheet extends StatelessWidget {
                 const Text('⭐', style: TextStyle(fontSize: 20)),
                 const SizedBox(width: 8),
                 Text(
-                  '+25 XP kazandın!',
+                  '+$pointsEarned XP kazandın!',
                   style: GoogleFonts.nunito(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -173,7 +184,9 @@ class SessionCompleteSheet extends StatelessWidget {
                   const Text('☕', style: TextStyle(fontSize: 18)),
                   const SizedBox(width: 8),
                   Text(
-                    isLongBreak ? 'Uzun Mola Başlat ($longBreakMinutes dk)' : 'Mola Başlat ($breakMinutes dk)',
+                    isLongBreak 
+                      ? 'Uzun Mola Başlat ($longBreakMinutes dk)' 
+                      : 'Mola Başlat ($breakMinutes dk)',
                     style: GoogleFonts.nunito(
                       color: Colors.white,
                       fontSize: 16,
