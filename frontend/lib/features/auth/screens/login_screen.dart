@@ -47,9 +47,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
       return;
     }
-    // Başarı: authenticated olunca auth.isLoading false olur; _isSubmitting ile spinner sürer.
-    if (mounted) context.go('/home');
-    // _isSubmitting true kalsın; route değişince bu widget dispose olur
   }
 
   @override
