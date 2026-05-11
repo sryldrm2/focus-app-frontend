@@ -61,7 +61,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       );
       return;
     }
-    if (mounted) context.go('/home');
   }
 
   @override

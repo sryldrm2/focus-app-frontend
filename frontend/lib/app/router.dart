@@ -70,7 +70,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (auth.status == AuthStatus.unauthenticated) {
           return '/auth/login';
         }
-        return '/splash';
+        return null;
+        //return '/splash';
       }
 
       return null;

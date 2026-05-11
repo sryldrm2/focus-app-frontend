@@ -47,9 +47,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
       return;
     }
-    // Başarı: authenticated olunca auth.isLoading false olur; _isSubmitting ile spinner sürer.
-    if (mounted) context.go('/home');
-    // _isSubmitting true kalsın; route değişince bu widget dispose olur
   }
 
   @override
@@ -137,12 +134,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(height: 24),
                       AppTextField(
                         controller: _emailController,
-                        hint: 'E-posta adresi',
+                        hint: 'E-posta veya kullanıcı adı',
                         icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
+                        keyboardType: TextInputType.text,
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'E-posta girin';
-                          if (!v.contains('@')) return 'Geçerli bir e-posta girin';
+                          if (v == null || v.isEmpty) return 'E-posta veya kullanıcı adı girin';
                           return null;
                         },
                       ),
