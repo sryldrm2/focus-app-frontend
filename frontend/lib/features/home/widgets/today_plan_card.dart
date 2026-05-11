@@ -73,7 +73,7 @@ class TodayPlanCard extends ConsumerWidget {
           GestureDetector(
             onTap: () => context.go('/tasks'),
             child: Text(
-              'Tüm GÖrevler →',
+              'Tüm Görevler →',
               style: GoogleFonts.dmSans(
                 fontSize: 13,
                 color: AppColors.primary,
@@ -134,88 +134,91 @@ class _PlanRow extends ConsumerWidget {
  
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 4, height: 36,
-            decoration: BoxDecoration(
-              color: task.color,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        task.title,
-                        style: GoogleFonts.nunito(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: task.isCompleted
-                              ? AppColors.textSecondary
-                              : AppColors.textPrimary,
-                          decoration: task.isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (task.dueDate != null)
-                      Text(
-                        '${task.dueDate!.day}/${task.dueDate!.month}',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: task.isCompleted ? 1.0 : 0.0,
-                    backgroundColor: task.color.withOpacity(0.1),
-                    valueColor: AlwaysStoppedAnimation<Color>(task.color),
-                    minHeight: 5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: () => ref.read(taskNotifierProvider).toggleComplete(task),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 22, height: 22,
+    return GestureDetector(
+      onTap: () => context.go('/pomodoro', extra: task.taskId),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 4, height: 36,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: task.isCompleted
-                    ? AppColors.success
-                    : Colors.transparent,
-                border: Border.all(
+                color: task.color,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          task.title,
+                          style: GoogleFonts.nunito(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: task.isCompleted
+                                ? AppColors.textSecondary
+                                : AppColors.textPrimary,
+                            decoration: task.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (task.dueDate != null)
+                        Text(
+                          '${task.dueDate!.day}/${task.dueDate!.month}',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: LinearProgressIndicator(
+                      value: task.isCompleted ? 1.0 : 0.0,
+                      backgroundColor: task.color.withOpacity(0.1),
+                      valueColor: AlwaysStoppedAnimation<Color>(task.color),
+                      minHeight: 5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: () => ref.read(taskNotifierProvider).toggleComplete(task),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 22, height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
                   color: task.isCompleted
                       ? AppColors.success
-                      : Colors.grey.shade300,
-                  width: 2,
+                      : Colors.transparent,
+                  border: Border.all(
+                    color: task.isCompleted
+                        ? AppColors.success
+                        : Colors.grey.shade300,
+                    width: 2,
+                  ),
                 ),
+                child: task.isCompleted
+                    ? const Icon(Icons.check, color: Colors.white, size: 12)
+                    : null,
               ),
-              child: task.isCompleted
-                  ? const Icon(Icons.check, color: Colors.white, size: 12)
-                  : null,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

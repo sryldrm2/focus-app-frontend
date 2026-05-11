@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/features/pomodoro/widgets/pomodoro_models.dart';
+import 'package:focus_app/features/tasks/models/task_model.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TimerDisplay extends StatelessWidget {
   final int secondsLeft;
   final double progress;
   final Color color;
   final TimerStatus status;
-  final Subject? subject;
+  final TaskModel? task;
 
   const TimerDisplay({
     super.key,
@@ -16,7 +17,7 @@ class TimerDisplay extends StatelessWidget {
     required this.progress,
     required this.color,
     required this.status,
-    required this.subject,
+    required this.task,
   });
 
   String get _timeText {
@@ -72,8 +73,15 @@ class TimerDisplay extends StatelessWidget {
               // Durum ikonu
               if (status == TimerStatus.breakTime)
                 const Text('☕', style: TextStyle(fontSize: 32))
-              else if (subject != null)
-                Text(subject!.emoji, style: const TextStyle(fontSize: 28))
+              else if (task != null)
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: task!.color,
+                  ),
+                )
               else
                 const Text('🍅', style: TextStyle(fontSize: 28)),
 
@@ -100,12 +108,14 @@ class TimerDisplay extends StatelessWidget {
                         ? 'Hazır'
                         : status == TimerStatus.paused
                             ? 'Duraklatıldı'
-                            : subject?.name ?? 'Odaklan',
+                            : task?.title ?? 'Odaklan',
                 style: GoogleFonts.dmSans(
-                  fontSize: 14,
+                  fontSize: 13,
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

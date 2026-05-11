@@ -104,7 +104,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/pomodoro',
-            builder: (_, __) => const PomodoroScreen(),
+            builder: (context, state) => PomodoroScreen(
+              initialTaskId: state.extra as String?,
+            ),
           ),
           GoRoute(
             path: '/stats',
