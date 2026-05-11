@@ -9,12 +9,16 @@ class PomodoroState {
   final bool isLoading;
   final String? errorMessage;
   final int pointsEarned; // son oturumdan kazanılan puan
+  final int completedTodayCount;
+  final double totalPoints;
 
   const PomodoroState({
     this.currentSession,
     this.isLoading = false,
     this.errorMessage,
     this.pointsEarned = 0,
+    this.completedTodayCount = 0,
+    this.totalPoints = 0,
   });
 
   bool get hasOngoing => currentSession != null && currentSession!.isOngoing;
@@ -25,12 +29,17 @@ class PomodoroState {
     bool? isLoading,
     String? errorMessage,
     int? pointsEarned,
-  }) => PomodoroState(
-    currentSession: clearSession ? null : currentSession ?? this.currentSession,
-    isLoading: isLoading ?? this.isLoading,
-    errorMessage: errorMessage,
-    pointsEarned: pointsEarned ?? this.pointsEarned,
-  );
+    int? completedTodayCount,
+    double? totalPoints,
+  }) =>
+      PomodoroState(
+        currentSession: clearSession ? null : currentSession ?? this.currentSession,
+        isLoading:           isLoading           ?? this.isLoading,
+        errorMessage:        errorMessage,
+        pointsEarned:        pointsEarned        ?? this.pointsEarned,
+        completedTodayCount: completedTodayCount ?? this.completedTodayCount,
+        totalPoints:         totalPoints         ?? this.totalPoints,
+      );
 }
 
 // ── Notifier ───────────────────────────────────────────────
@@ -43,6 +52,37 @@ class PomodoroNotifier extends ChangeNotifier {
   void _emit(PomodoroState s) {
     _state = s;
     notifyListeners();
+  }
+
+  // ─── Bugünkü istatistikleri yükle ────────────────────
+  Future<void> loadTodayStats() async {
+    try {
+      final token = await TokenStorage.getAccessToken();
+      if (token == null) return;
+
+      final today = DateTime.now();
+      final results = await Future.wait([
+        _service.getCompleted(token),
+        _service.getTotalPoints(token),
+      ]);
+
+      final completed = results[0] as List<dynamic>;
+      final points = results[1] as double;
+
+      // Bugün tamamlananları filtrele
+      final todayCompleted = (completed as List).where((s) {
+        if (s.completedAt == null) return false;
+        final d = s.completedAt!.toLocal();
+        return d.year == today.year &&
+            d.month == today.month &&
+            d.day == today.day;
+      }).length;
+
+      _emit(_state.copyWith(
+        completedTodayCount: todayCompleted,
+        totalPoints: points,
+      ));
+    } catch (_) {}
   }
 
   // ─── Uygulama açılınca ongoing session var mı? ────────
@@ -89,6 +129,8 @@ class PomodoroNotifier extends ChangeNotifier {
         currentSession: completed,
         isLoading: false,
         pointsEarned: completed.pointsEarned,
+        completedTodayCount: _state.completedTodayCount + 1,
+        totalPoints: _state.totalPoints + completed.pointsEarned,
       ));
       return true;
     } catch (e) {
