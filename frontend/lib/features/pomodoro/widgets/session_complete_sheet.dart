@@ -28,198 +28,233 @@ class SessionCompleteSheet extends StatelessWidget {
     final isLongBreak = completedSessions % 4 == 0;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 34),
+      decoration: BoxDecoration(
+        color: AppColors.cardLight,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Tutamaç
           Container(
-            width: 40,
-            height: 4,
+            width: 48,
+            height: 5,
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(2),
+              color: AppColors.textSecondary.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(2.5),
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 32),
 
-          // Emoji + konfeti hissi
+          // Kutlama İkon Alanı
           Stack(
             alignment: Alignment.center,
             children: [
               Container(
-                width: 90,
-                height: 90,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColors.success.withOpacity(0.1),
                 ),
               ),
-              const Text('🎉', style: TextStyle(fontSize: 48)),
+              const Icon(
+                Icons.celebration_rounded,
+                size: 38,
+                color: AppColors.success,
+              ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
+          // Başlık
           Text(
             'Oturum Tamamlandı!',
-            style: GoogleFonts.nunito(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
+            style: GoogleFonts.inter(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
+              letterSpacing: -0.02,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
 
-          // Task ve oturum bilgisi
+          // Rozetler (Badges)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (task != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: task!.color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8, height: 8,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: task!.color,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.secondary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      task!.title, 
-                      style: GoogleFonts.dmSans(
-                        fontSize: 13,
-                        color: task!.color,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    )
-                  ],
+                      const SizedBox(width: 8),
+                      Text(
+                        task!.title,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    ],
+                  ),
                 ),
-              ),
               if (task != null) const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.secondary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(24),
                 ),
                 child: Text(
                   '$completedSessions/4 oturum',
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
-                    color: AppColors.primary,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 24),
 
-          Text(
-            isLongBreak
-                ? '4 oturum tamamladın! Uzun mola hak ettin 🌟'
-                : 'Harika iş! Kısa bir mola ver.',
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 28),
-
-          // XP kazanıldı
+          // Reward Widget
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF3E8FF),
-              borderRadius: BorderRadius.circular(14),
+              color: AppColors.backgroundLight,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.textSecondary.withOpacity(0.1)),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('⭐', style: TextStyle(fontSize: 20)),
-                const SizedBox(width: 8),
-                Text(
-                  '+$pointsEarned XP kazandın!',
-                  style: GoogleFonts.nunito(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF7C3AED),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.xpColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: AppColors.xpColor,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '+$pointsEarned XP Kazandın!',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Günlük hedefe yaklaştın',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textSecondary.withOpacity(0.5),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
-          // Mola başlat butonu
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          // Eylemler (Actions)
+          Column(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                    shadowColor: AppColors.success.withOpacity(0.25),
+                  ),
+                  onPressed: onStartBreak,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.coffee_rounded, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        isLongBreak
+                            ? 'Uzun Mola Başlat ($longBreakMinutes dk)'
+                            : 'Mola Başlat ($breakMinutes dk)',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                elevation: 0,
               ),
-              onPressed: onStartBreak,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('☕', style: TextStyle(fontSize: 18)),
-                  const SizedBox(width: 8),
-                  Text(
-                    isLongBreak 
-                      ? 'Uzun Mola Başlat ($longBreakMinutes dk)' 
-                      : 'Mola Başlat ($breakMinutes dk)',
-                    style: GoogleFonts.nunito(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppColors.textSecondary.withOpacity(0.4)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Molayi geç
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.grey.shade300),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  onPressed: onSkipBreak,
+                  child: Text(
+                    'Molayı Geç',
+                    style: GoogleFonts.inter(
+                      color: AppColors.textSecondary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
-              onPressed: onSkipBreak,
-              child: Text(
-                'Molayı Geç',
-                style: GoogleFonts.dmSans(
-                  color: AppColors.textSecondary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
+            ],
           ),
         ],
       ),
