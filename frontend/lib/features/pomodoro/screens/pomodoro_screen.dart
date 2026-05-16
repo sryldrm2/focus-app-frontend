@@ -97,9 +97,9 @@ class _PomodoroAppBar extends StatelessWidget {
  
   String _statusText() {
     switch (status) {
-      case TimerStatus.idle:     return 'Başlamaya hazır';
-      case TimerStatus.running:  return 'Odaklanma zamanı 🎯';
-      case TimerStatus.paused:   return 'Duraklatıldı';
+      case TimerStatus.idle:      return 'Başlamaya hazır';
+      case TimerStatus.running:   return 'Odaklanma zamanı 🎯';
+      case TimerStatus.paused:    return 'Duraklatıldı';
       case TimerStatus.breakTime: return 'Mola zamanı ☕';
       case TimerStatus.completed: return 'Oturum tamamlandı!';
     }
@@ -108,7 +108,7 @@ class _PomodoroAppBar extends StatelessWidget {
 
 // ── Ana ekran ─────────────────────────────────────────────
 class PomodoroScreen extends ConsumerStatefulWidget {
-  final String? initialTaskId; // dashboard'dan gelince dolu olur
+  final String? initialTaskId;
  
   const PomodoroScreen({super.key, this.initialTaskId});
  
@@ -118,7 +118,6 @@ class PomodoroScreen extends ConsumerStatefulWidget {
  
 class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     with TickerProviderStateMixin {
-  // Timer ayarları
   int _workMinutes = 25;
   int _breakMinutes = 5;
   int _longBreakMinutes = 15;
@@ -127,14 +126,12 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
   int get breakDuration => _breakMinutes * 60;
   int get longBreakDuration => _longBreakMinutes * 60;
  
-  // UI State
   TimerStatus _status = TimerStatus.idle;
   int _secondsLeft = 25 * 60;
   int _completedSessions = 0;
   TaskModel? _selectedTask;
   Timer? _timer;
  
-  // Animasyon
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
  
@@ -150,16 +147,37 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
  
-    // Dashboard'dan taskId geldiyse seç
-    if (widget.initialTaskId != null) {
-      Future.microtask(() {
+    Future.microtask(() async {
+      // Ongoing session kontrolü
+      await ref.read(pomodoroNotifierProvider).checkOngoing();
+      final ongoing = ref.read(pomodoroNotifierProvider).state.currentSession;
+ 
+      if (ongoing != null && ongoing.isOngoing && mounted) {
+        final elapsed = DateTime.now()
+            .difference(ongoing.startedAt.toLocal())
+            .inSeconds;
+        final total = ongoing.durationMinute * 60;
+        final remaining = (total - elapsed).clamp(0, total);
+ 
+        setState(() {
+          _status = TimerStatus.running;
+          _secondsLeft = remaining;
+          _workMinutes = ongoing.durationMinute;
+        });
+        _tick();
+      }
+ 
+      // Dashboard'dan taskId geldiyse seç
+      if (widget.initialTaskId != null) {
         final tasks = ref.read(taskNotifierProvider).state.todayTasks;
-        final task = tasks.where(
-          (t) => t.taskId == widget.initialTaskId
-        ).firstOrNull;
-        if (task != null) setState(() => _selectedTask = task);
-      });
-    }
+        final task = tasks
+            .where((t) => t.taskId == widget.initialTaskId)
+            .firstOrNull;
+        if (task != null && mounted) {
+          setState(() => _selectedTask = task);
+        }
+      }
+    });
   }
  
   Future<void> _loadSettings() async {
@@ -179,7 +197,6 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     super.dispose();
   }
  
-  // ── Timer kontrolleri ─────────────────────────────────
   Future<void> _start() async {
     if (_selectedTask == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -187,14 +204,12 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
           content: const Text('Lütfen önce bir görev seç 📚'),
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
       return;
     }
  
-    // Backend'e oturum başlat
     final success = await ref.read(pomodoroNotifierProvider).startSession(
       CreatePomodoroSessionDto(
         sessionType: PomodoroType.workSession,
@@ -211,8 +226,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
             content: Text(error ?? 'Oturum başlatılamadı.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
@@ -226,7 +240,6 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
   void _pause() {
     _timer?.cancel();
     setState(() => _status = TimerStatus.paused);
-    // Mola sayacı artır
     ref.read(pomodoroNotifierProvider).addBreak();
   }
  
@@ -249,7 +262,6 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
  
   Future<void> _reset() async {
     _timer?.cancel();
-    // Backend'e iptal gönder
     await ref.read(pomodoroNotifierProvider).cancelSession();
     setState(() {
       _status = TimerStatus.idle;
@@ -269,9 +281,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
   }
  
   Future<void> _onWorkComplete() async {
-    // Backend'e tamamlandı gönder
     await ref.read(pomodoroNotifierProvider).completeSession();
- 
     setState(() {
       _completedSessions++;
       _status = TimerStatus.completed;
@@ -280,9 +290,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
   }
  
   void _showCompleteSheet() {
-    final pointsEarned =
-        ref.read(pomodoroNotifierProvider).state.pointsEarned;
- 
+    final pointsEarned = ref.read(pomodoroNotifierProvider).state.pointsEarned;
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -349,9 +357,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
   }
  
   double get _progress {
-    final total = _status == TimerStatus.breakTime
-        ? breakDuration
-        : workDuration;
+    final total = _status == TimerStatus.breakTime ? breakDuration : workDuration;
     return 1 - (_secondsLeft / total);
   }
  
