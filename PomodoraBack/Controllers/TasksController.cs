@@ -29,6 +29,17 @@ namespace PomodoraBack.Controllers
             return Response(result);
         }
 
+        [HttpGet("workspaces/{workspaceId}")]
+        public async Task<IActionResult> GetWorkspaceTasks(string workspaceId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Kullanıcı kimliği bulunamadı.");
+
+            var result = await _taskService.GetWorkspaceTasksAsync(userId, workspaceId);
+            return Response(result);
+        }
+
         [HttpGet("{taskId}")]
         public async Task<IActionResult> GetById(string taskId)
         {
@@ -59,6 +70,20 @@ namespace PomodoraBack.Controllers
                 return Unauthorized("Kullanıcı kimliği bulunamadı.");
 
             var result = await _taskService.UpdateAsync(userId, taskId, request);
+            return Response(result);
+        }
+
+        /// <summary>
+        /// Senaryo 2: Kişisel bir task'ı workspace'e aktar ("Odaya Aktar" butonu)
+        /// </summary>
+        [HttpPatch("{taskId}/assign-to-workspace")]
+        public async Task<IActionResult> AssignToWorkspace(string taskId, [FromBody] AssignTaskToWorkspaceDto request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Kullanıcı kimliği bulunamadı.");
+
+            var result = await _taskService.AssignTaskToWorkspaceAsync(userId, taskId, request);
             return Response(result);
         }
 
