@@ -1,0 +1,33 @@
+info:
+  name: "5 - Ali → Veli'ye Arkadaslik Istegi Gonder"
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{base_url}}/api/friend-requests"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: "Bearer {{access_token}}"
+  body:
+    type: json
+    data: |-
+      {
+        "receiverId": "{{second_user_id}}"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ADIM 5: Ali'nin token'ı ile Veli'ye arkadaslik istegi gonder.
+  Önce: access_token = Ali'nin tokeni
+  Önce: second_user_id = Veli'nin userId'si
+  Response'dan gelen friendRequestId'yi kopyala →
+  friend_request_id değişkenine yapıştır.

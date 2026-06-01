@@ -1,0 +1,26 @@
+info:
+  name: "S2-4 - Kisisel Gorevler (Simdi Bos Olmali)"
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: "{{base_url}}/api/tasks"
+  headers:
+    - name: Authorization
+      value: "Bearer {{access_token}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  SENARYO 2 - Adim 4: Kisisel gorev listesi tekrar kontrol.
+  "Kisisel Gorev - Odaya Aktarilacak" task'i artik odaya gecti.
+  Kisisel listeden kaybolmuş olmali.
+  
+  Beklenen: data.length == 0 (ya da o task artik listede yok)
+  Bu, Senaryo 2'nin başarili oldugunu kanıtlar!

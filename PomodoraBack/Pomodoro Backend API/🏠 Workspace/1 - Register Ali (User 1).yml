@@ -1,0 +1,33 @@
+info:
+  name: "1 - Register Ali (User 1)"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/api/auth/register"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Ali",
+        "surname": "Yilmaz",
+        "nickname": "ali_kral",
+        "email": "ali@test.com",
+        "password": "Ali123!",
+        "confirmPassword": "Ali123!"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ADIM 1: Ali'yi kaydet (Workspace kurucusu).
+  Eğer "Bu email zaten kayıtlı" derse devam et - sorun yok.

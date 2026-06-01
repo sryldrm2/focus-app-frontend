@@ -1,0 +1,41 @@
+info:
+  name: "S1-1 - Oda Gorevi Olustur (WorkspaceId Dolu)"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/api/tasks"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: "Bearer {{access_token}}"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Ortak Proje Gorevi",
+        "description": "Bu gorev direkt odaya ait dogdu",
+        "workspaceId": "{{workspace_id}}",
+        "priority": 3,
+        "dueDate": null
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  SENARYO 1 - Adim 1: Odaya ozel task olustur.
+  Kullanici odanin icindeyken "Yeni Gorev" butonuna basar.
+  workspaceId dolu gider → task direkt odaya ait olarak dogdu.
+  
+  Önce: workspace_id = 7. adımdan gelen ID
+  Önce: access_token = Ali'nin token'ı
+  
+  Beklenen: success=true, workspaceId dolu (null degil)
+  Response'dan taskId'yi kopyala → task_id değişkenine yapıştır.

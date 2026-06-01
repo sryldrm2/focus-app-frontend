@@ -1,0 +1,31 @@
+info:
+  name: "4 - Login Veli → second_access_token al"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{base_url}}/api/auth/login"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "emailOrNickname": "veli@test.com",
+        "password": "Veli123!"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ADIM 4: Veli olarak login ol.
+  Response'dan gelen accessToken'ı kopyala →
+  opencollection.yml → second_access_token değerine yapıştır.
+  userId'yi de kopyala → second_user_id değerine yapıştır.

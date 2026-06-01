@@ -1,0 +1,23 @@
+info:
+  name: "6 - Veli → Arkadaslik Isteğini Kabul Et"
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{base_url}}/api/friend-requests/{{friend_request_id}}/accept"
+  headers:
+    - name: Authorization
+      value: "Bearer {{second_access_token}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ADIM 6: Veli'nin token'ı ile arkadaslik isteğini kabul et.
+  Önce: second_access_token = Veli'nin token'ı
+  Önce: friend_request_id = 5. adımdan gelen ID

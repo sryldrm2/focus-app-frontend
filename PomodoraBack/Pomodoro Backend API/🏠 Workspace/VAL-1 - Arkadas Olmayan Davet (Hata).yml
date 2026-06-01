@@ -1,0 +1,36 @@
+info:
+  name: "VAL-1 - Arkadas Olmayan Birine Davet (HATA beklenir)"
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: "{{base_url}}/api/workspaces/invitations"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: "Bearer {{access_token}}"
+  body:
+    type: json
+    data: |-
+      {
+        "workspaceId": "{{workspace_id}}",
+        "receiverId": "BU_ID_YI_ARKADASIN_OLMAYAN_BIR_KULLANICI_ILE_DEL"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  VALIDASYON 1: Arkadaslik olmayan kullaniciya davet
+  
+  receiverId'yi baska bir kullanicinin (Veli ile arkadasliği olmayan) ID'siyle degistir.
+  Kendin yeni bir kullanici kaydet ve o ID'yi buraya yaz.
+  
+  Beklenen HATA: "Sadece arkadaslarinizi davet edebilirsiniz."
+  HTTP Status: 400
