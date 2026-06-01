@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using PomodoraBack.Core.Enums;
 
 namespace PomodoraBack.DTOs
@@ -8,6 +9,11 @@ namespace PomodoraBack.DTOs
     /// </summary>
     public class CreateTaskDto
     {
+        /// <summary>
+        /// Görevin ait olduğu oda (opsiyonel)
+        /// </summary>
+        public string? WorkspaceId { get; set; }
+
         /// <summary>
         /// Görev başlığı
         /// </summary>

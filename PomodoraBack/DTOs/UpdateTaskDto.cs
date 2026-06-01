@@ -9,6 +9,11 @@ namespace PomodoraBack.DTOs
     public class UpdateTaskDto
     {
         /// <summary>
+        /// Görevin ait olduğu oda (opsiyonel)
+        /// </summary>
+        public string? WorkspaceId { get; set; }
+
+        /// <summary>
         /// Görev başlığı
         /// </summary>
         [MaxLength(200, ErrorMessage = "Başlık maksimum 200 karakter olmalıdır")]
