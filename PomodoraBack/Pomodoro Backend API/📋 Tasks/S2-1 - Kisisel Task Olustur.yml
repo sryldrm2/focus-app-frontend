@@ -1,0 +1,37 @@
+info:
+  name: "S2-1 - Kisisel Task Olustur (WorkspaceId NULL)"
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{base_url}}/api/tasks"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: "Bearer {{access_token}}"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Kisisel Gorev - Odaya Aktarilacak",
+        "description": "Once kisisel, sonra odaya tasiniyor",
+        "priority": 2
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  SENARYO 2 - Adim 1: Kullanici kisisel bir task olusturuyor.
+  workspaceId body'de YOK → null olarak kaydedilir.
+  
+  Beklenen: success=true, workspaceId = null
+  Bu task sadece Ali'ye aittir, odada gorunmez.
+  
+  Response'dan taskId'yi kopyala → task_id değişkenine yapıştır.

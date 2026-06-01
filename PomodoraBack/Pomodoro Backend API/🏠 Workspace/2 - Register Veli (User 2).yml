@@ -1,0 +1,33 @@
+info:
+  name: "2 - Register Veli (User 2)"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{base_url}}/api/auth/register"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Veli",
+        "surname": "Demir",
+        "nickname": "veli_bey",
+        "email": "veli@test.com",
+        "password": "Veli123!",
+        "confirmPassword": "Veli123!"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ADIM 2: Veli'yi kaydet (Odaya davet edilecek kişi).
+  Eğer "Bu email zaten kayıtlı" derse devam et - sorun yok.

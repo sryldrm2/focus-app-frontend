@@ -1,0 +1,25 @@
+info:
+  name: "S1-4 - Kisisel Gorevler (Oda Gorevi GOZUKMEMELI)"
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{base_url}}/api/tasks"
+  headers:
+    - name: Authorization
+      value: "Bearer {{access_token}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  SENARYO 1 - Adim 4: Kisisel gorev listesi kontrolu.
+  GET /api/tasks → sadece workspaceId=NULL olan taskları döner.
+  
+  Beklenen: Senaryo 1'de olusturulan "Ortak Proje Gorevi" BURADA GOZUKMEZ.
+  Cünkü workspaceId dolu olan tasklar kisisel listede filtreleniyor.

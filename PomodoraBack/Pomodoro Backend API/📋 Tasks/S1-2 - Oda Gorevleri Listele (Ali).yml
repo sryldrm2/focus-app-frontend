@@ -1,0 +1,25 @@
+info:
+  name: "S1-2 - Oda Gorevlerini Listele (Ali)"
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{base_url}}/api/tasks/workspaces/{{workspace_id}}"
+  headers:
+    - name: Authorization
+      value: "Bearer {{access_token}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  SENARYO 1 - Adim 2: Ali oda gorevlerini gorur.
+  GET /api/tasks/workspaces/{workspaceId}
+  
+  Beklenen: success=true, data[0].workspaceId = workspace_id
+  Odadaki herkes (Ali ve Veli) ayni gorevleri gorur.

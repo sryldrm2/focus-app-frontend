@@ -1,0 +1,26 @@
+info:
+  name: "S2-3 - Oda Gorevleri (Simdi 2 Task Olmali)"
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{base_url}}/api/tasks/workspaces/{{workspace_id}}"
+  headers:
+    - name: Authorization
+      value: "Bearer {{access_token}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  SENARYO 2 - Adim 3: Oda gorevlerini tekrar listele.
+  Artik 2 task olmali:
+  1. "Ortak Proje Gorevi" (S1'de direkt oda gorevi olarak olusturuldu)
+  2. "Kisisel Gorev - Odaya Aktarilacak" (S2'de odaya aktarilan task)
+  
+  Beklenen: data.length == 2

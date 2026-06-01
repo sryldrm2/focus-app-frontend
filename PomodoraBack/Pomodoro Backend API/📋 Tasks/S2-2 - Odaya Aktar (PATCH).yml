@@ -1,0 +1,42 @@
+info:
+  name: "S2-2 - Odaya Aktar (PATCH assign-to-workspace)"
+  type: http
+  seq: 6
+
+http:
+  method: PATCH
+  url: "{{base_url}}/api/tasks/{{task_id}}/assign-to-workspace"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: "Bearer {{access_token}}"
+  body:
+    type: json
+    data: |-
+      {
+        "workspaceId": "{{workspace_id}}"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  SENARYO 2 - Adim 2: "Odaya Aktar" butonu!
+  PATCH /api/tasks/{taskId}/assign-to-workspace
+  
+  Önce: task_id = S2-1'den gelen kisisel task ID
+  Önce: workspace_id = odanin ID'si
+  
+  Bu endpoint:
+  ✅ Task'in sahibinin o kullanici oldugunu kontrol eder
+  ✅ Workspace'in var oldugunu kontrol eder
+  ✅ Kullanicinin o workspace'in üyesi oldugunu kontrol eder
+  ✅ Task'in workspaceId'sini günceller (NULL → workspace_id)
+  
+  Beklenen: success=true, workspaceId artik dolu
+  Task kisiselden çikip ortak alana gecti!

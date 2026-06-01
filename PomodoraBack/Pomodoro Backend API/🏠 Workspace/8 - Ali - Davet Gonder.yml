@@ -1,0 +1,43 @@
+info:
+  name: "8 - Ali → Veli'ye Workspace Daveti Gonder"
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{base_url}}/api/workspaces/invitations"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: "Bearer {{access_token}}"
+  body:
+    type: json
+    data: |-
+      {
+        "workspaceId": "{{workspace_id}}",
+        "receiverId": "{{second_user_id}}"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ADIM 8 (Akis 2 - Davet Gonderme):
+  Ali, Veli'yi odaya davet ediyor.
+  
+  Backend validasyonlari:
+  ✅ Arkadaslik kontrolü (Veli, Ali'nin arkadasi olmali)
+  ✅ Kapasite kontrolü (max 4 kisi)
+  ✅ Mevcudiyet kontrolü (zaten odada mi? bekleyen davet var mi?)
+  
+  Önce: workspace_id = 7. adımdan gelen workspace ID
+  Önce: second_user_id = Veli'nin userId'si
+  
+  Response'dan gelen workspaceInvitationId'yi kopyala →
+  invitation_id değişkenine yapıştır.
+  Beklenen: success=true, status=0 (pending)

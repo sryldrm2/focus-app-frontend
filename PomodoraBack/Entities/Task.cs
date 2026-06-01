@@ -18,6 +18,7 @@ namespace PomodoraBack.Entities
         /// 0: NotStarted, 1: InProgress, 2: Completed, 3: Cancelled, 4: OnHold
         /// </summary>
         public TaskStatusEnums Status { get; set; } = TaskStatusEnums.NotStarted;
+        public string? WorkspaceId { get; set; } = null;
         public int? Priority { get; set; } = null;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; } = null;
@@ -26,5 +27,7 @@ namespace PomodoraBack.Entities
 
         [ForeignKey(nameof(UserId))]
         public User User { get; set; } = null!;
+        [ForeignKey(nameof(WorkspaceId))]
+        public Workspace? Workspace { get; set; }
     }
 }

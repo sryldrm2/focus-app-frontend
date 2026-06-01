@@ -1,0 +1,33 @@
+info:
+  name: "9 - Veli → Daveti Kabul Et"
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{base_url}}/api/workspaces/invitations/{{invitation_id}}/accept"
+  headers:
+    - name: Authorization
+      value: "Bearer {{second_access_token}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ADIM 9 (Akis 3 - Daveti Kabul):
+  Veli daveti kabul ediyor.
+  
+  Backend validasyonlari:
+  ✅ Kapasite tekrar kontrol edilir (race condition koruması)
+  ✅ WorkspaceInvitation status → 1 (accepted)
+  ✅ WorkspaceMember tablosuna Veli eklenir
+  
+  Önce: second_access_token = Veli'nin token'ı
+  Önce: invitation_id = 8. adımdan gelen invitation ID
+  
+  Beklenen: success=true, status=1 (accepted)
+  Artık odada 2 kisi var.

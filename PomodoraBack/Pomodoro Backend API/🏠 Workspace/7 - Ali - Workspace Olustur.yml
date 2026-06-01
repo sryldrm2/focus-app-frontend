@@ -1,0 +1,34 @@
+info:
+  name: "7 - Ali → Workspace Olustur"
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{base_url}}/api/workspaces"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: "Bearer {{access_token}}"
+  body:
+    type: json
+    data: |-
+      {
+        "workspaceName": "Proje Odasi"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ADIM 7 (Akis 1 - Oda Olusturma):
+  Ali bir workspace olusturuyor.
+  - Ali otomatik olarak OwnerId VE WorkspaceMember olur (1 kisi)
+  Response'dan gelen workspaceId'yi kopyala →
+  workspace_id değişkenine yapıştır.
+  Beklenen: success=true, memberCount=1

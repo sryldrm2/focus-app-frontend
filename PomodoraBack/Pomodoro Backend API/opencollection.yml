@@ -19,7 +19,7 @@ request:
     - name: base_url
       value: http://localhost:5265
     - name: access_token
-      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3YjhiZTdkZC03MGQ5LTRmMmUtYjU5NC02N2ZkMTFhYTQyYzYiLCJlbWFpbCI6ImJhdHVha2JheUBnbWFpbC5jb20iLCJuaWNrbmFtZSI6InJhZGJhc3MiLCJqdGkiOiI0M2YxYTNkMi02NWYzLTQ1OTMtYjM4Ny03MTBhNGNkNjU5NWIiLCJpYXQiOiIxNzc2NTIxMDMwIiwiZXhwIjoxNzc2NTI0NjMwLCJpc3MiOiJQb21vZG9yb0JhY2tBUEkiLCJhdWQiOiJQb21vZG9yb0JhY2tDbGllbnRzIn0.nOBy5MtAU6yhPCw9Hn8sngb6ohZNedw-EiqOUvZAFr4
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3YjhiZTdkZC03MGQ5LTRmMmUtYjU5NC02N2ZkMTFhYTQyYzYiLCJlbWFpbCI6ImJhdHVha2JheUBnbWFpbC5jb20iLCJuaWNrbmFtZSI6InJhZGJhc3MiLCJqdGkiOiI5YzBhM2QxZS1iOGMxLTQyYTYtYmRhYy02MWE1YmJjMzY2OTEiLCJpYXQiOiIxNzgwMzE4MTQ3IiwiZXhwIjoxNzgwMzIxNzQ3LCJpc3MiOiJQb21vZG9yb0JhY2tBUEkiLCJhdWQiOiJQb21vZG9yb0JhY2tDbGllbnRzIn0.GuWnhnYCQWudW4a9tA48sfy48DxjshgJkqk2HsKXQks
     - name: refresh_token
       value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3YjhiZTdkZC03MGQ5LTRmMmUtYjU5NC02N2ZkMTFhYTQyYzYiLCJlbWFpbCI6ImJhdHVha2JheUBnbWFpbC5jb20iLCJuaWNrbmFtZSI6InJhZGJhc3MiLCJqdGkiOiIxNWRjZmEzMi1mYzQyLTQwY2MtYjhiMS02N2QzMWI1ZmExNDQiLCJpYXQiOiIxNzc2NTE2Njc4IiwiZXhwIjoxNzc2NTIwMjc4LCJpc3MiOiJQb21vZG9yb0JhY2tBUEkiLCJhdWQiOiJQb21vZG9yb0JhY2tDbGllbnRzIn0.RNBbV0DXk1aJ3ra0cGL2uYJ7W-4VUmnUKPiErbwn-rk
     - name: user_id
@@ -30,13 +30,20 @@ request:
       value: de6b3051-be7d-44d3-bc29-fe14ecba161a
     - name: friend_request_id
       value: dce48ed0-e04b-43e4-a178-3d5bffa98775
-    # 🍅 Pomodoro Session Variables
     - name: pomo_id
       value: ""
     - name: task_id
-      value: ""
+      value: 64b42235-84fa-4b61-b5d9-b700f61e5273
     - name: total_points
-      value: 0
+      value: "0"
+    - name: workspace_id
+      value: 7bdc8305-3bf7-4d48-ac84-ab8ec3cd6c44
+    - name: invitation_id
+      value: dd0783ab-3802-4a2d-960e-92bc5d090a97
+    - name: second_access_token
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZTZiMzA1MS1iZTdkLTQ0ZDMtYmMyOS1mZTE0ZWNiYTE2MWEiLCJlbWFpbCI6ImJhc2FraW5jZUBnbWFpbC5jb20iLCJuaWNrbmFtZSI6ImJhc2FrbyIsImp0aSI6ImI5YmY5MTc5LThiZTgtNGI0OC05YzlkLWM5MzlmMTJhNTAwYSIsImlhdCI6IjE3ODAzMTgyODAiLCJleHAiOjE3ODAzMjE4ODAsImlzcyI6IlBvbW9kb3JvQmFja0FQSSIsImF1ZCI6IlBvbW9kb3JvQmFja0NsaWVudHMifQ.MA0EuFGXnm3lk0JyM9LMLkTuLHCkhUTt-OjtQ9eJmow
+    - name: second_user_id
+      value: de6b3051-be7d-44d3-bc29-fe14ecba161a
 
 docs:
   content: Pomodoro Uygulaması Backend API - Tüm endpoint'ler

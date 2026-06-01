@@ -31,6 +31,9 @@ builder.Services.AddScoped<IFriendRequestDal, FriendRequestDal>();
 builder.Services.AddScoped<IFriendShipDal, FriendShipDal>();
 builder.Services.AddScoped<IPomodoroSessionDal, PomodoroSessionDal>();
 builder.Services.AddScoped<IPomodoroTaskDal, PomodoroTaskDal>();
+builder.Services.AddScoped<IWorkspaceDal, WorkspaceDal>();
+builder.Services.AddScoped<IWorkspaceMemberDal, WorkspaceMemberDal>();
+builder.Services.AddScoped<IWorkspaceInvitationDal, WorkspaceInvitationDal>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -39,6 +42,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IFriendRequest, FriendRequestService>();
 builder.Services.AddScoped<IPomodoroSessionService, PomodoroSessionService>();
 builder.Services.AddScoped<IPomodoroTaskService, PomodoroTaskService>();
+builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
 
 // JWT Authentication
 builder.Services.AddAuthentication(options =>

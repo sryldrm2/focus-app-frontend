@@ -14,7 +14,12 @@ namespace PomodoraBack.DataAccess.Context
         public DbSet<FriendRequest> FriendRequests { get; set; }
         public DbSet<FriendShip> Friendships { get; set; }
         public DbSet<Entities.Task> Tasks{ get; set; }
-        public DbSet <PomodoroSession> PomodoroSessions{ get; set; } 
+        public DbSet <PomodoroSession> PomodoroSessions{ get; set; }
+        public DbSet<Workspace> Workspaces { get; set; }
+        public DbSet<WorkspaceInvitation> WorkspaceInvitations { get; set; }
+        public DbSet<WorkspaceMember> WorkspaceMembers { get; set; }
+
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -119,6 +124,56 @@ namespace PomodoraBack.DataAccess.Context
                 entity.HasIndex(e => e.UserId);
                 entity.HasIndex(e => new { e.UserId, e.Status, e.StartedAt });
                 entity.HasIndex(e => e.TaskId);
+            });
+
+            modelBuilder.Entity<Workspace>(entity =>
+            {
+                entity.HasKey(e => e.WorkspaceId);
+                entity.HasOne(e => e.Owner)
+                    .WithMany()
+                    .HasForeignKey(e => e.OwnerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => e.OwnerId);
+            });
+
+            modelBuilder.Entity<WorkspaceMember>(entity =>
+            {
+                entity.HasKey(e => new { e.WorkspaceId, e.UserId });
+
+                entity.HasOne(e => e.Workspace)
+                    .WithMany()
+                    .HasForeignKey(e => e.WorkspaceId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => e.WorkspaceId);
+            });
+
+            modelBuilder.Entity<WorkspaceInvitation>(entity =>
+            {
+                entity.HasKey(e => e.WorkspaceInvitationId);
+
+                entity.HasOne(e => e.Workspace)
+                    .WithMany()
+                    .HasForeignKey(e => e.WorkspaceId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Sender)
+                    .WithMany()
+                    .HasForeignKey(e => e.SenderId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Recevier)
+                    .WithMany()
+                    .HasForeignKey(e => e.ReceiverId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => new { e.WorkspaceId, e.ReceiverId, e.Status });
             });
         }
     }
