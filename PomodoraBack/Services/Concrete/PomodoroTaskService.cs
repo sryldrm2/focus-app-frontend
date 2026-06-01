@@ -13,12 +13,21 @@ namespace PomodoraBack.Services.Concrete
     {
         private readonly IPomodoroTaskDal _taskDal;
         private readonly IUserDal _userDal;
+        private readonly IWorkspaceDal _workspaceDal;
+        private readonly IWorkspaceMemberDal _workspaceMemberDal;
         private readonly IMapper _mapper;
 
-        public PomodoroTaskService(IPomodoroTaskDal taskDal, IUserDal userDal, IMapper mapper)
+        public PomodoroTaskService(
+            IPomodoroTaskDal taskDal,
+            IUserDal userDal,
+            IWorkspaceDal workspaceDal,
+            IWorkspaceMemberDal workspaceMemberDal,
+            IMapper mapper)
         {
             _taskDal = taskDal;
             _userDal = userDal;
+            _workspaceDal = workspaceDal;
+            _workspaceMemberDal = workspaceMemberDal;
             _mapper = mapper;
         }
 
@@ -42,6 +51,19 @@ namespace PomodoraBack.Services.Concrete
             if (user == null)
                 return new ErrorDataResult<TaskDto>("Kullanıcı bulunamadı.");
 
+            if (!string.IsNullOrWhiteSpace(taskDto.WorkspaceId))
+            {
+                var workspace = await _workspaceDal.GetAsync(w => w.WorkspaceId == taskDto.WorkspaceId);
+                if (workspace == null)
+                    return new ErrorDataResult<TaskDto>("Oda bulunamadı.");
+
+                var membership = await _workspaceMemberDal.GetAsync(m =>
+                    m.WorkspaceId == taskDto.WorkspaceId && m.UserId == userId);
+
+                if (membership == null)
+                    return new ErrorDataResult<TaskDto>("Oda görevi oluşturmak için odanın üyesi olmalısınız.");
+            }
+
             var task = _mapper.Map<TaskEntity>(taskDto);
             task.TaskId = Guid.NewGuid().ToString();
             task.UserId = userId;
@@ -51,6 +73,7 @@ namespace PomodoraBack.Services.Concrete
 
             // Non-nullable entity fields safety
             task.Description = taskDto.Description ?? string.Empty;
+            task.WorkspaceId = taskDto.WorkspaceId;
 
             await _taskDal.AddAsync(task);
 
@@ -60,7 +83,23 @@ namespace PomodoraBack.Services.Concrete
 
         public async Task<IDataResult<List<TaskDto>>> GetAllAsync(string userId)
         {
-            var tasks = await _taskDal.GetListAsync(t => t.UserId == userId && t.DeletedAt == null);
+            var tasks = await _taskDal.GetListAsync(t =>
+                t.UserId == userId && t.DeletedAt == null && t.WorkspaceId == null);
+
+            var taskDtos = _mapper.Map<List<TaskDto>>(tasks);
+            return new SuccessDataResult<List<TaskDto>>(taskDtos);
+        }
+
+        public async Task<IDataResult<List<TaskDto>>> GetWorkspaceTasksAsync(string userId, string workspaceId)
+        {
+            var membership = await _workspaceMemberDal.GetAsync(m =>
+                m.WorkspaceId == workspaceId && m.UserId == userId);
+
+            if (membership == null)
+                return new ErrorDataResult<List<TaskDto>>("Oda görevlerini görmek için odanın üyesi olmalısınız.");
+
+            var tasks = await _taskDal.GetListAsync(t =>
+                t.WorkspaceId == workspaceId && t.DeletedAt == null);
 
             var taskDtos = _mapper.Map<List<TaskDto>>(tasks);
             return new SuccessDataResult<List<TaskDto>>(taskDtos);
@@ -76,6 +115,19 @@ namespace PomodoraBack.Services.Concrete
             if (task == null)
                 return new ErrorDataResult<TaskDto>("Görev bulunamadı.");
 
+            if (!string.IsNullOrWhiteSpace(updateTaskDto.WorkspaceId))
+            {
+                var workspace = await _workspaceDal.GetAsync(w => w.WorkspaceId == updateTaskDto.WorkspaceId);
+                if (workspace == null)
+                    return new ErrorDataResult<TaskDto>("Oda bulunamadı.");
+
+                var membership = await _workspaceMemberDal.GetAsync(m =>
+                    m.WorkspaceId == updateTaskDto.WorkspaceId && m.UserId == userId);
+
+                if (membership == null)
+                    return new ErrorDataResult<TaskDto>("Odaya görev taşımak için odanın üyesi olmalısınız.");
+            }
+
             _mapper.Map(updateTaskDto, task);
             task.UpdatedAt = DateTime.Now;
 
@@ -87,6 +139,43 @@ namespace PomodoraBack.Services.Concrete
 
             var updatedDto = _mapper.Map<TaskDto>(task);
             return new SuccessDataResult<TaskDto>(updatedDto, "Görev güncellendi.");
+        }
+
+        public async Task<IDataResult<TaskDto>> AssignTaskToWorkspaceAsync(string userId, string taskId, AssignTaskToWorkspaceDto dto)
+        {
+            // Task'ın mevcut kullanıcıya ait olduğunu kontrol et
+            var task = await _taskDal.GetAsync(t =>
+                t.TaskId == taskId &&
+                t.UserId == userId &&
+                t.DeletedAt == null);
+
+            if (task == null)
+                return new ErrorDataResult<TaskDto>("Görev bulunamadı veya bu göreve erişim yetkiniz yok.");
+
+            // Workspace var mı?
+            var workspace = await _workspaceDal.GetAsync(w => w.WorkspaceId == dto.WorkspaceId);
+            if (workspace == null)
+                return new ErrorDataResult<TaskDto>("Oda bulunamadı.");
+
+            // Kullanıcı o workspace'in üyesi mi?
+            var membership = await _workspaceMemberDal.GetAsync(m =>
+                m.WorkspaceId == dto.WorkspaceId && m.UserId == userId);
+
+            if (membership == null)
+                return new ErrorDataResult<TaskDto>("Görevi odaya aktarmak için odanın üyesi olmalısınız.");
+
+            // Task zaten bu workspace'e mi ait?
+            if (task.WorkspaceId == dto.WorkspaceId)
+                return new ErrorDataResult<TaskDto>("Görev zaten bu odaya ait.");
+
+            // WorkspaceId güncelle → kişiselden ortak alana taşı
+            task.WorkspaceId = dto.WorkspaceId;
+            task.UpdatedAt = DateTime.UtcNow;
+
+            await _taskDal.UpdateAsync(task);
+
+            var updatedDto = _mapper.Map<TaskDto>(task);
+            return new SuccessDataResult<TaskDto>(updatedDto, "Görev odaya aktarıldı.");
         }
 
         public async Task<IResult> DeleteAsync(string userId, string taskId)
