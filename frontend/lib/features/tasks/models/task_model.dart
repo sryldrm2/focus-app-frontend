@@ -28,6 +28,7 @@ enum TaskStatus {
  
 class TaskModel {
   final String taskId;
+  final String? workspaceId;
   final String title;
   final String description;
   final TaskStatus status;
@@ -38,6 +39,7 @@ class TaskModel {
  
   const TaskModel({
     required this.taskId,
+    required this.workspaceId,
     required this.title,
     required this.description,
     required this.status,
@@ -48,9 +50,12 @@ class TaskModel {
   });
  
   bool get isCompleted => status == TaskStatus.completed;
+  bool get isPersonal => 
+      workspaceId == null || workspaceId!.isEmpty;
 
   factory TaskModel.fromJson(Map<String, dynamic> json) => TaskModel(
         taskId:      json['taskId'] as String,
+        workspaceId: json['workspaceId'] as String?,
         title:       json['title'] as String,
         description: json['description'] as String? ?? '',
         status:      TaskStatus.fromInt(json['status'] as int? ?? 0),
@@ -63,6 +68,7 @@ class TaskModel {
  
   TaskModel copyWith({TaskStatus? status, Color? color}) => TaskModel(
         taskId:      taskId,
+        workspaceId: workspaceId ?? this.workspaceId,
         title:       title,
         description: description,
         status:      status ?? this.status,
@@ -73,36 +79,3 @@ class TaskModel {
       );
 }
  
-// ── Mock veriler ───────────────────────────────────────────
-final mockTasks = [
-  TaskModel(
-    taskId: '1',
-    title: 'Matematik çalış',
-    description: 'Türev ve integral konuları',
-    status: TaskStatus.notStarted,
-    priority: 1,
-    createdAt: DateTime.now(),
-    dueDate: DateTime.now(),
-    color: const Color(0xFFE74C3C),
-  ),
-  TaskModel(
-    taskId: '2',
-    title: 'Fizik ödevini bitir',
-    description: 'Newton yasaları',
-    status: TaskStatus.inProgress,
-    priority: 2,
-    createdAt: DateTime.now(),
-    dueDate: DateTime.now(),
-    color: const Color(0xFF3498DB),
-  ),
-  TaskModel(
-    taskId: '3',
-    title: 'İngilizce essay yaz',
-    description: '',
-    status: TaskStatus.completed,
-    priority: 3,
-    createdAt: DateTime.now(),
-    dueDate: DateTime.now(),
-    color: const Color(0xFF2ECC71),
-  ),
-];

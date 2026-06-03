@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
@@ -8,6 +9,8 @@ import 'package:focus_app/features/social/providers/social_providers.dart';
 import 'package:focus_app/features/social/providers/workspace_provider.dart';
 import 'package:focus_app/features/social/widgets/create_room_sheet.dart';
 import 'package:focus_app/features/social/widgets/study_room_card.dart';
+import 'package:focus_app/features/social/screens/workspace_detail_screen.dart';
+
 
 class StudyRoomsTab extends ConsumerStatefulWidget {
   const StudyRoomsTab({super.key});
@@ -18,6 +21,14 @@ class StudyRoomsTab extends ConsumerStatefulWidget {
 
 class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
   final _invitationIdController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(workspaceNotifierProvider).init();
+    });
+  }
 
   @override
   void dispose() {
@@ -104,9 +115,13 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
 
     if (ok) {
       final invId = ref.read(workspaceStateProvider).lastInvitationId;
-      _showSnack(
-        'Davet gönderildi${invId != null ? ' (ID: ${invId.substring(0, 8)}…)' : ''}',
-      );
+      if (invId != null) {
+        await Clipboard.setData(ClipboardData(text: invId));
+        _showSnack('Davet gönderildi. ID panoya kopyalandı.');
+      } else {
+        _showSnack(
+        'Davet gönderildi.');
+      }
     } else {
       final msg = ref.read(workspaceStateProvider).errorMessage;
       _showSnack(msg ?? 'Davet gönderilemedi.', isError: true);
@@ -266,6 +281,14 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: StudyRoomCard(
                       workspace: w,
+                      onOpen: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => WorkspaceDetailScreen(workspace: w),
+                          ),
+                        );
+                      },
                       onInvite: () => _pickFriendAndInvite(w.workspaceId),
                     ),
                   ),

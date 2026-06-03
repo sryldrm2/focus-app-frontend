@@ -8,6 +8,9 @@ import 'package:focus_app/features/tasks/widgets/date_selector.dart';
 import 'package:focus_app/features/tasks/widgets/empty_state.dart';
 import 'package:focus_app/features/tasks/widgets/task_card.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:focus_app/features/social/models/workspace_model.dart';
+import 'package:focus_app/features/social/providers/workspace_provider.dart';
+import 'package:focus_app/features/tasks/models/task_model.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key});
@@ -34,6 +37,63 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         initialDate: _selectedDate,
         onAdd: (dto) => ref.read(taskNotifierProvider).addTask(dto),
       ),
+    );
+  }
+
+  Future<void> _assignToRoom(TaskModel task) async {
+    await ref.read(workspaceNotifierProvider).init();
+    final rooms = ref.read(workspaceStateProvider).myWorkspaces;
+
+    if (rooms.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Önce bir oda oluştur veya daveti kabul et.'),
+        ),
+      );
+      return;
+    }
+
+    final picked = await showModalBottomSheet<WorkspaceModel>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Hangi odaya aktarılsın',
+                style: GoogleFonts.nunito(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            ...rooms.map(
+              (w) => ListTile(
+                title: Text(w.workspaceName),
+                subtitle: Text(
+                  '${w.memberCount}/${WorkspaceModel.maxCapacity} kişi',
+                ),
+                onTap: () => Navigator.pop(ctx, w),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (picked == null || !mounted) return;
+    final ok = await ref
+        .read(taskNotifierProvider)
+        .assignToWorkspace(
+          taskId: task.taskId,
+          workspaceId: picked.workspaceId,
+        );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? 'Görev odaya aktarıldı' : 'Aktarılamadı')),
     );
   }
 
@@ -131,6 +191,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   onDelete: () => ref
                       .read(taskNotifierProvider)
                       .deleteTask(tasks[i].taskId),
+                  onAssignToRoom: tasks[i].isPersonal
+                      ? () => _assignToRoom(tasks[i])
+                      : null,
                 ),
               ),
             ),
