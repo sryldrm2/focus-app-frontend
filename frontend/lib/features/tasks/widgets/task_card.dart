@@ -7,12 +7,14 @@ class TaskCard extends StatelessWidget {
   final TaskModel task;
   final VoidCallback onToggle;
   final VoidCallback onDelete;
+  final VoidCallback? onAssignToRoom;
  
   const TaskCard({
     super.key,
     required this.task,
     required this.onToggle,
     required this.onDelete,
+    this.onAssignToRoom,
   });
  
   @override
@@ -106,6 +108,14 @@ class TaskCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
+
+            if (task.isPersonal && onAssignToRoom != null)
+              IconButton(
+                icon: const Icon(Icons.group_add_outlined, size: 20),
+                color: AppColors.primary,
+                tooltip: 'Odaya aktar',
+                onPressed: onAssignToRoom,
+              ),
  
             // Tamamlama butonu
             GestureDetector(

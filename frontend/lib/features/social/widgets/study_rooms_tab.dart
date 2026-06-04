@@ -1,56 +1,123 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:focus_app/features/social/widgets/invite_friend_sheet.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
-import 'package:focus_app/features/social/widgets/study_room_card.dart';
+import 'package:focus_app/features/auth/providers/auth_providers.dart';
+import 'package:focus_app/features/social/models/friend_models.dart';
+import 'package:focus_app/features/social/providers/social_providers.dart';
+import 'package:focus_app/features/social/providers/workspace_provider.dart';
 import 'package:focus_app/features/social/widgets/create_room_sheet.dart';
+import 'package:focus_app/features/social/widgets/study_room_card.dart';
+import 'package:focus_app/features/social/screens/workspace_detail_screen.dart';
 
-class StudyRoomsTab extends StatefulWidget {
+
+class StudyRoomsTab extends ConsumerStatefulWidget {
   const StudyRoomsTab({super.key});
 
   @override
-  State<StudyRoomsTab> createState() => _StudyRoomsTabState();
+  ConsumerState<StudyRoomsTab> createState() => _StudyRoomsTabState();
 }
 
-class _StudyRoomsTabState extends State<StudyRoomsTab> {
-  List<StudyRoom> _rooms = List.from(mockStudyRooms);
+class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
+  final _invitationIdController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(workspaceNotifierProvider).init();
+    });
+  }
+
+  @override
+  void dispose() {
+    _invitationIdController.dispose();
+    super.dispose();
+  }
 
   void _showCreateRoomSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => CreateRoomSheet(
-        onCreate: (name, subject, emoji, color, maxParticipants) {
-          setState(() {
-            _rooms.add(StudyRoom(
-              id: DateTime.now().toString(),
-              name: name,
-              subject: subject,
-              subjectEmoji: emoji,
-              subjectColor: color,
-              participantCount: 1,
-              maxParticipants: maxParticipants,
-              isActive: true,
-              participants: [],
-            ));
-          });
+      builder: (_) => CreateRoomSheet(),
+    );
+  }
+
+  void _showSnack(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red.shade700 : AppColors.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  Future<void> _pickFriendAndInvite(String workspaceId, String workspaceName) async {
+    await ref.read(socialNotifierProvider).loadAll();
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => InviteFriendSheet(
+        workspaceName: workspaceName,
+        onInvite: (receiverId) async {
+          final ok = await ref
+            .read(workspaceNotifierProvider)
+            .sendInvitation(
+              workspaceId: workspaceId, 
+              receiverId: receiverId,
+            );
+          if (!mounted) return;
+          _showSnack(
+            ok ? 'Davet gönderildi!' : ref.read(workspaceStateProvider).errorMessage ?? 'Davet gönderilemedi.',
+            isError: !ok,
+          );
         },
       ),
     );
   }
 
+  Future<void> _acceptInvitation() async {
+    final id = _invitationIdController.text.trim();
+    if (id.isEmpty) {
+      _showSnack('Davet ID gir.', isError: true);
+      return;
+    }
+
+    final ok = await ref.read(workspaceNotifierProvider).acceptInvitation(id);
+    if (!mounted) return;
+
+    if (ok) {
+      _invitationIdController.clear();
+      _showSnack('Davet kabul edildi.');
+    } else {
+      final msg = ref.read(workspaceStateProvider).errorMessage;
+      _showSnack(msg ?? 'Davet kabul edilmedi.', isError: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final wsState = ref.watch(workspaceStateProvider);
+    final rooms = wsState.myWorkspaces;
+    final isLoading = wsState.isLoading;
+
     return CustomScrollView(
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-
               // ── Oda Oluştur Butonu ───────────────────
               GestureDetector(
-                onTap: _showCreateRoomSheet,
+                onTap: isLoading ? null : _showCreateRoomSheet,
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -81,11 +148,52 @@ class _StudyRoomsTabState extends State<StudyRoomsTab> {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Davet kabul et',
+                      style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _invitationIdController,
+                      decoration: InputDecoration(
+                        hintText: 'workspaceInvitationId',
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: isLoading ? null : _acceptInvitation,
+                        child: const Text('Kabul Et'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 20),
 
               // ── Aktif Odalar ─────────────────────────
               Text(
-                'Aktif Odalar',
+                'Odalarım',
                 style: GoogleFonts.nunito(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -94,7 +202,7 @@ class _StudyRoomsTabState extends State<StudyRoomsTab> {
               ),
               const SizedBox(height: 10),
 
-              if (_rooms.isEmpty)
+              if (rooms.isEmpty)
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.all(32),
@@ -112,7 +220,7 @@ class _StudyRoomsTabState extends State<StudyRoomsTab> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Yeni bir oda oluştur veya arkadaşlarının odasına katıl',
+                          'Yeni bir oda oluştur ve arkadaşlarını davet et',
                           style: GoogleFonts.dmSans(
                             fontSize: 13,
                             color: AppColors.textSecondary,
@@ -124,24 +232,23 @@ class _StudyRoomsTabState extends State<StudyRoomsTab> {
                   ),
                 )
               else
-                ..._rooms.map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: StudyRoomCard(
-                    room: r,
-                    onJoin: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${r.name} odasına katıldın! 🎉'),
-                          backgroundColor: AppColors.primary,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                ...rooms.map(
+                  (w) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: StudyRoomCard(
+                      workspace: w,
+                      onOpen: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => WorkspaceDetailScreen(workspace: w),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                      onInvite: () => _pickFriendAndInvite(w.workspaceId, w.workspaceName),
+                    ),
                   ),
-                )),
+                ),
             ]),
           ),
         ),

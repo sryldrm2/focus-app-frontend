@@ -9,12 +9,14 @@ class CreateTaskDto {
   final String? description;
   final int? priority;
   final DateTime? dueDate;
+  final String? workspaceId;
 
   const CreateTaskDto({
     required this.title,
     this.description,
     this.priority,
     this.dueDate,
+    this.workspaceId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -23,6 +25,8 @@ class CreateTaskDto {
           'description': description,
         if (priority != null) 'priority': priority,
         if (dueDate != null) 'dueDate': dueDate!.toIso8601String(),
+        if (workspaceId != null && workspaceId!.isNotEmpty)
+          'workspaceId': workspaceId,
       };
 }
 
@@ -114,5 +118,35 @@ class TaskService {
     }
     final message = body['message'] ?? 'Bir hata oluştu.';
     throw Exception(message);
+  }
+
+  Future<List<TaskModel>> getWorkspaceTasks(
+    String token,
+    String workspaceId,
+  ) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/tasks/workspaces/$workspaceId'),
+      headers: _headers(token),
+    );
+    if (response.statusCode == 204) return [];
+    final body = _handleResponse(response);
+    final list = body['data'] as List<dynamic>? ?? [];
+    return list
+      .map((e) => TaskModel.fromJson(e as Map<String, dynamic>))
+      .toList();
+  }
+
+  Future<TaskModel> assignToWorkSpace(
+    String token,
+    String taskId,
+    String workspaceId,
+  ) async {
+    final response = await http.patch(
+      Uri.parse('$_baseUrl/tasks/$taskId/assign-to-workspace'),
+      headers: _headers(token),
+      body: jsonEncode({'workspaceId': workspaceId}),
+    );
+    final body = _handleResponse(response);
+    return TaskModel.fromJson(body['data'] as Map<String, dynamic>);
   }
 }

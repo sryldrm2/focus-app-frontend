@@ -78,8 +78,11 @@ class TaskNotifier extends ChangeNotifier {
       final token = await TokenStorage.getAccessToken();
       if (token == null) throw Exception('Oturum bulunamadı.');
       final newTask = await _service.createTask(token, dto);
+      final updated = dto.workspaceId == null || dto.workspaceId!.isEmpty
+        ? [..._state.tasks, newTask]
+        : _state.tasks;
       _emit(_state.copyWith(
-        tasks: [..._state.tasks, newTask],
+        tasks: updated,
         isLoading: false,
       ));
       return true;
@@ -145,6 +148,26 @@ class TaskNotifier extends ChangeNotifier {
         tasks: prev,
         errorMessage: e.toString().replaceFirst('Exception: ', ''),
       ));
+    }
+  }
+
+  Future<bool> assignToWorkspace({
+    required String taskId,
+    required String workspaceId,
+  }) async {
+    try {
+      final token = await TokenStorage.getAccessToken();
+      if (token == null) throw Exception('Oturum bulunamadı.');
+      await _service.assignToWorkSpace(token, taskId, workspaceId);
+      _emit(_state.copyWith(
+        tasks: _state.tasks.where((t) => t.taskId != taskId).toList(),
+      ));
+      return true;
+    } catch (e) {
+      _emit(_state.copyWith(
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      ));
+      return false;
     }
   }
 }

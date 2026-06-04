@@ -6,11 +6,15 @@ import 'package:google_fonts/google_fonts.dart';
 class AddTaskSheet extends StatefulWidget {
   final DateTime initialDate;
   final Future<bool> Function(CreateTaskDto) onAdd;
+  final String? workspaceId;
+  final String title;
  
   const AddTaskSheet({
     super.key,
     required this.initialDate,
     required this.onAdd,
+    this.workspaceId,
+    this.title = 'Yeni Görev',
   });
  
   @override
@@ -58,6 +62,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
         : _descController.text.trim(),
       priority: _priority,
       dueDate: _dueDate,
+      workspaceId: widget.workspaceId,
     );
 
     final success = await widget.onAdd(dto);
