@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:focus_app/features/social/widgets/invite_friend_sheet.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/auth/providers/auth_providers.dart';
@@ -56,76 +57,31 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
     );
   }
 
-  Future<void> _pickFriendAndInvite(String workspaceId) async {
+  Future<void> _pickFriendAndInvite(String workspaceId, String workspaceName) async {
     await ref.read(socialNotifierProvider).loadAll();
     if (!mounted) return;
 
-    final friends = ref.read(socialStateProvider).myFriends;
-    final myUserId = ref.read(authNotifierProvider).state.user?.userId ?? '';
-
-    if (friends.isEmpty) {
-      _showSnack('Davet için önce arkadaş eklemen gerekiyor.', isError: true);
-      return;
-    }
-
-    final picked = await showModalBottomSheet<FriendshipModel>(
+    showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => InviteFriendSheet(
+        workspaceName: workspaceName,
+        onInvite: (receiverId) async {
+          final ok = await ref
+            .read(workspaceNotifierProvider)
+            .sendInvitation(
+              workspaceId: workspaceId, 
+              receiverId: receiverId,
+            );
+          if (!mounted) return;
+          _showSnack(
+            ok ? 'Davet gönderildi!' : ref.read(workspaceStateProvider).errorMessage ?? 'Davet gönderilemedi.',
+            isError: !ok,
+          );
+        },
       ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Arkadaşını davet et',
-                  style: GoogleFonts.nunito(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              ...friends.map((f) {
-                final other = f.otherUser(myUserId);
-                return ListTile(
-                  title: Text(other.nickname),
-                  subtitle: Text('${other.name} ${other.surname}'.trim()),
-                  onTap: () => Navigator.pop(ctx, f),
-                );
-              }),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
     );
-
-    if (picked == null || !mounted) return;
-
-    final receiverId = picked.otherUser(myUserId).userId;
-    final ok = await ref
-        .read(workspaceNotifierProvider)
-        .sendInvitation(workspaceId: workspaceId, receiverId: receiverId);
-
-    if (!mounted) return;
-
-    if (ok) {
-      final invId = ref.read(workspaceStateProvider).lastInvitationId;
-      if (invId != null) {
-        await Clipboard.setData(ClipboardData(text: invId));
-        _showSnack('Davet gönderildi. ID panoya kopyalandı.');
-      } else {
-        _showSnack(
-        'Davet gönderildi.');
-      }
-    } else {
-      final msg = ref.read(workspaceStateProvider).errorMessage;
-      _showSnack(msg ?? 'Davet gönderilemedi.', isError: true);
-    }
   }
 
   Future<void> _acceptInvitation() async {
@@ -289,7 +245,7 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                           ),
                         );
                       },
-                      onInvite: () => _pickFriendAndInvite(w.workspaceId),
+                      onInvite: () => _pickFriendAndInvite(w.workspaceId, w.workspaceName),
                     ),
                   ),
                 ),
