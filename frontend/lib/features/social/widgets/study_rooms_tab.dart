@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/features/social/widgets/invite_friend_sheet.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
-import 'package:focus_app/features/auth/providers/auth_providers.dart';
-import 'package:focus_app/features/social/models/friend_models.dart';
 import 'package:focus_app/features/social/providers/social_providers.dart';
 import 'package:focus_app/features/social/providers/workspace_provider.dart';
 import 'package:focus_app/features/social/widgets/create_room_sheet.dart';
 import 'package:focus_app/features/social/widgets/study_room_card.dart';
 import 'package:focus_app/features/social/screens/workspace_detail_screen.dart';
-
 
 class StudyRoomsTab extends ConsumerStatefulWidget {
   const StudyRoomsTab({super.key});
@@ -21,20 +17,12 @@ class StudyRoomsTab extends ConsumerStatefulWidget {
 }
 
 class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
-  final _invitationIdController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(workspaceNotifierProvider).init();
     });
-  }
-
-  @override
-  void dispose() {
-    _invitationIdController.dispose();
-    super.dispose();
   }
 
   void _showCreateRoomSheet() {
@@ -57,7 +45,10 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
     );
   }
 
-  Future<void> _pickFriendAndInvite(String workspaceId, String workspaceName) async {
+  Future<void> _pickFriendAndInvite(
+    String workspaceId,
+    String workspaceName,
+  ) async {
     await ref.read(socialNotifierProvider).loadAll();
     if (!mounted) return;
 
@@ -69,14 +60,14 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
         workspaceName: workspaceName,
         onInvite: (receiverId) async {
           final ok = await ref
-            .read(workspaceNotifierProvider)
-            .sendInvitation(
-              workspaceId: workspaceId, 
-              receiverId: receiverId,
-            );
+              .read(workspaceNotifierProvider)
+              .sendInvitation(workspaceId: workspaceId, receiverId: receiverId);
           if (!mounted) return;
           _showSnack(
-            ok ? 'Davet gönderildi!' : ref.read(workspaceStateProvider).errorMessage ?? 'Davet gönderilemedi.',
+            ok
+                ? 'Davet gönderildi!'
+                : ref.read(workspaceStateProvider).errorMessage ??
+                      'Davet gönderilemedi.',
             isError: !ok,
           );
         },
@@ -84,29 +75,11 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
     );
   }
 
-  Future<void> _acceptInvitation() async {
-    final id = _invitationIdController.text.trim();
-    if (id.isEmpty) {
-      _showSnack('Davet ID gir.', isError: true);
-      return;
-    }
-
-    final ok = await ref.read(workspaceNotifierProvider).acceptInvitation(id);
-    if (!mounted) return;
-
-    if (ok) {
-      _invitationIdController.clear();
-      _showSnack('Davet kabul edildi.');
-    } else {
-      final msg = ref.read(workspaceStateProvider).errorMessage;
-      _showSnack(msg ?? 'Davet kabul edilmedi.', isError: true);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final wsState = ref.watch(workspaceStateProvider);
     final rooms = wsState.myWorkspaces;
+    final invitations = wsState.pendingInvitations;
     final isLoading = wsState.isLoading;
 
     return CustomScrollView(
@@ -150,47 +123,131 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
               ),
               const SizedBox(height: 16),
 
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+              if (invitations.isNotEmpty) ...[
+                Text(
+                  'Bekleyen Davetler',
+                  style: GoogleFonts.nunito(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Davet kabul et',
-                      style: GoogleFonts.nunito(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _invitationIdController,
-                      decoration: InputDecoration(
-                        hintText: 'workspaceInvitationId',
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: isLoading ? null : _acceptInvitation,
-                        child: const Text('Kabul Et'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 10),
 
+                ...invitations.map(
+                  (inv) => Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.15),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.mail_outline_rounded,
+                            color: AppColors.primary,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                inv.workspaceName.isEmpty
+                                    ? 'Çalışma odası daveti'
+                                    : inv.workspaceName,
+                                style: GoogleFonts.nunito(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                inv.senderNickName.isEmpty
+                                    ? 'Bir kullanıcı seni bu odaya davet etti.'
+                                    : '${inv.senderNickName} seni bu odaya davet etti.',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: isLoading
+                              ? null
+                              : () async {
+                                  final ok = await ref
+                                      .read(workspaceNotifierProvider)
+                                      .acceptInvitation(
+                                        inv.workspaceInvitationId,
+                                      );
+
+                                  if (!mounted) return;
+
+                                  _showSnack(
+                                    ok
+                                        ? 'Davet kabul edildi.'
+                                        : ref
+                                                  .read(workspaceStateProvider)
+                                                  .errorMessage ??
+                                              'Davet kabul edilmedi.',
+                                    isError: !ok,
+                                  );
+                                },
+                          child: Text(
+                            'Kabul',
+                            style: GoogleFonts.nunito(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+              ],
               // ── Aktif Odalar ─────────────────────────
               Text(
                 'Odalarım',
@@ -245,7 +302,8 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                           ),
                         );
                       },
-                      onInvite: () => _pickFriendAndInvite(w.workspaceId, w.workspaceName),
+                      onInvite: () =>
+                          _pickFriendAndInvite(w.workspaceId, w.workspaceName),
                     ),
                   ),
                 ),

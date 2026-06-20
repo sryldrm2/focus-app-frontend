@@ -116,10 +116,18 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
               child: TextField(
                 controller: _nameController,
                 enabled: !isLoading,
-                style: GoogleFonts.dmSans(fontSize: 15),
+                cursorColor: AppColors.primary,
+                style: GoogleFonts.dmSans(
+                  fontSize: 15,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Örn: Proje Odası',
-                  hintStyle: GoogleFonts.dmSans(color: Colors.grey.shade400),
+                  hintStyle: GoogleFonts.dmSans(
+                    color: AppColors.textSecondary.withOpacity(0.65),
+                    fontSize: 15,
+                  ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -137,7 +145,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadiusGeometry.circular(14),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   elevation: 0,
                 ),
