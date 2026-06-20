@@ -32,6 +32,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         '/stats',
         '/social',
         '/profile',
+        '/tasks',
       ];
 
       // Splash: checkAuth bitene kadar bekle; sonra home veya login
@@ -62,7 +63,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // Shell: sadece oturum açıkken; aksi halde login veya splash (token kontrolü için)
+      // Shell: sadece oturum açıkken; aksi halde login veya splash
       if (shellPrefixes.any((p) => loc.startsWith(p))) {
         if (auth.status == AuthStatus.authenticated) {
           return null;
@@ -70,8 +71,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (auth.status == AuthStatus.unauthenticated) {
           return '/auth/login';
         }
-        return null;
-        //return '/splash';
+        return '/splash';
       }
 
       return null;

@@ -1,9 +1,13 @@
-import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/auth/providers/auth_providers.dart';
+import 'package:focus_app/features/pomodoro/providers/pomodoro_provider.dart';
+import 'package:focus_app/features/profile/providers/profile_providers.dart';
+import 'package:focus_app/features/social/providers/social_providers.dart';
+import 'package:focus_app/features/social/providers/workspace_provider.dart';
+import 'package:focus_app/features/tasks/providers/task_provider.dart';
 
 class LogoutButton extends ConsumerWidget {
   const LogoutButton({super.key});
@@ -45,10 +49,13 @@ class LogoutButton extends ConsumerWidget {
               TextButton(
                 onPressed: () async {
                   Navigator.pop(dialogContext);
+                  ref.invalidate(taskNotifierProvider);
+                  ref.invalidate(pomodoroNotifierProvider);
+                  ref.invalidate(socialNotifierProvider);
+                  ref.invalidate(workspaceNotifierProvider);
+                  ref.invalidate(workspaceTaskNotifierProvider);
+                  ref.invalidate(profileNotifierProvider);
                   await ref.read(authNotifierProvider).logout();
-
-                  if (!context.mounted) return;
-                  context.go('/auth/login');
                 },
                 child: Text(
                   'Çıkış Yap',
