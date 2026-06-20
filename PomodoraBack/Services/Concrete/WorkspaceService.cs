@@ -1,10 +1,12 @@
 using AutoMapper;
 using Core.Utilities.Results;
+using Microsoft.EntityFrameworkCore;
 using PomodoraBack.Core.Enums;
 using PomodoraBack.DataAccess.Interfaces;
 using PomodoraBack.DTOs;
 using PomodoraBack.Entities;
 using PomodoraBack.Services.Interfaces;
+using System.Linq;
 
 namespace PomodoraBack.Services.Concrete
 {
@@ -73,7 +75,19 @@ namespace PomodoraBack.Services.Concrete
             if (sender == null)
                 return new ErrorDataResult<WorkspaceInvitationDto>("Gönderici kullanıcı bulunamadı.");
 
-            var receiver = await _userDal.GetAsync(u => u.UserId == request.ReceiverId);
+            if (string.IsNullOrWhiteSpace(request.ReceiverId) && string.IsNullOrWhiteSpace(request.ReceiverNickname))
+                return new ErrorDataResult<WorkspaceInvitationDto>("Davet edilecek kullanıcı ID veya nickname ile belirtilmelidir.");
+
+            User? receiver = null;
+            if (!string.IsNullOrWhiteSpace(request.ReceiverId))
+            {
+                receiver = await _userDal.GetAsync(u => u.UserId == request.ReceiverId);
+            }
+            else if (!string.IsNullOrWhiteSpace(request.ReceiverNickname))
+            {
+                receiver = await _userDal.GetAsync(u => u.Nickname == request.ReceiverNickname);
+            }
+
             if (receiver == null)
                 return new ErrorDataResult<WorkspaceInvitationDto>("Alıcı kullanıcı bulunamadı.");
 
@@ -88,21 +102,21 @@ namespace PomodoraBack.Services.Concrete
                 return new ErrorDataResult<WorkspaceInvitationDto>("Odaya üye olmayan kullanıcı davet gönderemez.");
 
             var friendship = await _friendshipDal.GetAsync(f =>
-                ((f.FirstUserId == senderId && f.SecondUserId == request.ReceiverId) ||
-                 (f.FirstUserId == request.ReceiverId && f.SecondUserId == senderId)) && f.DeletedAt == null);
+                ((f.FirstUserId == senderId && f.SecondUserId == receiver.UserId) ||
+                 (f.FirstUserId == receiver.UserId && f.SecondUserId == senderId)) && f.DeletedAt == null);
 
             if (friendship == null)
                 return new ErrorDataResult<WorkspaceInvitationDto>("Sadece arkadaşlarınızı davet edebilirsiniz.");
 
             var existingMember = await _workspaceMemberDal.GetAsync(m =>
-                m.WorkspaceId == request.WorkspaceId && m.UserId == request.ReceiverId);
+                m.WorkspaceId == request.WorkspaceId && m.UserId == receiver.UserId);
 
             if (existingMember != null)
                 return new ErrorDataResult<WorkspaceInvitationDto>("Kullanıcı zaten odada.");
 
             var pendingInvitation = await _workspaceInvitationDal.GetAsync(i =>
                 i.WorkspaceId == request.WorkspaceId &&
-                i.ReceiverId == request.ReceiverId &&
+                i.ReceiverId == receiver.UserId &&
                 i.Status == WorkspaceInvitationStatusEnums.pending);
 
             if (pendingInvitation != null)
@@ -117,7 +131,7 @@ namespace PomodoraBack.Services.Concrete
                 WorkspaceInvitationId = Guid.NewGuid().ToString(),
                 WorkspaceId = request.WorkspaceId,
                 SenderId = senderId,
-                ReceiverId = request.ReceiverId,
+                ReceiverId = receiver.UserId,
                 Status = WorkspaceInvitationStatusEnums.pending,
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(7)
@@ -168,6 +182,52 @@ namespace PomodoraBack.Services.Concrete
 
             var invitationDto = _mapper.Map<WorkspaceInvitationDto>(invitation);
             return new SuccessDataResult<WorkspaceInvitationDto>(invitationDto, "Davet kabul edildi.");
+        }
+
+        public async Task<IDataResult<List<WorkspaceDto>>> GetMyWorkspacesAsync(string userId)
+        {
+            var memberships = await _workspaceMemberDal.GetListAsync(
+                m => m.UserId == userId,
+                q => q.Include(x => x.Workspace)
+                      .ThenInclude(x => x.Owner));
+
+            if (memberships == null || !memberships.Any())
+                return new SuccessDataResult<List<WorkspaceDto>>(new List<WorkspaceDto>(), "Üye olunan oda bulunamadı.");
+
+            var workspaces = memberships
+                .Where(m => m.Workspace != null)
+                .Select(m => m.Workspace)
+                .DistinctBy(w => w.WorkspaceId)
+                .ToList();
+
+            var workspaceIds = workspaces.Select(w => w.WorkspaceId).ToList();
+            var allMembers = await _workspaceMemberDal.GetListAsync(m => workspaceIds.Contains(m.WorkspaceId));
+            var memberCounts = allMembers
+                .GroupBy(m => m.WorkspaceId)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var workspaceDtos = workspaces.Select(workspace =>
+            {
+                var dto = _mapper.Map<WorkspaceDto>(workspace);
+                dto.MemberCount = memberCounts.TryGetValue(workspace.WorkspaceId, out var count) ? count : 0;
+                return dto;
+            }).ToList();
+
+            return new SuccessDataResult<List<WorkspaceDto>>(workspaceDtos);
+        }
+
+        public async Task<IDataResult<List<WorkspaceInvitationDto>>> GetPendingInvitationsAsync(string userId)
+        {
+            var invitations = await _workspaceInvitationDal.GetListAsync(
+                i => i.ReceiverId == userId && i.Status == WorkspaceInvitationStatusEnums.pending,
+                q => q.Include(x => x.Workspace)
+                      .Include(x => x.Sender));
+
+            if (invitations == null || !invitations.Any())
+                return new SuccessDataResult<List<WorkspaceInvitationDto>>(new List<WorkspaceInvitationDto>(), "Bekleyen davet bulunamadı.");
+
+            var invitationDtos = _mapper.Map<List<WorkspaceInvitationDto>>(invitations);
+            return new SuccessDataResult<List<WorkspaceInvitationDto>>(invitationDtos);
         }
     }
 }
