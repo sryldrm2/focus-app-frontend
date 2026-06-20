@@ -7,7 +7,8 @@ namespace PomodoraBack.DTOs
         [Required(ErrorMessage = "Oda bilgisi gereklidir")]
         public string WorkspaceId { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Davet edilecek kullanıcı gereklidir")]
-        public string ReceiverId { get; set; } = string.Empty;
+        public string? ReceiverId { get; set; }
+
+        public string? ReceiverNickname { get; set; }
     }
 }

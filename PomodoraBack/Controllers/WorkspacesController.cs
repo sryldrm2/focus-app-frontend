@@ -50,5 +50,27 @@ namespace PomodoraBack.Controllers
             var result = await _workspaceService.AcceptInvitationAsync(userId, invitationId);
             return Response(result);
         }
+
+        [HttpGet("mine")]
+        public async Task<IActionResult> GetMyWorkspaces()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Kullanıcı kimliği bulunamadı.");
+
+            var result = await _workspaceService.GetMyWorkspacesAsync(userId);
+            return Response(result);
+        }
+
+        [HttpGet("invitations/pending")]
+        public async Task<IActionResult> GetPendingInvitations()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Kullanıcı kimliği bulunamadı.");
+
+            var result = await _workspaceService.GetPendingInvitationsAsync(userId);
+            return Response(result);
+        }
     }
 }

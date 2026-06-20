@@ -13,7 +13,9 @@ namespace PomodoraBack.Mappings
                 .ForMember(dest => dest.OwnerNickName, opt => opt.MapFrom(src => src.Owner.Nickname))
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.isActive));
 
-            CreateMap<WorkspaceInvitation, WorkspaceInvitationDto>();
+            CreateMap<WorkspaceInvitation, WorkspaceInvitationDto>()
+                .ForMember(dest => dest.WorkspaceName, opt => opt.MapFrom(src => src.Workspace.WorkspaceName))
+                .ForMember(dest => dest.SenderNickName, opt => opt.MapFrom(src => src.Sender.Nickname));
         }
     }
 }
