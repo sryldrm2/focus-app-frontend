@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_providers.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'login_screen.dart' show AppTextField;
+import 'package:focus_app/shared/widgets/app_text_field.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});

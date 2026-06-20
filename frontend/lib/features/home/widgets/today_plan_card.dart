@@ -4,6 +4,7 @@ import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/tasks/models/task_model.dart';
 import 'package:focus_app/features/tasks/providers/task_provider.dart';
 import 'package:focus_app/shared/widgets/section_card.dart';
+import 'package:focus_app/features/pomodoro/utils/open_pomodoro.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -135,7 +136,7 @@ class _PlanRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
-      onTap: () => context.go('/pomodoro', extra: task.taskId),
+      onTap: () => openPomodoro(context, ref, taskId: task.taskId),
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Row(

@@ -10,7 +10,7 @@ class AppColors {
   // Yüzey Renkleri (Light)
   static const surfaceLight   = Color(0xFFFFFBF7);
   static const cardLight      = Color(0xFFFFFFFF);
-  static const backgroundLight = Color(0xFFF5F0EB);
+  static const backgroundLight = Color(0xFFF1ECE6);
 
   // Yüzey Renkleri (Dark)
   static const surfaceDark    = Color(0xFF1A1612);
@@ -19,7 +19,7 @@ class AppColors {
 
   // Metin
   static const textPrimary   = Color(0xFF2D2016);  
-  static const textSecondary = Color(0xFF5C4F45); 
+  static const textSecondary = Color(0xFF7A7068); 
 
   // Semantik
   static const success = Color(0xFF2ECC71);
