@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
+import 'package:focus_app/features/pomodoro/utils/open_pomodoro.dart';
 import 'package:focus_app/shared/widgets/section_card.dart';
 import 'package:focus_app/shared/widgets/subject_chip.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class QuickStartCard extends StatelessWidget {
+class QuickStartCard extends ConsumerWidget {
+  const QuickStartCard({super.key});
   final _subjects = const [
     {'name': 'Matematik', 'color': Color(0xFFE74C3C), 'emoji': '📐'},
     {'name': 'Fizik', 'color': Color(0xFF3498DB), 'emoji': '⚡'},
@@ -13,7 +15,7 @@ class QuickStartCard extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,7 +83,7 @@ class QuickStartCard extends StatelessWidget {
                 elevation: 3,
                 shadowColor: AppColors.primary.withOpacity(0.3),
               ),
-              onPressed: () => context.go('/pomodoro'),
+              onPressed: () => openPomodoro(context, ref),
               icon: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 22),
               label: Text(
                 'Başlat',

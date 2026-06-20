@@ -2,24 +2,24 @@ enum PomodoroType {
   workSession(0),
   shortBreakSession(1),
   longBreakSession(2);
- 
+
   final int value;
   const PomodoroType(this.value);
 }
- 
+
 enum SessionStatus {
   onGoing(0),
   successful(1),
   incomplete(2),
   cancelled(3);
- 
+
   final int value;
   const SessionStatus(this.value);
- 
+
   static SessionStatus fromInt(int v) => SessionStatus.values.firstWhere(
-        (e) => e.value == v,
-        orElse: () => SessionStatus.onGoing,
-      );
+    (e) => e.value == v,
+    orElse: () => SessionStatus.onGoing,
+  );
 }
 
 class PomodoroSessionModel {
@@ -36,7 +36,7 @@ class PomodoroSessionModel {
   final DateTime? updatedAt;
   final DateTime? completedAt;
   final SessionStatus status;
- 
+
   const PomodoroSessionModel({
     required this.pomoId,
     required this.userId,
@@ -57,25 +57,36 @@ class PomodoroSessionModel {
   bool get isOngoing => status == SessionStatus.onGoing;
   bool get isIncomplete => status == SessionStatus.incomplete;
 
-  factory PomodoroSessionModel.fromJson(Map<String, dynamic> json) => 
-    PomodoroSessionModel(
-        pomoId:        json['pomoId'] as String,
-        userId:        json['userId'] as String,
-        taskId:        json['taskId'] as String?,
-        sessionType:   PomodoroType.values.firstWhere(
+  int get remainingSeconds {
+    final totalSeconds = durationMinute * 60;
+    final elapsedSeconds = DateTime.now()
+        .difference(startedAt.toLocal())
+        .inSeconds;
+
+    final remaining = totalSeconds - elapsedSeconds;
+
+    return remaining > 0 ? remaining : 0;
+  }
+
+  factory PomodoroSessionModel.fromJson(Map<String, dynamic> json) =>
+      PomodoroSessionModel(
+        pomoId: json['pomoId'] as String,
+        userId: json['userId'] as String,
+        taskId: json['taskId'] as String?,
+        sessionType: PomodoroType.values.firstWhere(
           (e) => e.value == (json['sessionType'] as int? ?? 0),
           orElse: () => PomodoroType.workSession,
         ),
         durationMinute: json['durationMinute'] as int,
-        pointsEarned:   json['pointsEarned'] as int? ?? 0,
-        notes:          json['notes'] as String?,
-        breakCount:     json['breakCount'] as int? ?? 0,
-        startedAt:      DateTime.parse(json['startedAt'] as String),
-        createdAt:      DateTime.parse(json['createdAt'] as String),
-        updatedAt:      json['updatedAt'] != null
+        pointsEarned: json['pointsEarned'] as int? ?? 0,
+        notes: json['notes'] as String?,
+        breakCount: json['breakCount'] as int? ?? 0,
+        startedAt: DateTime.parse(json['startedAt'] as String),
+        createdAt: DateTime.parse(json['createdAt'] as String),
+        updatedAt: json['updatedAt'] != null
             ? DateTime.parse(json['updatedAt'] as String)
             : null,
-        completedAt:    json['completedAt'] != null
+        completedAt: json['completedAt'] != null
             ? DateTime.parse(json['completedAt'] as String)
             : null,
         status: SessionStatus.fromInt(json['status'] as int? ?? 0),

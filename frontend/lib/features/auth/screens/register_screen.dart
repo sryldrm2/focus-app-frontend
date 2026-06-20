@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_providers.dart';
-import 'package:focus_app/features/auth/screens/login_screen.dart' show AppTextField;
+import 'package:focus_app/shared/widgets/app_text_field.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -72,7 +72,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(backgroundColor: AppColors.primary, toolbarHeight: 4),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
         child: Form(
           key: _formKey,
           child: Column(
@@ -103,7 +103,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
               Text(
                 "Hesap Oluştur",
                 style: GoogleFonts.nunito(
@@ -116,75 +116,96 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 "Odaklanma yolculuğuna başla",
                 style: GoogleFonts.dmSans(color: Colors.grey),
               ),
-              const SizedBox(height: 32),
-              _buildInputLabel("Ad"),
-              AppTextField(
-                controller: _nameController,
-                hint: "Adınızı girin",
-                icon: Icons.person_outline,
-                validator: (v) => v!.isEmpty ? 'Ad girin' : null,
+              const SizedBox(height: 24),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      controller: _nameController,
+                      hint: "Adınız",
+                      icon: Icons.person_outline,
+                      validator: (v) => v!.isEmpty ? 'Ad girin' : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: AppTextField(
+                      controller: _surnameController,
+                      hint: "Soyadınız",
+                      icon: Icons.person_outline,
+                      validator: (v) => v!.isEmpty ? 'Soyad girin' : null,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              _buildInputLabel("Soyad"),
-              AppTextField(
-                controller: _surnameController,
-                hint: "Soyadınızı girin",
-                icon: Icons.person_outline,
-                validator: (v) => v!.isEmpty ? 'Soyad girin' : null,
-              ),
-              const SizedBox(height: 16),
-              _buildInputLabel("Kullanıcı Adı"),
+
+              const SizedBox(height: 14),
+
               AppTextField(
                 controller: _nicknameController,
-                hint: "kullaniciadi",
+                hint: "Kullanıcı adı",
                 icon: Icons.alternate_email,
                 validator: (v) => v!.isEmpty ? 'Kullanıcı adı girin' : null,
               ),
-              const SizedBox(height: 16),
-              _buildInputLabel("E-posta"),
+
+              const SizedBox(height: 14),
+
               AppTextField(
                 controller: _emailController,
-                hint: "ornek@mail.com",
+                hint: "E-posta adresi",
                 icon: Icons.mail_outline,
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) =>
                     (!v!.contains('@')) ? 'Geçerli e-posta girin' : null,
               ),
-              const SizedBox(height: 16),
-              _buildInputLabel("Şifre"),
+
+              const SizedBox(height: 14),
+
               AppTextField(
-  controller: _passwordController,
-  hint: "••••••••",
-  icon: Icons.lock_outline,
-  obscureText: _obscurePassword,
-  suffixIcon: IconButton(
-    icon: Icon(
-      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-      color: Colors.grey,
-      size: 20,
-    ),
-    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-  ),
-  validator: (v) => v!.length < 6 ? 'En az 6 karakter' : null,
-),
-              const SizedBox(height: 16),
-              _buildInputLabel("Şifre Tekrar"),
+                controller: _passwordController,
+                hint: "Şifre",
+                icon: Icons.lock_outline,
+                obscureText: _obscurePassword,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: Colors.grey,
+                    size: 20,
+                  ),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
+                ),
+                validator: (v) => v!.length < 6 ? 'En az 6 karakter' : null,
+              ),
+
+              const SizedBox(height: 14),
+
               AppTextField(
-  controller: _confirmController,
-  hint: "••••••••",
-  icon: Icons.lock_outline,
-  obscureText: _obscureConfirm,
-  suffixIcon: IconButton(
-    icon: Icon(
-      _obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-      color: Colors.grey,
-      size: 20,
-    ),
-    onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-  ),
-  validator: (v) => v != _passwordController.text ? 'Şifreler eşleşmiyor' : null,
-),
-              const SizedBox(height: 32),
+                controller: _confirmController,
+                hint: "Şifre tekrar",
+                icon: Icons.lock_outline,
+                obscureText: _obscureConfirm,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureConfirm
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: Colors.grey,
+                    size: 20,
+                  ),
+                  onPressed: () =>
+                      setState(() => _obscureConfirm = !_obscureConfirm),
+                ),
+                validator: (v) => v != _passwordController.text
+                    ? 'Şifreler eşleşmiyor'
+                    : null,
+              ),
+
+              const SizedBox(height: 28),
+
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -241,19 +262,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  Widget _buildInputLabel(String label) => Padding(
-    padding: const EdgeInsets.only(left: 4, bottom: 6),
-    child: Text(
-      label,
-      style: const TextStyle(
-        fontWeight: FontWeight.w500, 
-        fontSize: 14,
-        color: AppColors.textPrimary,
-      ),
-    ),
-  );
-
-  
   Widget _buildSocialDivider() => const Row(
     children: [
       Expanded(child: Divider()),

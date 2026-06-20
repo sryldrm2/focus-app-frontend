@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/pomodoro/models/pomodoro_model.dart';
 import 'package:focus_app/features/pomodoro/providers/pomodoro_provider.dart';
+import 'package:focus_app/features/pomodoro/notifiers/pomodoro_notifier.dart';
 import 'package:focus_app/features/pomodoro/network/pomodoro_service.dart';
 import 'package:focus_app/features/pomodoro/widgets/settings_sheet.dart';
 import 'package:focus_app/features/pomodoro/widgets/timer_display.dart';
@@ -22,13 +23,13 @@ class _PomodoroAppBar extends StatelessWidget {
   final int completedSessions;
   final TimerStatus status;
   final VoidCallback onSettings;
- 
+
   const _PomodoroAppBar({
     required this.completedSessions,
     required this.status,
     required this.onSettings,
   });
- 
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -60,7 +61,8 @@ class _PomodoroAppBar extends StatelessWidget {
             children: List.generate(4, (i) {
               return Container(
                 margin: const EdgeInsets.only(left: 4),
-                width: 10, height: 10,
+                width: 10,
+                height: 10,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: i < completedSessions
@@ -94,14 +96,19 @@ class _PomodoroAppBar extends StatelessWidget {
       ),
     );
   }
- 
+
   String _statusText() {
     switch (status) {
-      case TimerStatus.idle:     return 'Başlamaya hazır';
-      case TimerStatus.running:  return 'Odaklanma zamanı 🎯';
-      case TimerStatus.paused:   return 'Duraklatıldı';
-      case TimerStatus.breakTime: return 'Mola zamanı ☕';
-      case TimerStatus.completed: return 'Oturum tamamlandı!';
+      case TimerStatus.idle:
+        return 'Başlamaya hazır';
+      case TimerStatus.running:
+        return 'Odaklanma zamanı 🎯';
+      case TimerStatus.paused:
+        return 'Duraklatıldı';
+      case TimerStatus.breakTime:
+        return 'Mola zamanı ☕';
+      case TimerStatus.completed:
+        return 'Oturum tamamlandı!';
     }
   }
 }
@@ -109,35 +116,37 @@ class _PomodoroAppBar extends StatelessWidget {
 // ── Ana ekran ─────────────────────────────────────────────
 class PomodoroScreen extends ConsumerStatefulWidget {
   final String? initialTaskId; // dashboard'dan gelince dolu olur
- 
+
   const PomodoroScreen({super.key, this.initialTaskId});
- 
+
   @override
   ConsumerState<PomodoroScreen> createState() => _PomodoroScreenState();
 }
- 
+
 class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     with TickerProviderStateMixin {
   // Timer ayarları
   int _workMinutes = 25;
   int _breakMinutes = 5;
   int _longBreakMinutes = 15;
- 
+
   int get workDuration => _workMinutes * 60;
   int get breakDuration => _breakMinutes * 60;
   int get longBreakDuration => _longBreakMinutes * 60;
- 
+
   // UI State
   TimerStatus _status = TimerStatus.idle;
   int _secondsLeft = 25 * 60;
   int _completedSessions = 0;
   TaskModel? _selectedTask;
+  String? _activePomoId;
   Timer? _timer;
- 
+  bool _sessionReady = false;
+
   // Animasyon
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
- 
+
   @override
   void initState() {
     super.initState();
@@ -149,38 +158,221 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
- 
-    // Dashboard'dan taskId geldiyse seç
+
+    Future.microtask(_initializeSession);
+  }
+
+  Future<void> _initializeSession() async {
+    await _loadSettings();
+    await ref.read(pomodoroNotifierProvider).checkOngoing();
+    if (!mounted) return;
+
+    final pomState = ref.read(pomodoroNotifierProvider).state;
+
+    if (pomState.hasOngoing) {
+      _syncOngoingSessionToUi();
+      if (widget.initialTaskId != null &&
+          pomState.currentSession?.taskId != widget.initialTaskId) {
+        _showOngoingConflictSnackBar();
+      }
+      setState(() => _sessionReady = true);
+      return;
+    }
+
+    if (pomState.hasLocalActiveTimer) {
+      _restoreLocalTimerFromNotifier();
+      if (widget.initialTaskId != null) {
+        _showOngoingConflictSnackBar();
+      }
+      setState(() => _sessionReady = true);
+      return;
+    }
+
     if (widget.initialTaskId != null) {
-      Future.microtask(() {
-        final tasks = ref.read(taskNotifierProvider).state.todayTasks;
-        final task = tasks.where(
-          (t) => t.taskId == widget.initialTaskId
-        ).firstOrNull;
-        if (task != null) setState(() => _selectedTask = task);
-      });
+      final tasks = ref.read(taskNotifierProvider).state.todayTasks;
+      final task = tasks
+          .where((t) => t.taskId == widget.initialTaskId)
+          .firstOrNull;
+      if (task != null) setState(() => _selectedTask = task);
+    }
+
+    setState(() {
+      _secondsLeft = workDuration;
+      _sessionReady = true;
+    });
+  }
+
+  void _restoreLocalTimerFromNotifier() {
+    final pomState = ref.read(pomodoroNotifierProvider).state;
+    final session = pomState.currentSession;
+
+    setState(() {
+      _status = pomState.localTimerStatus;
+      _activePomoId = pomState.localActivePomoId;
+      if (session != null) {
+        _selectedTask = _findTaskForSession(session);
+        _workMinutes = session.durationMinute;
+        _secondsLeft = _resolveSecondsLeft(session, pomState);
+      } else if (pomState.localSecondsLeft != null) {
+        _secondsLeft = pomState.localSecondsLeft!;
+      }
+    });
+
+    if (_status == TimerStatus.running) {
+      _tick();
     }
   }
- 
+
+  int _resolveSecondsLeft(
+    PomodoroSessionModel session,
+    PomodoroState pomState,
+  ) {
+    if (pomState.localActivePomoId == session.pomoId &&
+        pomState.localSecondsLeft != null) {
+      return pomState.localSecondsLeft!;
+    }
+    return session.remainingSeconds;
+  }
+
+  void _persistLocalTimer(
+    TimerStatus status, {
+    String? pomoId,
+    int? secondsLeft,
+  }) {
+    ref.read(pomodoroNotifierProvider).setLocalTimer(
+          status,
+          pomoId: pomoId ?? _activePomoId,
+          secondsLeft: secondsLeft ?? _secondsLeft,
+        );
+  }
+
+  void _showOngoingConflictSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+          'Devam eden bir pomodoro var. Önce onu tamamlayın veya iptal edin.',
+        ),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  bool _isDifferentTaskThanSession(PomodoroSessionModel session) {
+    if (session.taskId == null) return _selectedTask != null;
+    return _selectedTask?.taskId != session.taskId;
+  }
+
+  TaskModel? _findTaskForSession(PomodoroSessionModel session) {
+    if (session.taskId == null) return null;
+    final tasks = ref.read(taskNotifierProvider).state.todayTasks;
+    return tasks.where((t) => t.taskId == session.taskId).firstOrNull;
+  }
+
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _workMinutes = prefs.getInt('work_minutes') ?? 25;
       _breakMinutes = prefs.getInt('break_minutes') ?? 5;
       _longBreakMinutes = prefs.getInt('long_break_minutes') ?? 15;
-      _secondsLeft = workDuration;
     });
   }
- 
+
   @override
   void dispose() {
     _timer?.cancel();
+    if (_status == TimerStatus.running || _status == TimerStatus.paused) {
+      ref.read(pomodoroNotifierProvider).setLocalTimer(
+            _status,
+            pomoId: _activePomoId,
+            secondsLeft: _secondsLeft,
+          );
+    }
     _pulseController.dispose();
     super.dispose();
   }
- 
+
+  void _syncOngoingSessionToUi() {
+    final pomState = ref.read(pomodoroNotifierProvider).state;
+    final session = pomState.currentSession;
+    if (session == null || !session.isOngoing) return;
+
+    final remaining = _resolveSecondsLeft(session, pomState);
+
+    if (remaining <= 0) {
+      ref.read(pomodoroNotifierProvider).completeSession();
+      ref.read(pomodoroNotifierProvider).clearLocalTimer();
+      setState(() {
+        _status = TimerStatus.idle;
+        _secondsLeft = workDuration;
+        _activePomoId = null;
+      });
+      return;
+    }
+
+    final preservePaused = pomState.localTimerStatus == TimerStatus.paused &&
+        pomState.localActivePomoId == session.pomoId;
+
+    setState(() {
+      _activePomoId = session.pomoId;
+      _selectedTask = _findTaskForSession(session);
+      _workMinutes = session.durationMinute;
+      _secondsLeft = remaining;
+      _status = preservePaused ? TimerStatus.paused : TimerStatus.running;
+    });
+
+    _persistLocalTimer(_status, pomoId: session.pomoId, secondsLeft: remaining);
+
+    if (!preservePaused) {
+      _tick();
+    }
+  }
+
   // ── Timer kontrolleri ─────────────────────────────────
   Future<void> _start() async {
+    if (!_sessionReady) return;
+
+    await ref.read(pomodoroNotifierProvider).checkOngoing();
+    if (!mounted) return;
+
+    final pomState = ref.read(pomodoroNotifierProvider).state;
+    final existingSession = pomState.currentSession;
+
+    // Backend'de devam eden session varsa asla yeni session açma.
+    if (existingSession != null && existingSession.isOngoing) {
+      if (_isDifferentTaskThanSession(existingSession)) {
+        _syncOngoingSessionToUi();
+        _showOngoingConflictSnackBar();
+        return;
+      }
+
+      if (_status == TimerStatus.paused ||
+          pomState.localTimerStatus == TimerStatus.paused) {
+        _resume();
+        return;
+      }
+
+      if (_status == TimerStatus.running) return;
+
+      _syncOngoingSessionToUi();
+      return;
+    }
+
+    if (pomState.hasLocalActiveTimer) {
+      _restoreLocalTimerFromNotifier();
+      if (pomState.localTimerStatus == TimerStatus.paused) {
+        _resume();
+      }
+      return;
+    }
+
+    if (_status == TimerStatus.paused || _status == TimerStatus.running) {
+      _resume();
+      return;
+    }
+
     if (_selectedTask == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -188,21 +380,24 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
     }
- 
+
     // Backend'e oturum başlat
-    final success = await ref.read(pomodoroNotifierProvider).startSession(
-      CreatePomodoroSessionDto(
-        sessionType: PomodoroType.workSession,
-        durationMinute: _workMinutes,
-        taskId: _selectedTask!.taskId,
-      ),
-    );
- 
+    final success = await ref
+        .read(pomodoroNotifierProvider)
+        .startSession(
+          CreatePomodoroSessionDto(
+            sessionType: PomodoroType.workSession,
+            durationMinute: _workMinutes,
+            taskId: _selectedTask!.taskId,
+          ),
+        );
+
     if (!success) {
       final error = ref.read(pomodoroNotifierProvider).state.errorMessage;
       if (mounted) {
@@ -212,29 +407,54 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
       return;
     }
- 
-    setState(() => _status = TimerStatus.running);
+
+    setState(() {
+      _activePomoId =
+          ref.read(pomodoroNotifierProvider).state.currentSession?.pomoId;
+      _status = TimerStatus.running;
+      _secondsLeft = workDuration;
+    });
+
+    _persistLocalTimer(
+      TimerStatus.running,
+      pomoId: _activePomoId,
+      secondsLeft: workDuration,
+    );
     _tick();
   }
- 
+
   void _pause() {
     _timer?.cancel();
     setState(() => _status = TimerStatus.paused);
+    _persistLocalTimer(TimerStatus.paused, secondsLeft: _secondsLeft);
     // Mola sayacı artır
     ref.read(pomodoroNotifierProvider).addBreak();
   }
- 
+
   void _resume() {
+    final pomState = ref.read(pomodoroNotifierProvider).state;
+    final session = pomState.currentSession;
+    if (session != null && session.isOngoing) {
+      setState(() {
+        _activePomoId = session.pomoId;
+        _selectedTask = _findTaskForSession(session) ?? _selectedTask;
+        _workMinutes = session.durationMinute;
+        _secondsLeft = _resolveSecondsLeft(session, pomState);
+      });
+    }
+
     setState(() => _status = TimerStatus.running);
+    _persistLocalTimer(TimerStatus.running, secondsLeft: _secondsLeft);
     _tick();
   }
- 
+
   void _skip() {
     _timer?.cancel();
     if (_status == TimerStatus.breakTime) {
@@ -246,7 +466,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
       _onWorkComplete();
     }
   }
- 
+
   Future<void> _reset() async {
     _timer?.cancel();
     // Backend'e iptal gönder
@@ -254,10 +474,13 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     setState(() {
       _status = TimerStatus.idle;
       _secondsLeft = workDuration;
+      _activePomoId = null;
     });
   }
- 
+
   void _tick() {
+    _timer?.cancel();
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsLeft <= 0) {
         timer.cancel();
@@ -265,24 +488,26 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
         return;
       }
       setState(() => _secondsLeft--);
+      if (_status == TimerStatus.running) {
+        _persistLocalTimer(TimerStatus.running, secondsLeft: _secondsLeft);
+      }
     });
   }
- 
+
   Future<void> _onWorkComplete() async {
     // Backend'e tamamlandı gönder
     await ref.read(pomodoroNotifierProvider).completeSession();
- 
+
     setState(() {
       _completedSessions++;
       _status = TimerStatus.completed;
     });
     _showCompleteSheet();
   }
- 
+
   void _showCompleteSheet() {
-    final pointsEarned =
-        ref.read(pomodoroNotifierProvider).state.pointsEarned;
- 
+    final pointsEarned = ref.read(pomodoroNotifierProvider).state.pointsEarned;
+
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -302,12 +527,13 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
           setState(() {
             _status = TimerStatus.idle;
             _secondsLeft = workDuration;
+            _activePomoId = null;
           });
         },
       ),
     );
   }
- 
+
   void _startBreak() {
     if (Navigator.canPop(context)) Navigator.pop(context);
     ref.read(pomodoroNotifierProvider).clearSession();
@@ -318,7 +544,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     });
     _tick();
   }
- 
+
   void _skipBreak() {
     _timer?.cancel();
     setState(() {
@@ -326,7 +552,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
       _secondsLeft = workDuration;
     });
   }
- 
+
   void _showSettingsSheet() {
     showModalBottomSheet(
       context: context,
@@ -347,24 +573,36 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
       ),
     );
   }
- 
+
   double get _progress {
     final total = _status == TimerStatus.breakTime
         ? breakDuration
         : workDuration;
     return 1 - (_secondsLeft / total);
   }
- 
+
   Color get _timerColor {
     if (_status == TimerStatus.breakTime) return AppColors.success;
     if (_secondsLeft < 60) return AppColors.error;
     return AppColors.primary;
   }
- 
+
   @override
   Widget build(BuildContext context) {
     final todayTasks = ref.watch(taskNotifierProvider).state.todayTasks;
- 
+    final hasBlocking =
+        ref.watch(pomodoroNotifierProvider).state.hasBlockingSession;
+    final canSelectTask = _status == TimerStatus.idle && !hasBlocking;
+
+    if (!_sessionReady) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundLight,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: Stack(
@@ -382,7 +620,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
                   tasks: todayTasks,
                   selected: _selectedTask,
                   onSelect: (t) => setState(() => _selectedTask = t),
-                  enabled: _status == TimerStatus.idle,
+                  enabled: canSelectTask,
                 ),
                 const SizedBox(height: 32),
                 Expanded(
@@ -413,7 +651,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
               ],
             ),
           ),
- 
+
           if (_status == TimerStatus.breakTime)
             Positioned.fill(
               child: BreakOverlay(
@@ -427,4 +665,3 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     );
   }
 }
- 

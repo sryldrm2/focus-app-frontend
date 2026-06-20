@@ -93,8 +93,9 @@ class PomodoroService {
     );
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     if (body['success'] == false) return null;
-    return PomodoroSessionModel.fromJson(
-        body['data'] as Map<String, dynamic>);
+    final data = body['data'];
+    if (data == null) return null;
+    return PomodoroSessionModel.fromJson(data as Map<String, dynamic>);
   }
 
   // ─── GET /api/PomodoroSession/completed ───────────────
