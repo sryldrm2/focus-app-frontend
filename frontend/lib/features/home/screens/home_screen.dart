@@ -9,6 +9,7 @@ import 'package:focus_app/features/pomodoro/providers/pomodoro_provider.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/stats/providers/stats_provider.dart';
 import 'package:focus_app/features/tasks/providers/task_provider.dart';
+import 'package:focus_app/features/notifications/providers/notification_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -28,6 +29,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       await ref.read(pomodoroNotifierProvider).checkOngoing();
       await ref.read(statsNotifierProvider).loadStats();
       await ref.read(taskNotifierProvider).loadTasks();
+      await ref.read(notificationNotifierProvider).loadUnreadCount();
     });
   }
 

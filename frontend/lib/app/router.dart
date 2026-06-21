@@ -13,6 +13,7 @@ import 'package:focus_app/features/home/screens/home_screen.dart';
 import 'package:focus_app/features/pomodoro/screens/pomodoro_screen.dart';
 import 'package:focus_app/features/stats/screens/stats_screen.dart';
 import 'package:focus_app/features/social/screens/social_screen.dart';
+import 'package:focus_app/features/notifications/screens/notifications_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authNotifierProvider);
@@ -33,6 +34,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         '/social',
         '/profile',
         '/tasks',
+        '/notifications',
       ];
 
       // Splash: checkAuth bitene kadar bekle; sonra home veya login
@@ -78,14 +80,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
 
     routes: [
-      GoRoute(
-        path: '/splash',
-        builder: (_, __) => const SplashScreen(),
-      ),
-      GoRoute(
-        path: '/auth/login',
-        builder: (_, __) => const LoginScreen(),
-      ),
+      GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
+      GoRoute(path: '/auth/login', builder: (_, __) => const LoginScreen()),
       GoRoute(
         path: '/auth/register',
         builder: (_, __) => const RegisterScreen(),
@@ -99,31 +95,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
-          GoRoute(
-            path: '/home',
-            builder: (_, __) => const HomeScreen(),
-          ),
+          GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
           GoRoute(
             path: '/pomodoro',
-            builder: (context, state) => PomodoroScreen(
-              initialTaskId: state.extra as String?,
-            ),
+            builder: (context, state) =>
+                PomodoroScreen(initialTaskId: state.extra as String?),
           ),
+          GoRoute(path: '/stats', builder: (_, __) => const StatsScreen()),
+          GoRoute(path: '/social', builder: (_, __) => const SocialScreen()),
+          GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+          GoRoute(path: '/tasks', builder: (_, __) => const TasksScreen()),
           GoRoute(
-            path: '/stats',
-            builder: (_, __) => const StatsScreen(),
+            path: '/notifications',
+            builder: (_, __) => const NotificationsScreen(),
           ),
-          GoRoute(
-            path: '/social',
-            builder: (_, __) => const SocialScreen(),
-          ),
-          GoRoute(
-            path: '/profile',
-            builder: (_, __) => const ProfileScreen(),
-          ),
-          GoRoute(
-            path: '/tasks', builder: (_, __) => const TasksScreen()
-          )
         ],
       ),
     ],
@@ -134,20 +119,14 @@ class MainShell extends StatelessWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
 
-  static const _tabs = [
-    '/home',
-    '/pomodoro',
-    '/stats',
-    '/social',
-    '/profile',
-  ];
+  static const _tabs = ['/home', '/pomodoro', '/stats', '/social', '/profile'];
 
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    final currentIndex = _tabs.indexWhere(
-          (t) => location.startsWith(t),
-    ).clamp(0, 4);
+    final currentIndex = _tabs
+        .indexWhere((t) => location.startsWith(t))
+        .clamp(0, 4);
 
     return Scaffold(
       body: child,

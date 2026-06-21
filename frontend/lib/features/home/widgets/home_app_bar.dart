@@ -5,11 +5,13 @@ import 'package:focus_app/features/auth/providers/auth_providers.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/features/stats/providers/stats_provider.dart';
+import 'package:focus_app/features/notifications/providers/notification_provider.dart';
 
 class HomeAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authNotifierProvider).state.user;
+    final unreadCount = ref.watch(notificationStateProvider).unreadCount;
 
     final stats = ref.watch(statsStateProvider).summary;
     final streak = stats?.currentStreak ?? 0;
@@ -78,22 +80,23 @@ class HomeAppBar extends ConsumerWidget {
           Stack(
             children: [
               IconButton(
-                onPressed: () {},
+                onPressed: () => context.go('/notifications'),
                 icon: const Icon(Icons.notifications_outlined, size: 24),
                 color: AppColors.textPrimary,
               ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.error,
-                    shape: BoxShape.circle,
+              if (unreadCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppColors.error,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ],
