@@ -6,7 +6,6 @@ namespace PomodoraBack.Services.Interfaces
 {
     public interface IPomodoroTaskService
     {
-
         Task<IDataResult<TaskDto>> GetByIdAsync(string userId, string taskId);
         Task<IDataResult<TaskDto>> Add(string userId, CreateTaskDto taskDto);
         Task<IDataResult<List<TaskDto>>> GetAllAsync(string userId);
@@ -14,5 +13,13 @@ namespace PomodoraBack.Services.Interfaces
         Task<IDataResult<TaskDto>> UpdateAsync(string userId, string taskId, UpdateTaskDto updateTaskDto);
         Task<IDataResult<TaskDto>> AssignTaskToWorkspaceAsync(string userId, string taskId, AssignTaskToWorkspaceDto dto);
         Task<IResult> DeleteAsync(string userId, string taskId);
+
+        /// <summary>
+        /// Bir Pomodoro oturumu başarıyla tamamlandığında ilgili görevin CompletedPomodoroCount
+        /// değerini 1 artırır. Hedef sayıya ulaşıldıysa görevi otomatik olarak Completed yapar.
+        /// </summary>
+        /// <param name="taskId">Güncellenmesi gereken görevin ID'si</param>
+        /// <returns>Güncellenmiş görev DTO'su</returns>
+        Task<IDataResult<TaskDto>> IncrementPomodoroCountAsync(string taskId);
     }
 }

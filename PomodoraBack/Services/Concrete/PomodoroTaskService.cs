@@ -194,5 +194,52 @@ namespace PomodoraBack.Services.Concrete
             await _taskDal.UpdateAsync(task);
             return new SuccessResult("Görev silindi.");
         }
+
+        /// <summary>
+        /// Bir Pomodoro oturumu başarıyla tamamlandığında çağrılır.
+        /// İlgili görevin CompletedPomodoroCount değerini 1 artırır.
+        /// Hedef sayıya (PomodoroTargetCount) ulaşıldıysa görevi otomatik olarak Completed yapar.
+        /// </summary>
+        public async Task<IDataResult<TaskDto>> IncrementPomodoroCountAsync(string taskId)
+        {
+            // 1. Görevi bul (silinmemiş ve tamamlanmamış)
+            var task = await _taskDal.GetAsync(t =>
+                t.TaskId == taskId &&
+                t.DeletedAt == null);
+
+            if (task == null)
+                return new ErrorDataResult<TaskDto>("Görev bulunamadı.");
+
+            // 2. Zaten tamamlanmış veya iptal edilmişse sayacı artırma
+            if (task.Status == TaskStatusEnums.Completed || task.Status == TaskStatusEnums.Cancelled)
+                return new ErrorDataResult<TaskDto>(
+                    $"Bu görev zaten '{task.Status}' durumunda. Pomodoro sayacı artırılamaz.");
+
+            // 3. CompletedPomodoroCount'u 1 artır (null-safe)
+            task.CompletedPomodoroCount = (task.CompletedPomodoroCount ?? 0) + 1;
+            task.UpdatedAt = DateTime.UtcNow;
+
+            // 4. Eğer görev InProgress değilse, artık InProgress yap
+            if (task.Status == TaskStatusEnums.NotStarted || task.Status == TaskStatusEnums.OnHold)
+                task.Status = TaskStatusEnums.InProgress;
+
+            // 5. Hedef sayıya ulaşıldıysa görevi otomatik tamamla
+            if (task.PomodoroTargetCount.HasValue &&
+                task.CompletedPomodoroCount >= task.PomodoroTargetCount)
+            {
+                task.Status = TaskStatusEnums.Completed;
+            }
+
+            await _taskDal.UpdateAsync(task);
+
+            var updatedDto = _mapper.Map<TaskDto>(task);
+            
+            var message = task.Status == TaskStatusEnums.Completed
+                ? $"Tebrikler! Görev tamamlandı. ({task.CompletedPomodoroCount}/{task.PomodoroTargetCount} Pomodoro)"
+                : $"Pomodoro sayacı artırıldı. ({task.CompletedPomodoroCount}" +
+                  $"{(task.PomodoroTargetCount.HasValue ? $"/{task.PomodoroTargetCount}" : string.Empty)} Pomodoro)";
+
+            return new SuccessDataResult<TaskDto>(updatedDto, message);
+        }
     }
 }
