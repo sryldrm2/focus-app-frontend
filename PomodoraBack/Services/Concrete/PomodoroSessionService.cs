@@ -18,15 +18,18 @@ namespace PomodoraBack.Services.Concrete
         private readonly IPomodoroSessionDal _pomodoroSessionDal;
         private readonly IUserDal _userDal;
         private readonly IMapper _mapper;
+        private readonly IPomodoroTaskService _taskService;
 
         public PomodoroSessionService(
             IPomodoroSessionDal pomodoroSessionDal,
             IUserDal userDal,
-            IMapper mapper)
+            IMapper mapper,
+            IPomodoroTaskService taskService)
         {
             _pomodoroSessionDal = pomodoroSessionDal;
             _userDal = userDal;
             _mapper = mapper;
+            _taskService = taskService;
         }
 
         /// <summary>
@@ -115,6 +118,14 @@ namespace PomodoraBack.Services.Concrete
 
             // 6. Seansı kaydet
             await _pomodoroSessionDal.UpdateAsync(session);
+
+            // 7. İlişkili bir görev varsa Pomodoro sayacını artır
+            //    (Yalnızca WorkSession tipindeki seanslar görev sayacını etkiler)
+            if (!string.IsNullOrWhiteSpace(session.TaskId) &&
+                session.SessionType == PomodoroTypeEnums.WorkSession)
+            {
+                await _taskService.IncrementPomodoroCountAsync(session.TaskId);
+            }
 
             var sessionDto = _mapper.Map<PomodoroSessionDto>(session);
             return new SuccessDataResult<PomodoroSessionDto>(

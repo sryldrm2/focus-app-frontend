@@ -40,5 +40,11 @@ namespace PomodoraBack.DTOs
         /// Görevin tamamlanması gereken tarih
         /// </summary>
         public DateTime? DueDate { get; set; }
+
+        /// <summary>
+        /// Bu görev için hedeflenen toplam Pomodoro sayısı (opsiyonel - güncellenebilir)
+        /// </summary>
+        [Range(1, 500, ErrorMessage = "Pomodoro hedefi 1 ile 500 arasında olmalıdır")]
+        public int? PomodoroTargetCount { get; set; }
     }
 }

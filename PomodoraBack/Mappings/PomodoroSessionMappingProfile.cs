@@ -36,19 +36,24 @@ namespace PomodoraBack.Mappings
             // ===== Task Mappings =====
 
             // Entities.Task -> TaskDto
+            // PomodoroTargetCount ve CompletedPomodoroCount otomatik eşleşir (isimler birebir aynı)
             CreateMap<Entities.Task, TaskDto>()
-                .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description ?? string.Empty));
+                .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description));
 
             // CreateTaskDto -> Entities.Task
+            // CompletedPomodoroCount kullanıcı tarafından set edilmez; varsayılan değer (0) korunur
             CreateMap<CreateTaskDto, Entities.Task>()
                 .ForMember(dest => dest.TaskId, opt => opt.Ignore())
                 .ForMember(dest => dest.UserId, opt => opt.Ignore()) // Service'de set edilecek
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.DeletedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.CompletedPomodoroCount, opt => opt.Ignore())
+                .ForMember(dest => dest.Status, opt => opt.Ignore())
                 .ForMember(dest => dest.User, opt => opt.Ignore());
 
             // UpdateTaskDto -> Entities.Task
+            // CompletedPomodoroCount kullanıcı tarafından güncellenemez; servis katmanı yönetir
             CreateMap<UpdateTaskDto, Entities.Task>()
                 .ForMember(dest => dest.TaskId, opt => opt.Ignore())
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
@@ -56,6 +61,7 @@ namespace PomodoraBack.Mappings
                 .ForMember(dest => dest.DeletedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.User, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.CompletedPomodoroCount, opt => opt.Ignore())
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         }
     }
