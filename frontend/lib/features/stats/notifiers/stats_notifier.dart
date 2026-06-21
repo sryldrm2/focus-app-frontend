@@ -15,11 +15,12 @@ class StatsState {
     bool? isLoading,
     String? errorMessage,
     StatsSummaryModel? summary,
+    bool clearSummary = false,
   }) {
     return StatsState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
-      summary: summary ?? this.summary,
+      summary: clearSummary ? null : (summary ?? this.summary),
     );
   }
 }
@@ -37,7 +38,7 @@ class StatsNotifier extends ChangeNotifier {
   }
 
   Future<void> loadStats() async {
-    _emit(_state.copyWith(isLoading: true, errorMessage: null));
+    _emit(_state.copyWith(isLoading: true, errorMessage: null, clearSummary: true));
 
     try {
       final token = await TokenStorage.getAccessToken();
@@ -148,6 +149,7 @@ class StatsNotifier extends ChangeNotifier {
         _state.copyWith(
           isLoading: false,
           errorMessage: e.toString().replaceFirst('Exception: ', ''),
+          clearSummary: true,
         ),
       );
     }

@@ -38,7 +38,9 @@ class TodayPlanCard extends ConsumerWidget {
               if (total > 0)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8F8EF),
                     borderRadius: BorderRadius.circular(10),
@@ -62,7 +64,9 @@ class TodayPlanCard extends ConsumerWidget {
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: CircularProgressIndicator(
-                  color: AppColors.primary, strokeWidth: 2),
+                  color: AppColors.primary,
+                  strokeWidth: 2,
+                ),
               ),
             )
           else if (today.isEmpty)
@@ -80,7 +84,7 @@ class TodayPlanCard extends ConsumerWidget {
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
               ),
-                        ),
+            ),
           ),
         ],
       ),
@@ -111,7 +115,9 @@ class _EmptyPlan extends StatelessWidget {
             Text(
               'Bugün için görev eklenmedi',
               style: GoogleFonts.dmSans(
-                  color: AppColors.textSecondary, fontSize: 13),
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -132,7 +138,26 @@ class _EmptyPlan extends StatelessWidget {
 class _PlanRow extends ConsumerWidget {
   final TaskModel task;
   const _PlanRow({required this.task});
- 
+
+  String _formatDueDate(DateTime date) {
+    const months = [
+      'Oca',
+      'Şub',
+      'Mar',
+      'Nis',
+      'May',
+      'Haz',
+      'Tem',
+      'Ağu',
+      'Eyl',
+      'Eki',
+      'Kas',
+      'Ara',
+    ];
+
+    return '${date.day} ${months[date.month - 1]}';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
@@ -142,7 +167,8 @@ class _PlanRow extends ConsumerWidget {
         child: Row(
           children: [
             Container(
-              width: 4, height: 36,
+              width: 4,
+              height: 36,
               decoration: BoxDecoration(
                 color: task.color,
                 borderRadius: BorderRadius.circular(2),
@@ -173,12 +199,24 @@ class _PlanRow extends ConsumerWidget {
                         ),
                       ),
                       if (task.dueDate != null)
-                        Text(
-                          '${task.dueDate!.day}/${task.dueDate!.month}',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_rounded,
+                              size: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatDueDate(task.dueDate!),
+                              style: GoogleFonts.dmSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
                     ],
                   ),
@@ -200,7 +238,8 @@ class _PlanRow extends ConsumerWidget {
               onTap: () => ref.read(taskNotifierProvider).toggleComplete(task),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 22, height: 22,
+                width: 22,
+                height: 22,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: task.isCompleted
