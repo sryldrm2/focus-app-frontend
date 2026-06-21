@@ -131,5 +131,18 @@ namespace PomodoraBack.Services.Concrete
 
             return new SuccessDataResult<int>(unreadNotifications.Count);
         }
+
+        /// <summary>
+        /// Bildirimi veritabanına kaydetmeden, yalnızca SignalR üzerinden
+        /// belirtilen kullanıcıya anlık olarak iletir.
+        /// FriendStartedFocus gibi geçici/ephemeral bildirimler için kullanılır.
+        /// </summary>
+        /// <param name="targetUserId">Bildirimi alacak kullanıcının ID'si</param>
+        /// <param name="notification">Gönderilecek bildirim DTO'su</param>
+        public async System.Threading.Tasks.Task SendRealTimeNotificationAsync(string targetUserId, NotificationDto notification)
+        {
+            var userGroup = NotificationHub.GetUserGroupName(targetUserId);
+            await _hubContext.Clients.Group(userGroup).SendAsync("ReceiveNotification", notification);
+        }
     }
 }

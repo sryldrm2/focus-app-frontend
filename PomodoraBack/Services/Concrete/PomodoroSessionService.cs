@@ -1,5 +1,6 @@
 using AutoMapper;
 using Core.Utilities.Results;
+using Microsoft.Extensions.Logging;
 using PomodoraBack.Core.Constants;
 using PomodoraBack.Core.Enums;
 using PomodoraBack.DataAccess.Interfaces;
@@ -19,17 +20,23 @@ namespace PomodoraBack.Services.Concrete
         private readonly IUserDal _userDal;
         private readonly IMapper _mapper;
         private readonly IPomodoroTaskService _taskService;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<PomodoroSessionService> _logger;
 
         public PomodoroSessionService(
             IPomodoroSessionDal pomodoroSessionDal,
             IUserDal userDal,
             IMapper mapper,
-            IPomodoroTaskService taskService)
+            IPomodoroTaskService taskService,
+            IServiceScopeFactory scopeFactory,
+            ILogger<PomodoroSessionService> logger)
         {
             _pomodoroSessionDal = pomodoroSessionDal;
             _userDal = userDal;
             _mapper = mapper;
             _taskService = taskService;
+            _scopeFactory = scopeFactory;
+            _logger = logger;
         }
 
         /// <summary>
@@ -76,6 +83,34 @@ namespace PomodoraBack.Services.Concrete
             await _pomodoroSessionDal.AddAsync(session);
 
             var sessionDto = _mapper.Map<PomodoroSessionDto>(session);
+
+            // Arkadaşlara anlık "odaklanmaya başladı" bildirimi gönder.
+            // Ana akışı bloke etmemek için fire-and-forget pattern kullanılır.
+            // IServiceScopeFactory ile kendi bağımsız scope'unu açar;
+            // HTTP scope dispose edilse bile background task güvenle çalışır.
+            var capturedScopeFactory = _scopeFactory;
+            var capturedLogger = _logger;
+            var capturedUserId = userId;
+            var capturedUserName = user.Name;
+            var capturedSessionId = session.PomoId;
+            var capturedTaskId = session.TaskId;
+
+            _ = System.Threading.Tasks.Task.Run(async () =>
+            {
+                await using var scope = capturedScopeFactory.CreateAsyncScope();
+                var friendShipDal = scope.ServiceProvider.GetRequiredService<IFriendShipDal>();
+                var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+
+                await DispatchFocusStartedNotificationsAsync(
+                    capturedUserId,
+                    capturedUserName,
+                    capturedSessionId,
+                    capturedTaskId,
+                    friendShipDal,
+                    notificationService,
+                    capturedLogger);
+            });
+
             return new SuccessDataResult<PomodoroSessionDto>(
                 sessionDto, 
                 PomodoroConstants.SUCCESS_SESSION_STARTED);
@@ -263,6 +298,93 @@ namespace PomodoraBack.Services.Concrete
             return new SuccessDataResult<PomodoroSessionDto>(
                 sessionDto, 
                 $"Ara verildi. Toplam ara: {session.BreakCount}");
+        }
+        /// <summary>
+        /// Kullanıcının onaylanmış tüm arkadaşlarına FriendStartedFocus tipinde
+        /// anlık SignalR bildirimi gönderir. DB'ye kayıt yapılmaz.
+        /// Her arkadaş için ayrı try-catch ile izole çalışır; birinin hatası
+        /// diğerlerinin bildirimini engellemez.
+        /// </summary>
+        /// <summary>
+        /// Kullanıcının onaylanmış tüm arkadaşlarına FriendStartedFocus tipinde
+        /// anlık SignalR bildirimi gönderir. DB'ye kayıt yapılmaz.
+        /// Her arkadaş için ayrı try-catch ile izole çalışır; birinin hatası
+        /// diğerlerinin bildirimini engellemez.
+        /// Scope dışarıdan enjekte edilir; bu metod kendi bağımsız DI scope'unda çalışır.
+        /// </summary>
+        private static async System.Threading.Tasks.Task DispatchFocusStartedNotificationsAsync(
+            string userId,
+            string userName,
+            string sessionId,
+            string? taskId,
+            IFriendShipDal friendShipDal,
+            INotificationService notificationService,
+            ILogger<PomodoroSessionService> logger)
+        {
+            try
+            {
+                logger.LogInformation(
+                    "[FocusNotification] {UserId} için arkadaş bildirimleri başlatıldı. SessionId={SessionId}",
+                    userId, sessionId);
+
+                var friendIds = await friendShipDal.GetApprovedFriendIdsAsync(userId);
+
+                if (friendIds == null || friendIds.Count == 0)
+                {
+                    logger.LogInformation(
+                        "[FocusNotification] {UserId} için onaylı arkadaş bulunamadı; bildirim gönderilmedi.",
+                        userId);
+                    return;
+                }
+
+                var notificationDto = new NotificationDto
+                {
+                    // NotificationId: ephemeral bildirim olduğu için DB primary key
+                    // gerekmez; referans amaçlı geçici bir GUID atıyoruz.
+                    NotificationId  = Guid.NewGuid().ToString(),
+                    UserId          = userId,
+                    Type            = NotificationTypeEnums.FriendStartedFocus,
+                    Title           = "Arkadaşın odaklanmaya başladı! 🍅",
+                    Message         = $"{userName} odaklanmaya başladı, sen de ona katıl!",
+                    IsRead          = false,
+                    CreatedAt       = DateTime.UtcNow,
+                    // RelatedEntityId: önce sessionId, yoksa taskId kullan
+                    RelatedEntityId = !string.IsNullOrWhiteSpace(sessionId) ? sessionId : taskId
+                };
+
+                foreach (var friendId in friendIds)
+                {
+                    try
+                    {
+                        await notificationService.SendRealTimeNotificationAsync(friendId, notificationDto);
+
+                        logger.LogInformation(
+                            "[FocusNotification] {UserId} → {FriendId} bildirimi gönderildi.",
+                            userId, friendId);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Tek bir arkadaşa gönderim başarısız olsa bile diğerleri etkilenmez.
+                        logger.LogWarning(
+                            ex,
+                            "[FocusNotification] {UserId} → {FriendId} bildirimi gönderilemedi.",
+                            userId, friendId);
+                    }
+                }
+
+                logger.LogInformation(
+                    "[FocusNotification] {UserId} seansı için {Count} arkadaşa bildirim gönderildi.",
+                    userId, friendIds.Count);
+            }
+            catch (Exception ex)
+            {
+                // Arkadaş listesi çekilemezse veya genel bir hata oluşursa
+                // sadece loglayıp susturuyoruz; ana seans başlatma akışı etkilenmez.
+                logger.LogError(
+                    ex,
+                    "[FocusNotification] {UserId} için bildirim dağıtımında beklenmeyen hata. SessionId={SessionId}",
+                    userId, sessionId);
+            }
         }
     }
 }
