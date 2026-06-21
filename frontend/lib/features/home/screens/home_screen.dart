@@ -7,6 +7,7 @@ import 'package:focus_app/features/home/widgets/today_plan_card.dart';
 import 'package:focus_app/features/home/widgets/priority_suggestion_card.dart';
 import 'package:focus_app/features/pomodoro/providers/pomodoro_provider.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
+import 'package:focus_app/features/stats/providers/stats_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -22,9 +23,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => ref.read(pomodoroNotifierProvider).checkOngoing(),
-    );
+    Future.microtask(() async {
+      await ref.read(pomodoroNotifierProvider).checkOngoing();
+      await ref.read(statsNotifierProvider).loadStats();
+    });
   }
 
   @override
@@ -35,9 +37,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(
-              child: HomeAppBar(),
-            ),
+            SliverToBoxAdapter(child: HomeAppBar()),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
                 _horizontalPadding,
@@ -63,4 +63,3 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 }
-

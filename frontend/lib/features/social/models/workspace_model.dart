@@ -53,7 +53,9 @@ class WorkspaceModel {
 class WorkspaceInvitationModel {
   final String workspaceInvitationId;
   final String workspaceId;
+  final String workspaceName;
   final String senderId;
+  final String senderNickName;
   final String receiverId;
   final WorkspaceInvitationStatus status;
   final DateTime createdAt;
@@ -61,7 +63,9 @@ class WorkspaceInvitationModel {
   const WorkspaceInvitationModel({
     required this.workspaceInvitationId,
     required this.workspaceId,
+    required this.workspaceName,
     required this.senderId,
+    required this.senderNickName,
     required this.receiverId,
     required this.status,
     required this.createdAt,
@@ -71,7 +75,9 @@ class WorkspaceInvitationModel {
     return WorkspaceInvitationModel(
       workspaceInvitationId: json['workspaceInvitationId'] as String? ?? '',
       workspaceId: json['workspaceId'] as String? ?? '',
+      workspaceName: json['workspaceName'] as String? ?? '',
       senderId: json['senderId'] as String? ?? '',
+      senderNickName: json['senderNickName'] as String? ?? '',
       receiverId: json['receiverId'] as String? ?? '',
       status: WorkspaceInvitationStatus.fromInt(json['status'] as int? ?? 0),
       createdAt: DateTime.parse(json['createdAt'] as String),

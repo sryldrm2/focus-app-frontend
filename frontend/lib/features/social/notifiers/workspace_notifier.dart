@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
+import 'package:focus_app/core/network/api_result.dart';
 import 'package:focus_app/features/social/models/workspace_model.dart';
 import 'package:focus_app/features/social/network/workspace_service.dart';
 import 'package:focus_app/features/social/network/workspace_storage.dart';
 
 class WorkspaceState {
   final List<WorkspaceModel> myWorkspaces;
+  final List<WorkspaceInvitationModel> pendingInvitations;
   final bool isLoading;
   final String? errorMessage;
   final String? lastInvitationId;
@@ -14,6 +16,7 @@ class WorkspaceState {
     this.isLoading = false,
     this.errorMessage,
     this.lastInvitationId,
+    this.pendingInvitations = const [],
   });
 
   WorkspaceState copyWith({
@@ -23,6 +26,7 @@ class WorkspaceState {
     String? lastInvitationId,
     bool clearError = false,
     bool clearLastInvitation = false,
+    List<WorkspaceInvitationModel>? pendingInvitations,
   }) {
     return WorkspaceState(
       myWorkspaces: myWorkspaces ?? this.myWorkspaces,
@@ -31,6 +35,7 @@ class WorkspaceState {
       lastInvitationId: clearLastInvitation
           ? null
           : (lastInvitationId ?? this.lastInvitationId),
+      pendingInvitations: pendingInvitations ?? this.pendingInvitations,
     );
   }
 }
@@ -51,9 +56,32 @@ class WorkspaceNotifier extends ChangeNotifier {
 
   /// StudyRoomsTab açılınca bir kez çağır.
   Future<void> init() async {
-    final saved = await WorkspaceStorage.load();
-    if (saved.isNotEmpty) {
-      _emit(_state.copyWith(myWorkspaces: saved));
+    _emit(_state.copyWith(isLoading: true, clearError: true));
+
+    try {
+      final results = await Future.wait([
+        _service.getMyWorkspaces(),
+        _service.getPendingInvitations(),
+      ]);
+
+      final workspacesResult = results[0] as ApiResult<List<WorkspaceModel>>;
+      final invitationsResult =
+          results[1] as ApiResult<List<WorkspaceInvitationModel>>;
+
+      _emit(
+        _state.copyWith(
+          isLoading: false,
+          myWorkspaces: workspacesResult.data ?? [],
+          pendingInvitations: invitationsResult.data ?? [],
+        ),
+      );
+    } catch (e) {
+      _emit(
+        _state.copyWith(
+          isLoading: false,
+          errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -73,17 +101,21 @@ class WorkspaceNotifier extends ChangeNotifier {
         throw Exception('Oda oluşturulamadı.');
       }
 
-      _emit(_state.copyWith(
-        isLoading: false,
-        myWorkspaces: [..._state.myWorkspaces, workspace],
-      ));
+      _emit(
+        _state.copyWith(
+          isLoading: false,
+          myWorkspaces: [..._state.myWorkspaces, workspace],
+        ),
+      );
       await _persist();
       return workspace;
     } catch (e) {
-      _emit(_state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
-      ));
+      _emit(
+        _state.copyWith(
+          isLoading: false,
+          errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        ),
+      );
       return null;
     }
   }
@@ -98,16 +130,20 @@ class WorkspaceNotifier extends ChangeNotifier {
         workspaceId: workspaceId,
         receiverId: receiverId,
       );
-      _emit(_state.copyWith(
-        isLoading: false,
-        lastInvitationId: result.data?.workspaceInvitationId,
-      ));
+      _emit(
+        _state.copyWith(
+          isLoading: false,
+          lastInvitationId: result.data?.workspaceInvitationId,
+        ),
+      );
       return true;
     } catch (e) {
-      _emit(_state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
-      ));
+      _emit(
+        _state.copyWith(
+          isLoading: false,
+          errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        ),
+      );
       return false;
     }
   }
@@ -117,46 +153,33 @@ class WorkspaceNotifier extends ChangeNotifier {
     if (id.isEmpty) return false;
 
     _emit(_state.copyWith(isLoading: true, clearError: true));
+
     try {
       final result = await _service.acceptInvitation(invitationId: id);
-      final inv = result.data;
-      if (inv == null) throw Exception('Davet kabul edilemedi.');
 
-      var list = [..._state.myWorkspaces];
-      final index = list.indexWhere((w) => w.workspaceId == inv.workspaceId);
-
-      if (index < 0) {
-        // Listede yoksa placeholder oda ekle (backend oda detayı dönmüyor)
-        list.add(WorkspaceModel(
-          workspaceId: inv.workspaceId,
-          workspaceName: 'Katıldığın oda',
-          ownerId: inv.senderId,
-          ownerNickName: '',
-          isActive: true,
-          createdAt: DateTime.now(),
-          memberCount: 1,
-        ));
-      } else {
-        final w = list[index];
-        list[index] = WorkspaceModel(
-          workspaceId: w.workspaceId,
-          workspaceName: w.workspaceName,
-          ownerId: w.ownerId,
-          ownerNickName: w.ownerNickName,
-          isActive: w.isActive,
-          createdAt: w.createdAt,
-          memberCount: w.memberCount + 1,
-        );
+      if (result.data == null) {
+        throw Exception('Davet kabul edilemedi.');
       }
 
-      _emit(_state.copyWith(isLoading: false, myWorkspaces: list));
-      await _persist();
+      final workspacesResult = await _service.getMyWorkspaces();
+      final invitationsResult = await _service.getPendingInvitations();
+
+      _emit(
+        _state.copyWith(
+          isLoading: false,
+          myWorkspaces: workspacesResult.data ?? [],
+          pendingInvitations: invitationsResult.data ?? [],
+        ),
+      );
+
       return true;
     } catch (e) {
-      _emit(_state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
-      ));
+      _emit(
+        _state.copyWith(
+          isLoading: false,
+          errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        ),
+      );
       return false;
     }
   }
@@ -165,21 +188,25 @@ class WorkspaceNotifier extends ChangeNotifier {
     String workspaceId,
     int memberCount,
   ) async {
-    _emit(_state.copyWith(
-      myWorkspaces: _state.myWorkspaces
-          .map((w) => w.workspaceId == workspaceId
-              ? WorkspaceModel(
-                  workspaceId: w.workspaceId,
-                  workspaceName: w.workspaceName,
-                  ownerId: w.ownerId,
-                  ownerNickName: w.ownerNickName,
-                  isActive: w.isActive,
-                  createdAt: w.createdAt,
-                  memberCount: memberCount,
-                )
-              : w)
-          .toList(),
-    ));
+    _emit(
+      _state.copyWith(
+        myWorkspaces: _state.myWorkspaces
+            .map(
+              (w) => w.workspaceId == workspaceId
+                  ? WorkspaceModel(
+                      workspaceId: w.workspaceId,
+                      workspaceName: w.workspaceName,
+                      ownerId: w.ownerId,
+                      ownerNickName: w.ownerNickName,
+                      isActive: w.isActive,
+                      createdAt: w.createdAt,
+                      memberCount: memberCount,
+                    )
+                  : w,
+            )
+            .toList(),
+      ),
+    );
     await _persist();
   }
 }

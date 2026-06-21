@@ -4,16 +4,21 @@ import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/auth/providers/auth_providers.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:focus_app/features/stats/providers/stats_provider.dart';
 
 class HomeAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authNotifierProvider).state.user;
+
+    final stats = ref.watch(statsStateProvider).summary;
+    final streak = stats?.currentStreak ?? 0;
+
     final firstName = user == null
         ? ''
         : user.name.trim().isNotEmpty
-            ? user.name.trim()
-            : user.nickname.trim();
+        ? user.name.trim()
+        : user.nickname.trim();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -31,9 +36,7 @@ class HomeAppBar extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  firstName.isEmpty
-                      ? 'Merhaba 👋'
-                      : 'Merhaba, $firstName 👋',
+                  firstName.isEmpty ? 'Merhaba 👋' : 'Merhaba, $firstName 👋',
                   style: GoogleFonts.nunito(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -54,7 +57,7 @@ class HomeAppBar extends ConsumerWidget {
                 const Text('🔥', style: TextStyle(fontSize: 14)),
                 const SizedBox(width: 4),
                 Text(
-                  '7 gün',
+                  '$streak gün',
                   style: GoogleFonts.nunito(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -90,14 +93,14 @@ class HomeAppBar extends ConsumerWidget {
                     shape: BoxShape.circle,
                   ),
                 ),
-              )
+              ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
-  
+
   String _greeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Günaydın ☀️';

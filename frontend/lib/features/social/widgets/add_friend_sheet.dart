@@ -9,6 +9,7 @@ class AddFriendSheet extends ConsumerStatefulWidget {
   @override
   ConsumerState<AddFriendSheet> createState() => _AddFriendSheetState();
 }
+
 class _AddFriendSheetState extends ConsumerState<AddFriendSheet> {
   final _controller = TextEditingController();
   bool _isLoading = false;
@@ -18,12 +19,13 @@ class _AddFriendSheetState extends ConsumerState<AddFriendSheet> {
     _controller.dispose();
     super.dispose();
   }
+
   Future<void> _sendRequest() async {
     final raw = _controller.text.trim();
     if (raw.isEmpty) return;
 
     final receiverNickname = raw.startsWith('@') ? raw.substring(1) : raw;
-if (receiverNickname.isEmpty) return;
+    if (receiverNickname.isEmpty) return;
 
     setState(() {
       _isLoading = true;
@@ -98,17 +100,22 @@ if (receiverNickname.isEmpty) return;
               child: TextField(
                 controller: _controller,
                 autofocus: true,
-                style: GoogleFonts.dmSans(fontSize: 15),
+                cursorColor: AppColors.primary,
+                style: GoogleFonts.dmSans(
+                  fontSize: 15,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Örn. kullaniciadi',
                   hintStyle: GoogleFonts.dmSans(
-                    color: Colors.grey.shade400,
+                    color: AppColors.textSecondary.withOpacity(0.65),
                   ),
-                  prefixIcon: const Icon(
-  Icons.alternate_email,
-  size: 20,
-  color: Colors.grey,
-),
+                  prefixIcon: Icon(
+                    Icons.alternate_email,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -123,10 +130,7 @@ if (receiverNickname.isEmpty) return;
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: GoogleFonts.dmSans(
-                  fontSize: 13,
-                  color: AppColors.error,
-                ),
+                style: GoogleFonts.dmSans(fontSize: 13, color: AppColors.error),
               ),
             ],
             const SizedBox(height: 20),
