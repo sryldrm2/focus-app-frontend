@@ -7,6 +7,7 @@ import 'package:focus_app/features/pomodoro/providers/pomodoro_provider.dart';
 import 'package:focus_app/features/profile/providers/profile_providers.dart';
 import 'package:focus_app/features/social/providers/social_providers.dart';
 import 'package:focus_app/features/social/providers/workspace_provider.dart';
+import 'package:focus_app/features/stats/providers/stats_provider.dart';
 import 'package:focus_app/features/tasks/providers/task_provider.dart';
 
 class LogoutButton extends ConsumerWidget {
@@ -92,6 +93,7 @@ class LogoutButton extends ConsumerWidget {
 
                             ref.invalidate(taskNotifierProvider);
                             ref.invalidate(pomodoroNotifierProvider);
+                            ref.invalidate(statsNotifierProvider);
                             ref.invalidate(socialNotifierProvider);
                             ref.invalidate(workspaceNotifierProvider);
                             ref.invalidate(workspaceTaskNotifierProvider);
