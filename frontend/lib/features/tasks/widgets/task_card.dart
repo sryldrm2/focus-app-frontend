@@ -8,6 +8,7 @@ class TaskCard extends StatelessWidget {
   final VoidCallback onToggle;
   final VoidCallback onDelete;
   final VoidCallback? onAssignToRoom;
+  final VoidCallback? onEdit;
  
   const TaskCard({
     super.key,
@@ -15,6 +16,7 @@ class TaskCard extends StatelessWidget {
     required this.onToggle,
     required this.onDelete,
     this.onAssignToRoom,
+    this.onEdit,
   });
  
   @override
@@ -62,7 +64,10 @@ class TaskCard extends StatelessWidget {
  
             // İçerik
             Expanded(
-              child: Column(
+              child: GestureDetector(
+                onTap: onEdit,
+                behavior: HitTestBehavior.opaque,
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -102,9 +107,14 @@ class TaskCard extends StatelessWidget {
                         const SizedBox(width: 6),
                         _DateChip(date: task.dueDate!),
                       ],
+                      if (task.pomodoroLabel != null) ...[
+                        const SizedBox(width: 6),
+                        _PomodoroChip(label: task.pomodoroLabel!),
+                      ],
                     ],
                   ),
                 ],
+              ),
               ),
             ),
             const SizedBox(width: 8),
@@ -220,6 +230,29 @@ class _DateChip extends StatelessWidget {
         const SizedBox(width: 2),
         Text(
           '${date.day}/${date.month}',
+          style: GoogleFonts.dmSans(
+            fontSize: 10,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PomodoroChip extends StatelessWidget {
+  final String label;
+  const _PomodoroChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.timer_outlined, size: 11, color: AppColors.textSecondary),
+        const SizedBox(width: 2),
+        Text(
+          label,
           style: GoogleFonts.dmSans(
             fontSize: 10,
             color: AppColors.textSecondary,

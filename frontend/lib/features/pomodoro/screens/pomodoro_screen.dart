@@ -15,6 +15,7 @@ import 'package:focus_app/features/pomodoro/widgets/session_complete_sheet.dart'
 import 'package:focus_app/features/pomodoro/widgets/pomodoro_models.dart';
 import 'package:focus_app/features/tasks/models/task_model.dart';
 import 'package:focus_app/features/tasks/providers/task_provider.dart';
+import 'package:focus_app/features/social/providers/workspace_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -294,7 +295,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     super.dispose();
   }
 
-  void _syncOngoingSessionToUi() {
+  Future<void> _syncOngoingSessionToUi() async {
     final pomState = ref.read(pomodoroNotifierProvider).state;
     final session = pomState.currentSession;
     if (session == null || !session.isOngoing) return;
@@ -302,7 +303,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     final remaining = _resolveSecondsLeft(session, pomState);
 
     if (remaining <= 0) {
-      ref.read(pomodoroNotifierProvider).completeSession();
+      await _completeSessionAndRefreshTasks();
       ref.read(pomodoroNotifierProvider).clearLocalTimer();
       setState(() {
         _status = TimerStatus.idle;
@@ -494,9 +495,31 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     });
   }
 
-  Future<void> _onWorkComplete() async {
-    // Backend'e tamamlandı gönder
+  Future<void> _completeSessionAndRefreshTasks() async {
+    final taskId = _selectedTask?.taskId;
+    final workspaceId = _selectedTask?.workspaceId;
+
     await ref.read(pomodoroNotifierProvider).completeSession();
+
+    await ref.read(taskNotifierProvider).loadTasks();
+    if (workspaceId != null && workspaceId.isNotEmpty) {
+      await ref
+          .read(workspaceTaskNotifierProvider)
+          .loadTasks(workspaceId);
+    }
+
+    if (taskId != null && mounted) {
+      final refreshed = ref.read(taskNotifierProvider).state.tasks
+          .where((t) => t.taskId == taskId)
+          .firstOrNull;
+      if (refreshed != null) _selectedTask = refreshed;
+    }
+  }
+
+  Future<void> _onWorkComplete() async {
+    await _completeSessionAndRefreshTasks();
+
+    if (!mounted) return;
 
     setState(() {
       _completedSessions++;

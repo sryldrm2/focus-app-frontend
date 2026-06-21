@@ -8,6 +8,21 @@ import 'package:focus_app/features/pomodoro/utils/open_pomodoro.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+double _taskProgress(TaskModel task) {
+  final target = task.pomodoroTargetCount;
+  if (target != null && target > 0) {
+    return (task.completedPomodoroCount / target).clamp(0.0, 1.0);
+  }
+  return task.isCompleted ? 1.0 : 0.0;
+}
+
+int _todayProgressPercent(List<TaskModel> tasks) {
+  if (tasks.isEmpty) return 0;
+  final avg =
+      tasks.map(_taskProgress).reduce((a, b) => a + b) / tasks.length;
+  return (avg * 100).round().clamp(0, 100);
+}
+
 class TodayPlanCard extends ConsumerWidget {
   const TodayPlanCard({super.key});
 
@@ -15,9 +30,8 @@ class TodayPlanCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(taskNotifierProvider).state;
     final today = state.todayTasks;
-    final completed = today.where((t) => t.isCompleted).length;
     final total = today.length;
-    final pct = total == 0 ? 0 : (completed / total * 100).round();
+    final pct = _todayProgressPercent(today);
 
     return SectionCard(
       child: Column(
@@ -224,7 +238,7 @@ class _PlanRow extends ConsumerWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(3),
                     child: LinearProgressIndicator(
-                      value: task.isCompleted ? 1.0 : 0.0,
+                      value: _taskProgress(task),
                       backgroundColor: task.color.withOpacity(0.1),
                       valueColor: AlwaysStoppedAnimation<Color>(task.color),
                       minHeight: 5,
