@@ -52,5 +52,19 @@ namespace PomodoraBack.DataAccess.Concrete
 
             return leaderboard;
         }
+
+        /// <summary>
+        /// Kullanıcının onaylanmış (soft-delete edilmemiş) tüm arkadaşlarının
+        /// UserId listesini döndürür. Yalnızca ID alanını çeker, JOIN yapmaz.
+        /// </summary>
+        public async Task<List<string>> GetApprovedFriendIdsAsync(string userId)
+        {
+            return await _pomodoroContext.Friendships
+                .Where(f => f.DeletedAt == null &&
+                            (f.FirstUserId == userId || f.SecondUserId == userId))
+                .Select(f => f.FirstUserId == userId ? f.SecondUserId : f.FirstUserId)
+                .Distinct()
+                .ToListAsync();
+        }
     }
 }
