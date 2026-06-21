@@ -8,6 +8,7 @@ using PomodoraBack.DataAccess.Context;
 using PomodoraBack.DataAccess.Interfaces;
 using PomodoraBack.Services.Concrete;
 using PomodoraBack.Services.Interfaces;
+using PomodoraBack.Services.BackgroundWorkers;
 using PomodoraBack.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +35,7 @@ builder.Services.AddScoped<IPomodoroTaskDal, PomodoroTaskDal>();
 builder.Services.AddScoped<IWorkspaceDal, WorkspaceDal>();
 builder.Services.AddScoped<IWorkspaceMemberDal, WorkspaceMemberDal>();
 builder.Services.AddScoped<IWorkspaceInvitationDal, WorkspaceInvitationDal>();
+builder.Services.AddScoped<INotificationDal, NotificationDal>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -43,6 +45,10 @@ builder.Services.AddScoped<IFriendRequest, FriendRequestService>();
 builder.Services.AddScoped<IPomodoroSessionService, PomodoroSessionService>();
 builder.Services.AddScoped<IPomodoroTaskService, PomodoroTaskService>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// Background Services
+builder.Services.AddHostedService<TaskDueDateReminderWorker>();
 
 // JWT Authentication
 builder.Services.AddAuthentication(options =>
@@ -69,6 +75,12 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 
+// SignalR Configuration
+builder.Services.AddSignalR(options =>
+{
+    options.MaximumReceiveMessageSize = 32 * 1024 * 1024; // 32 MB
+});
+
 // Swagger/OpenAPI Configuration
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -86,7 +98,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll",
         policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.AllowCredentials()
+                  .SetIsOriginAllowed(hostName => true)  // Tüm originlere izin ver
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -114,6 +127,7 @@ app.UseAuthorization();
 // LastSeen Middleware
 app.UseMiddleware<UpdateLastSeenMiddleware>();
 
+app.MapHub<PomodoraBack.Hubs.NotificationHub>("/notificationHub");
 app.MapControllers();
 
 app.Run();

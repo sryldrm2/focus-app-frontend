@@ -18,6 +18,7 @@ namespace PomodoraBack.DataAccess.Context
         public DbSet<Workspace> Workspaces { get; set; }
         public DbSet<WorkspaceInvitation> WorkspaceInvitations { get; set; }
         public DbSet<WorkspaceMember> WorkspaceMembers { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
 
 
@@ -174,6 +175,19 @@ namespace PomodoraBack.DataAccess.Context
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasIndex(e => new { e.WorkspaceId, e.ReceiverId, e.Status });
+            });
+
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.HasKey(e => e.NotificationId);
+
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => new { e.UserId, e.IsRead, e.CreatedAt });
+                entity.HasIndex(e => new { e.UserId, e.Type, e.CreatedAt });
             });
         }
     }
