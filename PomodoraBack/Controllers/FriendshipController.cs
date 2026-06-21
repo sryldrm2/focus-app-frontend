@@ -94,5 +94,22 @@ namespace PomodoraBack.Controllers
 
             return Ok(result);
         }
+
+        /// <summary>
+        /// Arkadaş içi liderlik tablosunu getir.
+        /// Giriş yapan kullanıcının kendisi ve onaylanmış arkadaşları
+        /// TotalPoints'e göre büyükten küçüğe sıralı, Rank numaralı şekilde listelenir.
+        /// </summary>
+        [HttpGet("leaderboard")]
+        [Authorize]
+        public async Task<IActionResult> GetFriendLeaderboard()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Kullanıcı kimliği bulunamadı.");
+
+            var result = await _friendRequestService.GetFriendLeaderboardAsync(userId);
+            return Response(result);
+        }
     }
 }

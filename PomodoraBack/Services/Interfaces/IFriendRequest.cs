@@ -1,4 +1,4 @@
-﻿using Core.Utilities.Results;
+using Core.Utilities.Results;
 using PomodoraBack.Core.DataAccess;
 using PomodoraBack.DTOs;
 using IResult = Core.Utilities.Results.IResults;
@@ -19,5 +19,13 @@ namespace PomodoraBack.Services.Interfaces
         Task<IDataResult<List<FriendshipDto>>> GetFriendsAsync(string userId);
         Task<IResult> RemoveFriendAsync(string userId, string friendId);
         Task<IDataResult<bool>> AreFriendsAsync(string userId, string friendId);
+
+        /// <summary>
+        /// Giriş yapan kullanıcının kendisini ve onaylanmış arkadaşlarını
+        /// TotalPoints'e göre büyükten küçüğe sıralayarak Rank atanmış
+        /// liderlik tablosu listesi döndürür.
+        /// </summary>
+        /// <param name="currentUserId">İsteği atan kullanıcının ID'si</param>
+        Task<IDataResult<List<FriendLeaderboardDto>>> GetFriendLeaderboardAsync(string currentUserId);
     }
 }

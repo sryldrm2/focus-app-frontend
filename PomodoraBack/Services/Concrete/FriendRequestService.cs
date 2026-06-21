@@ -238,5 +238,34 @@ namespace PomodoraBack.Services.Concrete
             bool areFriends = friendship != null;
             return new SuccessDataResult<bool>(areFriends);
         }
+
+        /// <summary>
+        /// Kullanıcının kendisini ve onaylanmış arkadaşlarını
+        /// TotalPoints'e göre sıralayıp Rank numarası atanmış
+        /// liderlik tablosu listesi döndürür.
+        /// </summary>
+        public async Task<IDataResult<List<FriendLeaderboardDto>>> GetFriendLeaderboardAsync(string currentUserId)
+        {
+            // Kullanıcı var mı kontrol et
+            var user = await _userDal.GetAsync(u => u.UserId == currentUserId && u.DeletedAt == null);
+            if (user == null)
+                return new ErrorDataResult<List<FriendLeaderboardDto>>("Kullanıcı bulunamadı.");
+
+            // DAL'dan TotalPoints desc sıralı listeyi al (Rank = 0 olarak gelir)
+            var sortedList = await _friendshipDal.GetFriendLeaderboardAsync(currentUserId);
+
+            // LINQ ile 1'den başlayan Rank numaralarını ata
+            var rankedList = sortedList
+                .Select((entry, index) =>
+                {
+                    entry.Rank = index + 1;
+                    return entry;
+                })
+                .ToList();
+
+            return new SuccessDataResult<List<FriendLeaderboardDto>>(
+                rankedList,
+                $"Liderlik tablosu getirildi. Toplam {rankedList.Count} kişi.");
+        }
     }
 }
