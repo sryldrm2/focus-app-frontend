@@ -57,14 +57,15 @@ class PomodoroService {
 
   // ─── POST /api/PomodoroSession/{pomoId}/complete ──────
   Future<PomodoroSessionModel> completeSession(
-      String token, String pomoId) async {
+    String token,
+    String pomoId,
+  ) async {
     final res = await http.post(
       Uri.parse('$_baseUrl/PomodoroSession/$pomoId/complete'),
       headers: _headers(token),
     );
     final body = _handleResponse(res);
-    return PomodoroSessionModel.fromJson(
-        body['data'] as Map<String, dynamic>);
+    return PomodoroSessionModel.fromJson(body['data'] as Map<String, dynamic>);
   }
 
   // ─── POST /api/PomodoroSession/{pomoId}/cancel ────────
@@ -106,6 +107,30 @@ class PomodoroService {
     );
     final body = _handleResponse(res);
     final list = body['data'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => PomodoroSessionModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ─── GET /api/PomodoroSession/date-range ───────────────
+  Future<List<PomodoroSessionModel>> getByDateRange(
+    String token, {
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final start = startDate.toIso8601String();
+    final end = endDate.toIso8601String();
+
+    final res = await http.get(
+      Uri.parse(
+        '$_baseUrl/PomodoroSession/date-range?startDate=$start&endDate=$end',
+      ),
+      headers: _headers(token),
+    );
+
+    final body = _handleResponse(res);
+    final list = body['data'] as List<dynamic>? ?? [];
+
     return list
         .map((e) => PomodoroSessionModel.fromJson(e as Map<String, dynamic>))
         .toList();
