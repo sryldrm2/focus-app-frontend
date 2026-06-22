@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/social/providers/social_providers.dart';
 import 'package:focus_app/features/social/providers/workspace_provider.dart';
+import 'package:focus_app/features/notifications/network/notification_hub_service.dart';
 import 'package:focus_app/features/social/utils/open_create_room.dart';
 import 'package:focus_app/features/social/widgets/study_room_card.dart';
 import 'package:focus_app/features/social/screens/workspace_detail_screen.dart';
@@ -214,6 +215,12 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                                       .acceptInvitation(
                                         inv.workspaceInvitationId,
                                       );
+
+                                  if (ok) {
+                                    await ref
+                                        .read(notificationHubServiceProvider)
+                                        .reconnect();
+                                  }
 
                                   if (!mounted) return;
 

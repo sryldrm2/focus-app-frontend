@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/features/social/notifiers/workspace_notifier.dart';
+import 'package:focus_app/features/social/notifiers/workspace_pomodoro_realtime_notifier.dart';
 import 'package:focus_app/features/tasks/notifiers/workspace_task_notifier.dart';
 
 // ── Workspace (oda) ────────────────────────────────────────
@@ -19,4 +20,15 @@ final workspaceTaskNotifierProvider =
 
 final workspaceTaskStateProvider = Provider<WorkspaceTaskState>(
   (ref) => ref.watch(workspaceTaskNotifierProvider).state,
+);
+
+// ── Workspace pomodoro gerçek zamanlı senkronizasyonu ────
+final workspacePomodoroRealtimeNotifierProvider =
+    ChangeNotifierProvider<WorkspacePomodoroRealtimeNotifier>(
+  (_) => WorkspacePomodoroRealtimeNotifier(),
+);
+
+final workspacePomodoroRealtimeProvider =
+    Provider<WorkspacePomodoroRealtimeState>(
+  (ref) => ref.watch(workspacePomodoroRealtimeNotifierProvider).state,
 );

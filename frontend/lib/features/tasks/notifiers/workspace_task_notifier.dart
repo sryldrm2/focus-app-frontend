@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:focus_app/core/network/token_storage.dart';
+import 'package:focus_app/features/pomodoro/models/pomodoro_model.dart';
 import 'package:focus_app/features/tasks/models/task_model.dart';
 import 'package:focus_app/features/tasks/network/task_service.dart';
 
@@ -50,6 +51,49 @@ class WorkspaceTaskNotifier extends ChangeNotifier {
   /// Oda ekranında pomodoro için seçili görev.
   void setActiveTask(String taskId) {
     if (!_state.tasks.any((t) => t.taskId == taskId)) return;
+    _emit(_state.copyWith(activeTaskId: taskId));
+  }
+
+  /// SignalR WorkspaceTaskCreated — kullanıcı ilgili oda ekranındaysa listeyi günceller.
+  void handleRealtimeTaskCreated(TaskModel task) {
+    final wsId = task.workspaceId;
+    if (wsId == null || wsId.isEmpty) return;
+    if (_state.workspaceId != wsId) return;
+    if (_state.tasks.any((t) => t.taskId == task.taskId)) return;
+
+    final nextActive = _state.activeTaskId ?? task.taskId;
+    _emit(
+      _state.copyWith(
+        tasks: [..._state.tasks, task],
+        activeTaskId: nextActive,
+      ),
+    );
+  }
+
+  /// SignalR WorkspacePomodoroStarted — görev bu odadaysa aktif görevi günceller.
+  void handleRealtimePomodoroStarted(PomodoroSessionModel session) {
+    final taskId = session.taskId;
+    if (taskId == null) {
+      debugPrint('[WorkspaceSync] handleRealtimePomodoroStarted: taskId null');
+      return;
+    }
+    if (_state.workspaceId == null) {
+      debugPrint(
+        '[WorkspaceSync] handleRealtimePomodoroStarted: workspaceId null, pending',
+      );
+      return;
+    }
+    if (!_state.tasks.any((t) => t.taskId == taskId)) {
+      debugPrint(
+        '[WorkspaceSync] handleRealtimePomodoroStarted: task $taskId not in list, pending',
+      );
+      return;
+    }
+
+    debugPrint(
+      '[WorkspaceSync] handleRealtimePomodoroStarted: task $taskId found, '
+      'setting active',
+    );
     _emit(_state.copyWith(activeTaskId: taskId));
   }
 

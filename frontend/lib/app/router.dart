@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/features/profile/screens/profile_screen.dart';
@@ -19,6 +21,9 @@ import 'package:focus_app/features/notifications/screens/notifications_screen.da
 import 'package:focus_app/features/notifications/network/notification_hub_service.dart';
 import 'package:focus_app/features/notifications/providers/notification_provider.dart';
 import 'package:focus_app/core/notifications/local_notification_service.dart';
+import 'package:focus_app/features/social/providers/workspace_provider.dart';
+import 'package:focus_app/features/social/utils/workspace_realtime_sync.dart';
+import 'package:focus_app/features/notifications/models/notification_model.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authNotifierProvider);
@@ -131,18 +136,52 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
+  Timer? _invitationPollTimer;
+  NotificationHubService? _hubService;
+
+  Future<void> _pollWorkspaceInvitations() async {
+    if (!mounted) return;
+
+    final newInvites =
+        await ref.read(workspaceNotifierProvider).pollPendingInvitations();
+
+    if (!mounted) return;
+
+    for (final inv in newInvites) {
+      final notification = NotificationModel.fromWorkspaceInvitation(inv);
+      ref
+          .read(notificationNotifierProvider)
+          .addRealtimeNotification(notification);
+
+      if (!mounted) return;
+
+      if (ref.read(notificationSettingsProvider).localNotificationsEnabled) {
+        ref
+            .read(localNotificationServiceProvider)
+            .showNotification(notification);
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
 
+    _hubService = ref.read(notificationHubServiceProvider);
+
     Future.microtask(() async {
+      if (!mounted) return;
+
       final settings = ref.read(notificationSettingsProvider);
       await settings.load();
+
+      if (!mounted) return;
+
       ref
           .read(localNotificationServiceProvider)
           .setLocalNotificationsEnabled(settings.localNotificationsEnabled);
 
-      ref.read(notificationHubServiceProvider).connect(
+      await _hubService!.connect(
             onReceive: (notification) {
               if (!mounted) return;
               ref
@@ -157,14 +196,48 @@ class _MainShellState extends ConsumerState<MainShell> {
                     .showNotification(notification);
               }
             },
+            onWorkspaceTaskCreated: (task) {
+              if (!mounted) return;
+              dispatchWorkspaceTaskCreated(ref, task);
+            },
+            onWorkspacePomodoroStarted: (session) {
+              if (!mounted) return;
+              debugPrint(
+                '[WorkspaceSync] Router callback received WorkspacePomodoroStarted '
+                'pomoId=${session.pomoId} taskId=${session.taskId}',
+              );
+              dispatchWorkspacePomodoroStarted(ref, session);
+            },
           );
+
+      if (!mounted) return;
+
+      await _pollWorkspaceInvitations();
+
+      if (!mounted) return;
+
+      _invitationPollTimer = Timer.periodic(
+        const Duration(seconds: 30),
+        (_) {
+          if (!mounted) return;
+          _pollWorkspaceInvitations();
+        },
+      );
     });
   }
 
   @override
   void dispose() {
-    // Logout sonrası hub bağlantısını kapat.
-    ref.read(notificationHubServiceProvider).disconnect();
+    _invitationPollTimer?.cancel();
+    _invitationPollTimer = null;
+
+    // dispose içinde ref kullanılmaz; hub servisi initState'te alınmıştı.
+    final hub = _hubService;
+    _hubService = null;
+    if (hub != null) {
+      unawaited(hub.disconnect());
+    }
+
     super.dispose();
   }
 

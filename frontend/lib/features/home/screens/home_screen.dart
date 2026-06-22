@@ -26,9 +26,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     Future.microtask(() async {
+      if (!mounted) return;
       await ref.read(pomodoroNotifierProvider).checkOngoing();
+
+      if (!mounted) return;
       await ref.read(statsNotifierProvider).loadStats();
+
+      if (!mounted) return;
       await ref.read(taskNotifierProvider).loadTasks();
+
+      if (!mounted) return;
       await ref.read(notificationNotifierProvider).loadUnreadCount();
     });
   }

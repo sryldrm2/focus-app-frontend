@@ -44,6 +44,8 @@ class WorkspaceNotifier extends ChangeNotifier {
   final _service = WorkspaceService();
   WorkspaceState _state = const WorkspaceState();
   WorkspaceState get state => _state;
+  final Set<String> _knownInvitationIds = {};
+  bool _invitationBaselineReady = false;
 
   void _emit(WorkspaceState s) {
     _state = s;
@@ -75,6 +77,7 @@ class WorkspaceNotifier extends ChangeNotifier {
           pendingInvitations: invitationsResult.data ?? [],
         ),
       );
+      _syncInvitationBaseline(invitationsResult.data ?? []);
     } catch (e) {
       _emit(
         _state.copyWith(
@@ -148,6 +151,40 @@ class WorkspaceNotifier extends ChangeNotifier {
     }
   }
 
+  void _syncInvitationBaseline(List<WorkspaceInvitationModel> invitations) {
+    _knownInvitationIds
+      ..clear()
+      ..addAll(invitations.map((i) => i.workspaceInvitationId));
+    _invitationBaselineReady = true;
+  }
+
+  /// Backend davet için SignalR göndermediğinden bekleyen davetleri periyodik kontrol eder.
+  /// Yeni davetleri döndürür; ilk baseline yüklemesinde bildirim üretmez.
+  Future<List<WorkspaceInvitationModel>> pollPendingInvitations() async {
+    try {
+      final result = await _service.getPendingInvitations();
+      final invitations = result.data ?? [];
+
+      final newInvitations = _invitationBaselineReady
+          ? invitations
+              .where(
+                (inv) => !_knownInvitationIds.contains(inv.workspaceInvitationId),
+              )
+              .toList()
+          : <WorkspaceInvitationModel>[];
+
+      _knownInvitationIds.addAll(
+        invitations.map((inv) => inv.workspaceInvitationId),
+      );
+      _invitationBaselineReady = true;
+
+      _emit(_state.copyWith(pendingInvitations: invitations));
+      return newInvitations;
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<bool> acceptInvitation(String invitationId) async {
     final id = invitationId.trim();
     if (id.isEmpty) return false;
@@ -171,6 +208,7 @@ class WorkspaceNotifier extends ChangeNotifier {
           pendingInvitations: invitationsResult.data ?? [],
         ),
       );
+      _syncInvitationBaseline(invitationsResult.data ?? []);
 
       return true;
     } catch (e) {

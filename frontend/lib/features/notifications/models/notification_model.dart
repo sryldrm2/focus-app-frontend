@@ -1,4 +1,9 @@
+import 'package:focus_app/features/social/models/workspace_model.dart';
+
 class NotificationModel {
+  static const int friendRequestType = 0;
+  static const int workspaceInvitationType = 1;
+  static const int dueDateReminderType = 2;
   static const int friendStartedFocusType = 3;
 
   final String notificationId;
@@ -47,10 +52,34 @@ class NotificationModel {
     if (raw is int) return raw;
     if (raw is num) return raw.toInt();
     if (raw is String) {
-      if (raw == 'FriendStartedFocus') return friendStartedFocusType;
+      switch (raw) {
+        case 'FriendRequest':
+          return friendRequestType;
+        case 'WorkspaceInvitation':
+        case 'RoomInvitation':
+          return workspaceInvitationType;
+        case 'DueDateReminder':
+          return dueDateReminderType;
+        case 'FriendStartedFocus':
+          return friendStartedFocusType;
+      }
       return int.tryParse(raw) ?? 0;
     }
     return 0;
+  }
+
+  factory NotificationModel.fromWorkspaceInvitation(
+    WorkspaceInvitationModel invitation,
+  ) {
+    return NotificationModel(
+      notificationId: invitation.workspaceInvitationId,
+      title: 'Oda daveti',
+      message:
+          '${invitation.senderNickName} sizi "${invitation.workspaceName}" odasına davet etti.',
+      type: workspaceInvitationType,
+      isRead: false,
+      createdAt: invitation.createdAt,
+    );
   }
 
   NotificationModel copyWith({

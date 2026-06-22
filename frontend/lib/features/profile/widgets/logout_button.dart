@@ -109,6 +109,7 @@ class LogoutButton extends ConsumerWidget {
                             ref.invalidate(socialNotifierProvider);
                             ref.invalidate(workspaceNotifierProvider);
                             ref.invalidate(workspaceTaskNotifierProvider);
+                            ref.invalidate(workspacePomodoroRealtimeNotifierProvider);
                             ref.invalidate(profileNotifierProvider);
                             ref.invalidate(notificationNotifierProvider);
 

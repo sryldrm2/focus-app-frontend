@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/auth/providers/auth_providers.dart';
+import 'package:focus_app/features/notifications/network/notification_hub_service.dart';
 import 'package:focus_app/features/social/models/workspace_model.dart';
 import 'package:focus_app/features/social/providers/workspace_provider.dart';
+import 'package:focus_app/features/social/utils/workspace_realtime_sync.dart';
 import 'package:focus_app/features/social/widgets/workspace_pomodoro_panel.dart';
 import 'package:focus_app/features/tasks/models/task_model.dart';
 import 'package:focus_app/features/tasks/widgets/add_task_sheet.dart';
@@ -23,9 +25,17 @@ class _WorkspaceDetailScreenState extends ConsumerState<WorkspaceDetailScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref
-        .read(workspaceTaskNotifierProvider)
-        .loadTasks(widget.workspace.workspaceId));
+    Future.microtask(() async {
+      // Yeni oda üyeliği / workspace grupları için hub'ı tazele.
+      await ref.read(notificationHubServiceProvider).reconnect();
+
+      await ref
+          .read(workspaceTaskNotifierProvider)
+          .loadTasks(widget.workspace.workspaceId);
+
+      if (!mounted) return;
+      applyPendingWorkspacePomodoro(ref);
+    });
   }
 
   void _showAddTask() {
