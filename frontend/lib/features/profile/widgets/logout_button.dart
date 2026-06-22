@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/auth/providers/auth_providers.dart';
 import 'package:focus_app/features/notifications/network/notification_hub_service.dart';
+import 'package:focus_app/core/notifications/local_notification_service.dart';
 import 'package:focus_app/features/pomodoro/providers/pomodoro_provider.dart';
 import 'package:focus_app/features/profile/providers/profile_providers.dart';
 import 'package:focus_app/features/social/providers/social_providers.dart';
@@ -95,6 +96,7 @@ class LogoutButton extends ConsumerWidget {
 
                             // SignalR bağlantısını kapat ve real-time notifier'ı sıfırla.
                             await ref.read(notificationHubServiceProvider).disconnect();
+                            ref.read(localNotificationServiceProvider).resetSession();
 
                             ref.invalidate(taskNotifierProvider);
                             ref.invalidate(pomodoroNotifierProvider);
