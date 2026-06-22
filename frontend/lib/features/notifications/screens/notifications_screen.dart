@@ -23,20 +23,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final state = ref.watch(notificationStateProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.backgroundLight,
-        foregroundColor: AppColors.textPrimary,
+        backgroundColor: Colors.transparent,
         title: Text(
           'Bildirimler',
           style: GoogleFonts.nunito(
             fontSize: 24,
             fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         actions: [
@@ -77,7 +76,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       style: GoogleFonts.nunito(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -87,7 +86,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       style: GoogleFonts.dmSans(
                         fontSize: 14,
                         height: 1.4,
-                        color: AppColors.textSecondary,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -114,8 +113,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: item.isRead
-                          ? Colors.white
-                          : const Color(0xFFFFEEE0),
+                          ? colorScheme.surface
+                          : AppColors.primary.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -126,7 +125,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                               ? Icons.notifications_none_rounded
                               : Icons.notifications_active_rounded,
                           color: item.isRead
-                              ? AppColors.textSecondary
+                              ? colorScheme.onSurfaceVariant
                               : AppColors.primary,
                         ),
                         const SizedBox(width: 12),
@@ -139,7 +138,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                 style: GoogleFonts.nunito(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -147,7 +146,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                 item.message,
                                 style: GoogleFonts.dmSans(
                                   fontSize: 13,
-                                  color: AppColors.textSecondary,
+                                  color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],

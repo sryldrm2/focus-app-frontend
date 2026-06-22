@@ -18,6 +18,14 @@ class LocalNotificationService {
   bool _initialized = false;
   final Set<String> _shownNotificationIds = {};
 
+  bool _localNotificationsEnabled = true;
+
+  bool get localNotificationsEnabled => _localNotificationsEnabled;
+
+  void setLocalNotificationsEnabled(bool enabled) {
+    _localNotificationsEnabled = enabled;
+  }
+
   Future<void> initialize() async {
     if (_initialized) return;
 
@@ -66,6 +74,7 @@ class LocalNotificationService {
   }
 
   Future<void> showNotification(NotificationModel notification) async {
+    if (!_localNotificationsEnabled) return;
     if (!_initialized) return;
 
     if (notification.notificationId.isEmpty) return;

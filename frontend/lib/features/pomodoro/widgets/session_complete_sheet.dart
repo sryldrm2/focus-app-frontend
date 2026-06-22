@@ -25,13 +25,14 @@ class SessionCompleteSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isLongBreak = completedSessions % 4 == 0;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -41,7 +42,7 @@ class SessionCompleteSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
+              color: colorScheme.outline.withOpacity(0.35),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -69,7 +70,7 @@ class SessionCompleteSheet extends StatelessWidget {
             style: GoogleFonts.nunito(
               fontSize: 22,
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
@@ -134,7 +135,7 @@ class SessionCompleteSheet extends StatelessWidget {
                 : 'Harika iş! Kısa bir mola ver.',
             style: GoogleFonts.dmSans(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: colorScheme.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),
@@ -214,7 +215,7 @@ class SessionCompleteSheet extends StatelessWidget {
               child: Text(
                 'Molayı Geç',
                 style: GoogleFonts.dmSans(
-                  color: AppColors.textSecondary,
+                  color: colorScheme.onSurfaceVariant,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),

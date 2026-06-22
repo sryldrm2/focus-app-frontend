@@ -11,7 +11,7 @@ class PriorityStatCard extends StatelessWidget {
     required this.stat,
   });
 
-  Color get color {
+  Color _color(BuildContext context) {
     switch (stat.priority) {
       case 1:
         return AppColors.error;
@@ -20,23 +20,26 @@ class PriorityStatCard extends StatelessWidget {
       case 3:
         return AppColors.success;
       default:
-        return AppColors.textSecondary;
+        return Theme.of(context).colorScheme.onSurfaceVariant;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final accentColor = _color(context);
     final percent = (stat.completionRate * 100).round();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.cardLight,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.025),
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.025),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -48,7 +51,7 @@ class PriorityStatCard extends StatelessWidget {
             width: 10,
             height: 36,
             decoration: BoxDecoration(
-              color: color,
+              color: accentColor,
               borderRadius: BorderRadius.circular(99),
             ),
           ),
@@ -59,7 +62,7 @@ class PriorityStatCard extends StatelessWidget {
               style: GoogleFonts.nunito(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
           ),
@@ -68,7 +71,7 @@ class PriorityStatCard extends StatelessWidget {
             style: GoogleFonts.dmSans(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: color,
+              color: accentColor,
             ),
           ),
         ],

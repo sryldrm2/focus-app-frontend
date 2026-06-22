@@ -19,6 +19,8 @@ class TaskSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (tasks.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -26,7 +28,7 @@ class TaskSelector extends StatelessWidget {
           'Bugün için görev eklenmedi',
           style: GoogleFonts.dmSans(
             fontSize: 13,
-            color: AppColors.textSecondary,
+            color: colorScheme.onSurfaceVariant,
           ),
         ),
       );
@@ -49,10 +51,10 @@ class TaskSelector extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? task.color : Colors.white,
+                color: isSelected ? task.color : colorScheme.surface,
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(
-                  color: isSelected ? task.color : Colors.grey.shade200,
+                  color: isSelected ? task.color : colorScheme.outline.withOpacity(0.5),
                   width: 1.5,
                 ),
                 boxShadow: isSelected
@@ -86,7 +88,7 @@ class TaskSelector extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: isSelected
                           ? Colors.white
-                          : AppColors.textSecondary,
+                          : colorScheme.onSurfaceVariant,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

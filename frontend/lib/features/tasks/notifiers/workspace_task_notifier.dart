@@ -4,24 +4,37 @@ import 'package:focus_app/features/tasks/models/task_model.dart';
 import 'package:focus_app/features/tasks/network/task_service.dart';
 
 class WorkspaceTaskState {
+  final String? workspaceId;
+  final String? activeTaskId;
   final List<TaskModel> tasks;
   final bool isLoading;
   final String? errorMessage;
+
   const WorkspaceTaskState({
+    this.workspaceId,
+    this.activeTaskId,
     this.tasks = const [],
     this.isLoading = false,
     this.errorMessage,
   });
+
   WorkspaceTaskState copyWith({
+    String? workspaceId,
+    String? activeTaskId,
+    bool clearActiveTask = false,
     List<TaskModel>? tasks,
     bool? isLoading,
     String? errorMessage,
     bool clearError = false,
-  }) => WorkspaceTaskState(
-    tasks: tasks ?? this.tasks,
-    isLoading: isLoading ?? this.isLoading,
-    errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-  );
+  }) =>
+      WorkspaceTaskState(
+        workspaceId: workspaceId ?? this.workspaceId,
+        activeTaskId:
+            clearActiveTask ? null : (activeTaskId ?? this.activeTaskId),
+        tasks: tasks ?? this.tasks,
+        isLoading: isLoading ?? this.isLoading,
+        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      );
 }
 
 class WorkspaceTaskNotifier extends ChangeNotifier {
@@ -34,13 +47,54 @@ class WorkspaceTaskNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Oda ekranında pomodoro için seçili görev.
+  void setActiveTask(String taskId) {
+    if (!_state.tasks.any((t) => t.taskId == taskId)) return;
+    _emit(_state.copyWith(activeTaskId: taskId));
+  }
+
+  String? _resolveActiveTaskId(List<TaskModel> tasks, {String? preferred}) {
+    if (preferred != null && tasks.any((t) => t.taskId == preferred)) {
+      return preferred;
+    }
+
+    final inProgress = tasks.where(
+      (t) => t.status == TaskStatus.inProgress && !t.isCompleted,
+    );
+    if (inProgress.isNotEmpty) return inProgress.first.taskId;
+
+    final pending = tasks.where((t) => !t.isCompleted);
+    if (pending.isNotEmpty) return pending.first.taskId;
+
+    return null;
+  }
+
   Future<void> loadTasks(String workspaceId) async {
-    _emit(_state.copyWith(isLoading: true, clearError: true));
+    _emit(
+      _state.copyWith(
+        isLoading: true,
+        clearError: true,
+        workspaceId: workspaceId,
+      ),
+    );
     try {
       final token = await TokenStorage.getAccessToken();
       if (token == null) throw Exception('Oturum bulunamadı.');
       final tasks = await _service.getWorkspaceTasks(token, workspaceId);
-      _emit(_state.copyWith(tasks: tasks, isLoading: false));
+      final activeId = _resolveActiveTaskId(
+        tasks,
+        preferred:
+            _state.workspaceId == workspaceId ? _state.activeTaskId : null,
+      );
+      _emit(
+        _state.copyWith(
+          tasks: tasks,
+          isLoading: false,
+          workspaceId: workspaceId,
+          activeTaskId: activeId,
+          clearActiveTask: activeId == null,
+        ),
+      );
     } catch (e) {
       _emit(
         _state.copyWith(
@@ -57,7 +111,13 @@ class WorkspaceTaskNotifier extends ChangeNotifier {
       final token = await TokenStorage.getAccessToken();
       if (token == null) throw Exception('Oturum bulunamadı.');
       final task = await _service.createTask(token, dto);
-      _emit(_state.copyWith(isLoading: false, tasks: [..._state.tasks, task]));
+      _emit(
+        _state.copyWith(
+          isLoading: false,
+          tasks: [..._state.tasks, task],
+          activeTaskId: task.taskId,
+        ),
+      );
       return true;
     } catch (e) {
       _emit(
@@ -76,12 +136,14 @@ class WorkspaceTaskNotifier extends ChangeNotifier {
       final token = await TokenStorage.getAccessToken();
       if (token == null) throw Exception('Oturum bulunamadı.');
       final updated = await _service.updateTask(token, taskId, dto);
-      _emit(_state.copyWith(
-        isLoading: false,
-        tasks: _state.tasks
-            .map((t) => t.taskId == taskId ? updated : t)
-            .toList(),
-      ));
+      _emit(
+        _state.copyWith(
+          isLoading: false,
+          tasks: _state.tasks
+              .map((t) => t.taskId == taskId ? updated : t)
+              .toList(),
+        ),
+      );
       return true;
     } catch (e) {
       _emit(
@@ -95,17 +157,23 @@ class WorkspaceTaskNotifier extends ChangeNotifier {
   }
 
   Future<void> toggleComplete(TaskModel task) async {
-    final newStatus = task.isCompleted
-        ? TaskStatus.notStarted
-        : TaskStatus.completed;
+    final newStatus =
+        task.isCompleted ? TaskStatus.notStarted : TaskStatus.completed;
+    final updatedTasks = _state.tasks
+        .map(
+          (t) => t.taskId == task.taskId ? t.copyWith(status: newStatus) : t,
+        )
+        .toList();
+
     _emit(
       _state.copyWith(
-        tasks: _state.tasks
-            .map(
-              (t) =>
-                  t.taskId == task.taskId ? t.copyWith(status: newStatus) : t,
-            )
-            .toList(),
+        tasks: updatedTasks,
+        clearActiveTask:
+            newStatus == TaskStatus.completed && _state.activeTaskId == task.taskId,
+        activeTaskId: newStatus == TaskStatus.completed &&
+                _state.activeTaskId == task.taskId
+            ? _resolveActiveTaskId(updatedTasks)
+            : _state.activeTaskId,
       ),
     );
     try {
@@ -130,9 +198,16 @@ class WorkspaceTaskNotifier extends ChangeNotifier {
 
   Future<void> deleteTask(String taskId) async {
     final prev = List<TaskModel>.from(_state.tasks);
+    final wasActive = _state.activeTaskId == taskId;
+    final remaining = _state.tasks.where((t) => t.taskId != taskId).toList();
+    final nextActive =
+        wasActive ? _resolveActiveTaskId(remaining) : _state.activeTaskId;
+
     _emit(
       _state.copyWith(
-        tasks: _state.tasks.where((t) => t.taskId != taskId).toList(),
+        tasks: remaining,
+        activeTaskId: nextActive,
+        clearActiveTask: wasActive && nextActive == null,
       ),
     );
     try {

@@ -19,6 +19,8 @@ class FriendLeaderboardSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -27,7 +29,7 @@ class FriendLeaderboardSection extends StatelessWidget {
           style: GoogleFonts.nunito(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 10),
@@ -61,6 +63,8 @@ class _LeaderboardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
     final isMe = entry.isCurrentUser;
 
     return Container(
@@ -68,14 +72,14 @@ class _LeaderboardRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: isMe
             ? AppColors.primary.withOpacity(0.08)
-            : Colors.white,
+            : colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: isMe
             ? Border.all(color: AppColors.primary.withOpacity(0.35))
             : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isMe ? 0.06 : 0.05),
+            color: Colors.black.withOpacity(isDark ? (isMe ? 0.2 : 0.25) : (isMe ? 0.06 : 0.05)),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -89,7 +93,7 @@ class _LeaderboardRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: isMe
                   ? AppColors.primary.withOpacity(0.15)
-                  : AppColors.backgroundLight,
+                  : colorScheme.surfaceContainerHighest,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -98,7 +102,7 @@ class _LeaderboardRow extends StatelessWidget {
                 style: GoogleFonts.nunito(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: isMe ? AppColors.primary : AppColors.textSecondary,
+                  color: isMe ? AppColors.primary : colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -116,7 +120,7 @@ class _LeaderboardRow extends StatelessWidget {
                         style: GoogleFonts.nunito(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: colorScheme.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -150,7 +154,7 @@ class _LeaderboardRow extends StatelessWidget {
                     '@${entry.nickname}',
                     style: GoogleFonts.dmSans(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
               ],
@@ -167,7 +171,7 @@ class _LeaderboardRow extends StatelessWidget {
                 style: GoogleFonts.nunito(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
-                  color: isMe ? AppColors.primary : AppColors.textPrimary,
+                  color: isMe ? AppColors.primary : colorScheme.onSurface,
                 ),
               ),
             ],
@@ -183,15 +187,18 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -206,7 +213,7 @@ class _EmptyState extends StatelessWidget {
             style: GoogleFonts.nunito(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
@@ -214,7 +221,7 @@ class _EmptyState extends StatelessWidget {
             'Arkadaş ekledikçe burada sıralamanı görebilirsin.',
             style: GoogleFonts.dmSans(
               fontSize: 12,
-              color: AppColors.textSecondary,
+              color: colorScheme.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),

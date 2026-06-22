@@ -47,19 +47,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final auth = ref.watch(authNotifierProvider).state;
     final userId = auth.user?.userId ?? '';
     final profile = ref.watch(profileStateProvider);
 
     if (userId.isEmpty) {
       return Scaffold(
-        backgroundColor: AppColors.backgroundLight,
         body: Center(
           child: Text(
             'Profil için giriş yapmalısın',
             style: GoogleFonts.dmSans(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -69,7 +69,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = profile.user;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       body: RefreshIndicator(
         onRefresh: () => ref.read(profileNotifierProvider).load(userId),
         child: CustomScrollView(
@@ -221,13 +220,15 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
   }
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -238,7 +239,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: colorScheme.outline.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -250,7 +251,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                 style: GoogleFonts.nunito(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ),
@@ -316,14 +317,16 @@ class _Field extends StatelessWidget {
   const _Field({required this.controller});
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
         controller: controller,
-        style: GoogleFonts.dmSans(fontSize: 15),
+        style: GoogleFonts.dmSans(fontSize: 15, color: colorScheme.onSurface),
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),

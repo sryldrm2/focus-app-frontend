@@ -18,12 +18,17 @@ class LogoutButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () {
         showDialog(
           context: context,
-          builder: (dialogContext) => Dialog(
-            backgroundColor: Colors.white,
+          builder: (dialogContext) {
+            final dialogScheme = Theme.of(dialogContext).colorScheme;
+            return Dialog(
+            backgroundColor: dialogScheme.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
             ),
@@ -51,7 +56,7 @@ class LogoutButton extends ConsumerWidget {
                     style: GoogleFonts.nunito(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: dialogScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -61,7 +66,7 @@ class LogoutButton extends ConsumerWidget {
                     style: GoogleFonts.dmSans(
                       fontSize: 14,
                       height: 1.5,
-                      color: AppColors.textSecondary,
+                      color: dialogScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -73,7 +78,7 @@ class LogoutButton extends ConsumerWidget {
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             side: BorderSide(
-                              color: AppColors.textSecondary.withOpacity(0.25),
+                              color: dialogScheme.outline.withOpacity(0.5),
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -83,7 +88,7 @@ class LogoutButton extends ConsumerWidget {
                             'Vazgeç',
                             style: GoogleFonts.nunito(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
+                              color: dialogScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -131,18 +136,19 @@ class LogoutButton extends ConsumerWidget {
                 ],
               ),
             ),
-          ),
+          );
+          },
         );
       },
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.05),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),

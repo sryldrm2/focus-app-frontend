@@ -9,3 +9,6 @@ final socialNotifierProvider = ChangeNotifierProvider<SocialNotifier>(
 final socialStateProvider = Provider<SocialState>(
   (ref) => ref.watch(socialNotifierProvider).state,
 );
+
+/// Sosyal ekranındaki aktif sekme: 0 = Arkadaşlar, 1 = Çalışma Odaları
+final socialTabIndexProvider = StateProvider<int>((ref) => 0);

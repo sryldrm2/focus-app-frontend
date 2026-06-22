@@ -10,6 +10,7 @@ import 'package:focus_app/features/notifications/providers/notification_provider
 class HomeAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
     final user = ref.watch(authNotifierProvider).state.user;
     final unreadCount = ref.watch(notificationStateProvider).unreadCount;
 
@@ -34,7 +35,7 @@ class HomeAppBar extends ConsumerWidget {
                   _greeting(),
                   style: GoogleFonts.dmSans(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 Text(
@@ -42,7 +43,7 @@ class HomeAppBar extends ConsumerWidget {
                   style: GoogleFonts.nunito(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -74,7 +75,7 @@ class HomeAppBar extends ConsumerWidget {
           IconButton(
             onPressed: () => context.go('/tasks'),
             icon: const Icon(Icons.checklist_rounded, size: 24),
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
 
           Stack(
@@ -82,7 +83,7 @@ class HomeAppBar extends ConsumerWidget {
               IconButton(
                 onPressed: () => context.go('/notifications'),
                 icon: const Icon(Icons.notifications_outlined, size: 24),
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
               if (unreadCount > 0)
                 Positioned(

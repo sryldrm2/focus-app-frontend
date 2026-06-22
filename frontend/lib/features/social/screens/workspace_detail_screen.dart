@@ -2,18 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
+import 'package:focus_app/features/auth/providers/auth_providers.dart';
 import 'package:focus_app/features/social/models/workspace_model.dart';
 import 'package:focus_app/features/social/providers/workspace_provider.dart';
+import 'package:focus_app/features/social/widgets/workspace_pomodoro_panel.dart';
 import 'package:focus_app/features/tasks/models/task_model.dart';
 import 'package:focus_app/features/tasks/widgets/add_task_sheet.dart';
 import 'package:focus_app/features/tasks/widgets/task_card.dart';
+
 class WorkspaceDetailScreen extends ConsumerStatefulWidget {
   final WorkspaceModel workspace;
   const WorkspaceDetailScreen({super.key, required this.workspace});
+
   @override
   ConsumerState<WorkspaceDetailScreen> createState() =>
       _WorkspaceDetailScreenState();
 }
+
 class _WorkspaceDetailScreenState extends ConsumerState<WorkspaceDetailScreen> {
   @override
   void initState() {
@@ -22,6 +27,7 @@ class _WorkspaceDetailScreenState extends ConsumerState<WorkspaceDetailScreen> {
         .read(workspaceTaskNotifierProvider)
         .loadTasks(widget.workspace.workspaceId));
   }
+
   void _showAddTask() {
     showModalBottomSheet(
       context: context,
@@ -50,11 +56,17 @@ class _WorkspaceDetailScreenState extends ConsumerState<WorkspaceDetailScreen> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final state = ref.watch(workspaceTaskStateProvider);
+    final notifier = ref.read(workspaceTaskNotifierProvider);
+    final currentUserId = ref.watch(authNotifierProvider).state.user?.userId ?? '';
+    final isRoomOwner = currentUserId.isNotEmpty &&
+        currentUserId == widget.workspace.ownerId;
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -62,54 +74,97 @@ class _WorkspaceDetailScreenState extends ConsumerState<WorkspaceDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-            widget.workspace.workspaceName,
-            style: GoogleFonts.nunito(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              widget.workspace.workspaceName,
+              style: GoogleFonts.nunito(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: colorScheme.onSurface,
+              ),
             ),
-          ),
-          Text(
-            '${widget.workspace.memberCount}/${WorkspaceModel.maxCapacity} üye',
-            style: GoogleFonts.dmSans(
-              fontSize: 12,
-              color: AppColors.textSecondary,
+            Text(
+              '${widget.workspace.memberCount}/${WorkspaceModel.maxCapacity} üye',
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: state.isLoading ? null : _showAddTask,
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      body: state.isLoading
+      floatingActionButton: isRoomOwner
+          ? FloatingActionButton(
+              onPressed: state.isLoading ? null : _showAddTask,
+              backgroundColor: AppColors.primary,
+              child: Icon(Icons.add, color: colorScheme.onPrimary),
+            )
+          : null,
+      body: state.isLoading && state.tasks.isEmpty
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             )
-          : state.tasks.isEmpty
-              ? Center(
-                  child: Text(
-                    'Henüz oda görevi yok.\n+ ile Senaryo 1: doğrudan oda görevi oluştur.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.dmSans(color: AppColors.textSecondary),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: state.tasks.length,
-                  itemBuilder: (_, i) {
-                    final task = state.tasks[i];
-                    final notifier = ref.read(workspaceTaskNotifierProvider);
-                    return TaskCard(
-                      task: task,
-                      onToggle: () => notifier.toggleComplete(task),
-                      onDelete: () => notifier.deleteTask(task.taskId),
-                      onEdit: () => _showEditTask(task),
-                    );
-                  },
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                WorkspacePomodoroPanel(
+                  workspaceId: widget.workspace.workspaceId,
                 ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text(
+                    'Oda Görevleri',
+                    style: GoogleFonts.nunito(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                if (state.tasks.isEmpty)
+                  Expanded(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          isRoomOwner
+                              ? 'Henüz oda görevi yok.\n+ ile görev ekleyin; eklenen görev otomatik aktif görev olur.'
+                              : 'Henüz oda görevi yok.\nOda sahibi görev eklediğinde burada görünecek.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.dmSans(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: RefreshIndicator(
+                      color: AppColors.primary,
+                      onRefresh: () => notifier.loadTasks(
+                        widget.workspace.workspaceId,
+                      ),
+                      child: ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                        itemCount: state.tasks.length,
+                        itemBuilder: (_, i) {
+                          final task = state.tasks[i];
+                          final isActive = state.activeTaskId == task.taskId;
+                          return TaskCard(
+                            task: task,
+                            isActiveFocus: isActive,
+                            onToggle: () => notifier.toggleComplete(task),
+                            onDelete: () => notifier.deleteTask(task.taskId),
+                            onEdit: () => _showEditTask(task),
+                            onFocus: task.isCompleted
+                                ? null
+                                : () => notifier.setActiveTask(task.taskId),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+              ],
+            ),
     );
   }
 }

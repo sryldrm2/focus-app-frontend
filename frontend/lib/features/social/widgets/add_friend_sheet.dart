@@ -46,15 +46,17 @@ class _AddFriendSheetState extends ConsumerState<AddFriendSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -63,7 +65,7 @@ class _AddFriendSheetState extends ConsumerState<AddFriendSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: colorScheme.outline.withOpacity(0.35),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -74,7 +76,7 @@ class _AddFriendSheetState extends ConsumerState<AddFriendSheet> {
               style: GoogleFonts.nunito(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -82,14 +84,14 @@ class _AddFriendSheetState extends ConsumerState<AddFriendSheet> {
               'Alıcının kullanıcı adını (nickname) gir.',
               style: GoogleFonts.dmSans(
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 24),
 
             Container(
               decoration: BoxDecoration(
-                color: AppColors.backgroundLight,
+                color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _errorMessage != null
@@ -103,18 +105,18 @@ class _AddFriendSheetState extends ConsumerState<AddFriendSheet> {
                 cursorColor: AppColors.primary,
                 style: GoogleFonts.dmSans(
                   fontSize: 15,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                   fontWeight: FontWeight.w500,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Örn. kullaniciadi',
                   hintStyle: GoogleFonts.dmSans(
-                    color: AppColors.textSecondary.withOpacity(0.65),
+                    color: colorScheme.onSurfaceVariant.withOpacity(0.65),
                   ),
                   prefixIcon: Icon(
                     Icons.alternate_email,
                     size: 20,
-                    color: AppColors.textSecondary,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -148,18 +150,18 @@ class _AddFriendSheetState extends ConsumerState<AddFriendSheet> {
                 ),
                 onPressed: _isLoading ? null : _sendRequest,
                 child: _isLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                           strokeWidth: 2.5,
                         ),
                       )
                     : Text(
                         'İstek Gönder',
                         style: GoogleFonts.nunito(
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),

@@ -12,14 +12,18 @@ class AppColors {
   static const cardLight      = Color(0xFFFFFFFF);
   static const backgroundLight = Color(0xFFF1ECE6);
 
-  // Yüzey Renkleri (Dark)
-  static const surfaceDark    = Color(0xFF1A1612);
-  static const cardDark       = Color(0xFF262118);
-  static const backgroundDark = Color(0xFF0F0D0A);
+  // Yüzey Renkleri (Dark) — koyu lacivert/gri tonları
+  static const surfaceDark    = Color(0xFF1A1D2A);
+  static const cardDark       = Color(0xFF22253A);
+  static const backgroundDark = Color(0xFF12141C);
 
-  // Metin
-  static const textPrimary   = Color(0xFF2D2016);  
-  static const textSecondary = Color(0xFF7A7068); 
+  // Metin (Light)
+  static const textPrimary   = Color(0xFF2D2016);
+  static const textSecondary = Color(0xFF7A7068);
+
+  // Metin (Dark)
+  static const textPrimaryDark   = Color(0xFFE8EAED);
+  static const textSecondaryDark = Color(0xFF9BA3B5); 
 
   // Semantik
   static const success = Color(0xFF2ECC71);

@@ -1,29 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
+import 'package:focus_app/core/theme/theme_provider.dart';
+import 'package:focus_app/core/notifications/local_notification_service.dart';
+import 'package:focus_app/features/notifications/providers/notification_provider.dart';
 
-class SettingsSection extends StatefulWidget {
+class SettingsSection extends ConsumerStatefulWidget {
   const SettingsSection({super.key});
 
   @override
-  State<SettingsSection> createState() => _SettingsSectionState();
+  ConsumerState<SettingsSection> createState() => _SettingsSectionState();
 }
 
-class _SettingsSectionState extends State<SettingsSection> {
-  // Mock ayarlar — backend gelince SharedPreferences veya API'den gelecek
-  bool _notificationsEnabled = true;
-  bool _darkModeEnabled = false;
+class _SettingsSectionState extends ConsumerState<SettingsSection> {
   bool _soundEnabled = true;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final notificationsEnabled = ref.watch(localNotificationsEnabledProvider);
+    final darkModeEnabled = ref.watch(isDarkModeProvider);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(
+              colorScheme.brightness == Brightness.dark ? 0.25 : 0.05,
+            ),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -40,35 +47,41 @@ class _SettingsSectionState extends State<SettingsSection> {
                 style: GoogleFonts.nunito(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ),
           ),
 
-          // Bildirimler
           _ToggleRow(
             icon: Icons.notifications_outlined,
             iconColor: AppColors.primary,
             label: 'Bildirimler',
-            subtitle: 'Pomodoro hatırlatıcıları',
-            value: _notificationsEnabled,
-            onChanged: (v) => setState(() => _notificationsEnabled = v),
+            subtitle: 'Cihaz bildirimlerini göster',
+            value: notificationsEnabled,
+            onChanged: (enabled) async {
+              await ref
+                  .read(notificationSettingsProvider)
+                  .setLocalNotificationsEnabled(enabled);
+              ref
+                  .read(localNotificationServiceProvider)
+                  .setLocalNotificationsEnabled(enabled);
+            },
           ),
           _Divider(),
 
-          // Karanlık Mod
           _ToggleRow(
             icon: Icons.dark_mode_outlined,
             iconColor: const Color(0xFF6C63FF),
             label: 'Karanlık Mod',
             subtitle: 'Gözlerin için',
-            value: _darkModeEnabled,
-            onChanged: (v) => setState(() => _darkModeEnabled = v),
+            value: darkModeEnabled,
+            onChanged: (enabled) async {
+              await ref.read(themeModeNotifierProvider).setDarkMode(enabled);
+            },
           ),
           _Divider(),
 
-          // Ses
           _ToggleRow(
             icon: Icons.volume_up_outlined,
             iconColor: AppColors.success,
@@ -79,13 +92,13 @@ class _SettingsSectionState extends State<SettingsSection> {
           ),
           _Divider(),
 
-          // Hakkında
           _TapRow(
             icon: Icons.info_outline,
             iconColor: AppColors.info,
             label: 'Hakkında',
             subtitle: 'Versiyon 1.0.0',
             onTap: () {
+              final colorScheme = Theme.of(context).colorScheme;
               showDialog(
                 context: context,
                 builder: (_) => AlertDialog(
@@ -102,7 +115,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                         style: GoogleFonts.nunito(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -110,7 +123,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                         'Versiyon 1.0.0',
                         style: GoogleFonts.dmSans(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -118,7 +131,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                         'Odaklan. Geliş. Kazan.',
                         style: GoogleFonts.dmSans(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -153,6 +166,8 @@ class _ToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
       child: Row(
@@ -176,14 +191,14 @@ class _ToggleRow extends StatelessWidget {
                   style: GoogleFonts.nunito(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   subtitle,
                   style: GoogleFonts.dmSans(
                     fontSize: 11,
-                    color: AppColors.textSecondary,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -217,6 +232,8 @@ class _TapRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: onTap,
       child: Padding(
@@ -242,14 +259,14 @@ class _TapRow extends StatelessWidget {
                     style: GoogleFonts.nunito(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: GoogleFonts.dmSans(
                       fontSize: 11,
-                      color: AppColors.textSecondary,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -257,7 +274,7 @@ class _TapRow extends StatelessWidget {
             ),
             Icon(
               Icons.chevron_right_rounded,
-              color: Colors.grey.shade400,
+              color: colorScheme.onSurfaceVariant.withOpacity(0.6),
               size: 20,
             ),
           ],
@@ -272,7 +289,10 @@ class _Divider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Divider(height: 1, color: Colors.grey.shade100),
+      child: Divider(
+        height: 1,
+        color: Theme.of(context).dividerColor,
+      ),
     );
   }
 }

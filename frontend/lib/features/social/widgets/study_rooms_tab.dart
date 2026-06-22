@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/social/providers/social_providers.dart';
 import 'package:focus_app/features/social/providers/workspace_provider.dart';
-import 'package:focus_app/features/social/widgets/create_room_sheet.dart';
+import 'package:focus_app/features/social/utils/open_create_room.dart';
 import 'package:focus_app/features/social/widgets/study_room_card.dart';
 import 'package:focus_app/features/social/screens/workspace_detail_screen.dart';
 
@@ -25,14 +25,7 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
     });
   }
 
-  void _showCreateRoomSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => CreateRoomSheet(),
-    );
-  }
+  void _showCreateRoomSheet() => showCreateRoomSheet(context);
 
   void _showSnack(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -77,6 +70,8 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
     final wsState = ref.watch(workspaceStateProvider);
     final rooms = wsState.myWorkspaces;
     final invitations = wsState.pendingInvitations;
@@ -129,7 +124,7 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                   style: GoogleFonts.nunito(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -139,14 +134,14 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: AppColors.primary.withOpacity(0.15),
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -180,7 +175,7 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                                 style: GoogleFonts.nunito(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -190,7 +185,7 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                                     : '${inv.senderNickName} seni bu odaya davet etti.',
                                 style: GoogleFonts.dmSans(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary,
+                                  color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -237,7 +232,7 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                             style: GoogleFonts.nunito(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: colorScheme.onPrimary,
                             ),
                           ),
                         ),
@@ -254,7 +249,7 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                 style: GoogleFonts.nunito(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 10),
@@ -272,7 +267,7 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                           style: GoogleFonts.nunito(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -280,7 +275,7 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                           'Yeni bir oda oluştur ve arkadaşlarını davet et',
                           style: GoogleFonts.dmSans(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                           textAlign: TextAlign.center,
                         ),

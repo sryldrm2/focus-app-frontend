@@ -28,15 +28,16 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     final state = ref.watch(statsStateProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(
           'Çalışma Raporum',
           style: GoogleFonts.nunito(
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -182,12 +183,14 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Text(
       title,
       style: GoogleFonts.nunito(
         fontSize: 16,
         fontWeight: FontWeight.w800,
-        color: AppColors.textPrimary,
+        color: colorScheme.onSurface,
       ),
     );
   }
@@ -201,6 +204,8 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -216,7 +221,7 @@ class _ErrorView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.dmSans(color: AppColors.textSecondary),
+              style: GoogleFonts.dmSans(color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -227,7 +232,7 @@ class _ErrorView extends StatelessWidget {
               child: Text(
                 'Tekrar Dene',
                 style: GoogleFonts.nunito(
-                  color: Colors.white,
+                  color: colorScheme.onPrimary,
                   fontWeight: FontWeight.w700,
                 ),
               ),

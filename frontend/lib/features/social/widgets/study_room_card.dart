@@ -19,6 +19,8 @@ class StudyRoomCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
     final isFull = workspace.isFull;
 
     return Material(
@@ -29,11 +31,11 @@ class StudyRoomCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withOpacity(isDark ? 0.25 : 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -113,7 +115,7 @@ class StudyRoomCard extends StatelessWidget {
                 style: GoogleFonts.nunito(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
@@ -121,7 +123,7 @@ class StudyRoomCard extends StatelessWidget {
                 'Sahip: @${workspace.ownerNickName}',
                 style: GoogleFonts.dmSans(
                   fontSize: 12,
-                  color: AppColors.textSecondary,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 12),
@@ -132,7 +134,7 @@ class StudyRoomCard extends StatelessWidget {
                     '${workspace.memberCount}/${WorkspaceModel.maxCapacity} kişi',
                     style: GoogleFonts.dmSans(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const Spacer(),
@@ -153,7 +155,7 @@ class StudyRoomCard extends StatelessWidget {
                           style: GoogleFonts.nunito(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: isFull ? Colors.grey : Colors.white,
+                            color: isFull ? colorScheme.onSurfaceVariant : colorScheme.onPrimary,
                           ),
                         ),
                       ),
