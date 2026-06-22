@@ -392,11 +392,11 @@ public class FriendRequestServiceTests
     // TEST 10: PomodoroConstants — Puan hesaplama doğruluğu
     // ─────────────────────────────────────────────────────────────────────────
     [Theory]
-    [InlineData(25, PomodoraBack.Core.Enums.PomodoroTypeEnums.WorkSession,       25)]
-    [InlineData(5,  PomodoraBack.Core.Enums.PomodoroTypeEnums.ShortBreakSession,  5)]
-    [InlineData(15, PomodoraBack.Core.Enums.PomodoroTypeEnums.LongBreakSession,  15)]
-    [InlineData(30, PomodoraBack.Core.Enums.PomodoroTypeEnums.WorkSession,       30)]
-    [InlineData(10, PomodoraBack.Core.Enums.PomodoroTypeEnums.ShortBreakSession, 10)]
+    [InlineData(25, PomodoraBack.Core.Enums.PomodoroTypeEnums.Work,       25)]
+    [InlineData(5,  PomodoraBack.Core.Enums.PomodoroTypeEnums.ShortBreak,  5)]
+    [InlineData(15, PomodoraBack.Core.Enums.PomodoroTypeEnums.LongBreak,  15)]
+    [InlineData(30, PomodoraBack.Core.Enums.PomodoroTypeEnums.Work,       30)]
+    [InlineData(10, PomodoraBack.Core.Enums.PomodoroTypeEnums.ShortBreak, 10)]
     public void PomodoroConstants_CalculatePoints_ReturnsExpected(
         int duration, PomodoraBack.Core.Enums.PomodoroTypeEnums type, int expectedPoints)
     {
