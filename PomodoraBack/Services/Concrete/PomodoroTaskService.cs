@@ -1,8 +1,10 @@
 using AutoMapper;
 using Core.Utilities.Results;
+using Microsoft.AspNetCore.SignalR;
 using PomodoraBack.Core.Enums;
 using PomodoraBack.DataAccess.Interfaces;
 using PomodoraBack.DTOs;
+using PomodoraBack.Hubs;
 using PomodoraBack.Services.Interfaces;
 using IResult = Core.Utilities.Results.IResults;
 using TaskEntity = PomodoraBack.Entities.Task;
@@ -16,19 +18,22 @@ namespace PomodoraBack.Services.Concrete
         private readonly IWorkspaceDal _workspaceDal;
         private readonly IWorkspaceMemberDal _workspaceMemberDal;
         private readonly IMapper _mapper;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
         public PomodoroTaskService(
             IPomodoroTaskDal taskDal,
             IUserDal userDal,
             IWorkspaceDal workspaceDal,
             IWorkspaceMemberDal workspaceMemberDal,
-            IMapper mapper)
+            IMapper mapper,
+            IHubContext<NotificationHub> hubContext)
         {
             _taskDal = taskDal;
             _userDal = userDal;
             _workspaceDal = workspaceDal;
             _workspaceMemberDal = workspaceMemberDal;
             _mapper = mapper;
+            _hubContext = hubContext;
         }
 
         public async Task<IDataResult<TaskDto>> GetByIdAsync(string userId, string taskId)
@@ -78,6 +83,22 @@ namespace PomodoraBack.Services.Concrete
             await _taskDal.AddAsync(task);
 
             var createdDto = _mapper.Map<TaskDto>(task);
+
+            // Görev bir workspace'e aitse, odadaki tüm online üyelere anlık event gönder.
+            if (!string.IsNullOrWhiteSpace(task.WorkspaceId))
+            {
+                try
+                {
+                    var wsGroup = NotificationHub.GetWorkspaceGroupName(task.WorkspaceId);
+                    await _hubContext.Clients.Group(wsGroup)
+                        .SendAsync("WorkspaceTaskCreated", createdDto);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[TaskService] WorkspaceTaskCreated gönderilemedi: {ex.Message}");
+                }
+            }
+
             return new SuccessDataResult<TaskDto>(createdDto, "Görev oluşturuldu.");
         }
 
@@ -175,6 +196,19 @@ namespace PomodoraBack.Services.Concrete
             await _taskDal.UpdateAsync(task);
 
             var updatedDto = _mapper.Map<TaskDto>(task);
+
+            // Görev odaya aktarıldığında, odadaki tüm online üyelere anlık event gönder.
+            try
+            {
+                var wsGroup = NotificationHub.GetWorkspaceGroupName(dto.WorkspaceId);
+                await _hubContext.Clients.Group(wsGroup)
+                    .SendAsync("WorkspaceTaskCreated", updatedDto);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TaskService] WorkspaceTaskCreated (assign) gönderilemedi: {ex.Message}");
+            }
+
             return new SuccessDataResult<TaskDto>(updatedDto, "Görev odaya aktarıldı.");
         }
 
