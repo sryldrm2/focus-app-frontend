@@ -69,6 +69,26 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtSettings?.SecretKey ?? "DefaultSecretKey"))
     };
+
+    // SignalR WebSocket/SSE bağlantıları Authorization header taşıyamaz.
+    // Frontend ?access_token=<jwt> query string'i ile bağlandığında
+    // bu event token'ı alıp Bearer olarak iletir.
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) &&
+                path.StartsWithSegments("/notificationHub"))
+            {
+                context.Token = accessToken;
+            }
+
+            return System.Threading.Tasks.Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddAuthorization();
