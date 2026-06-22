@@ -12,6 +12,8 @@ import 'package:focus_app/features/auth/notifiers/auth_state.dart';
 import 'package:focus_app/features/home/screens/home_screen.dart';
 import 'package:focus_app/features/pomodoro/screens/pomodoro_screen.dart';
 import 'package:focus_app/features/stats/screens/stats_screen.dart';
+import 'package:focus_app/core/theme/app_colors.dart';
+import 'package:focus_app/features/social/providers/social_providers.dart';
 import 'package:focus_app/features/social/screens/social_screen.dart';
 import 'package:focus_app/features/notifications/screens/notifications_screen.dart';
 import 'package:focus_app/features/notifications/network/notification_hub_service.dart';
@@ -133,16 +135,27 @@ class _MainShellState extends ConsumerState<MainShell> {
   void initState() {
     super.initState();
 
-    Future.microtask(() {
+    Future.microtask(() async {
+      final settings = ref.read(notificationSettingsProvider);
+      await settings.load();
+      ref
+          .read(localNotificationServiceProvider)
+          .setLocalNotificationsEnabled(settings.localNotificationsEnabled);
+
       ref.read(notificationHubServiceProvider).connect(
             onReceive: (notification) {
               if (!mounted) return;
               ref
                   .read(notificationNotifierProvider)
                   .addRealtimeNotification(notification);
-              ref
-                  .read(localNotificationServiceProvider)
-                  .showNotification(notification);
+
+              if (ref
+                  .read(notificationSettingsProvider)
+                  .localNotificationsEnabled) {
+                ref
+                    .read(localNotificationServiceProvider)
+                    .showNotification(notification);
+              }
             },
           );
     });
@@ -162,13 +175,21 @@ class _MainShellState extends ConsumerState<MainShell> {
         .indexWhere((t) => location.startsWith(t))
         .clamp(0, 4);
 
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: widget.child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
-        onDestinationSelected: (i) => context.go(MainShell._tabs[i]),
-        backgroundColor: Colors.white,
-        indicatorColor: const Color(0xFFFFE5D5),
+        onDestinationSelected: (i) {
+          final dest = MainShell._tabs[i];
+          if (dest == '/social') {
+            ref.read(socialTabIndexProvider.notifier).state = 0;
+          }
+          context.go(dest);
+        },
+        backgroundColor: colorScheme.surface,
+        indicatorColor: AppColors.primary.withOpacity(0.15),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),

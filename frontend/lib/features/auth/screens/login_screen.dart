@@ -52,11 +52,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final authLoading = ref.watch(authNotifierProvider).state.isLoading;
     final isBusy = _isSubmitting || authLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       body: Stack(
         children: [
           Container(
@@ -108,14 +108,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               height: MediaQuery.of(context).size.height * 0.56,
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12,
+                    color: Colors.black.withOpacity(
+                      colorScheme.brightness == Brightness.dark ? 0.35 : 0.12,
+                    ),
                     blurRadius: 24,
-                    spreadRadius: 4),
+                    spreadRadius: 4,
+                  ),
                 ],
               ),
               child: SingleChildScrollView(
@@ -129,7 +132,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         style: GoogleFonts.nunito(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -154,7 +157,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             _obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: Colors.grey,
+                            color: colorScheme.onSurfaceVariant,
                             size: 20,
                           ),
                           onPressed: () => setState(
@@ -200,18 +203,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           onPressed: isBusy ? null : _onLogin,
                           child: isBusy
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 22,
                                   height: 22,
                                   child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                    color: colorScheme.onPrimary,
                                     strokeWidth: 2.5,
                                   ),
                                 )
                               : Text(
                                   'Giriş Yap',
                                   style: GoogleFonts.nunito(
-                                    color: Colors.white,
+                                    color: colorScheme.onPrimary,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -225,7 +228,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Text.rich(
                             TextSpan(
                               text: 'Hesabın yok mu? ',
-                              style: GoogleFonts.dmSans(color: Colors.grey),
+                              style: GoogleFonts.dmSans(color: colorScheme.onSurfaceVariant),
                               children: [
                                 TextSpan(
                                   text: 'Kayıt Ol',

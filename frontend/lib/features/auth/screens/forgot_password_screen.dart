@@ -36,16 +36,16 @@ class _ForgotPasswordScreenState
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isLoading = ref.watch(authNotifierProvider).state.isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              color: AppColors.textPrimary, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new,
+              color: colorScheme.onSurface, size: 20),
           onPressed: () => context.pop(),
         ),
       ),
@@ -84,6 +84,8 @@ class _FormView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Form(
       key: formKey,
       child: Column(
@@ -96,7 +98,7 @@ class _FormView extends StatelessWidget {
             style: GoogleFonts.nunito(
               fontSize: 26,
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
@@ -104,7 +106,7 @@ class _FormView extends StatelessWidget {
             'E-posta adresini gir, şifre sıfırlama\nbağlantısı gönderelim.',
             style: GoogleFonts.dmSans(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: colorScheme.onSurfaceVariant,
               height: 1.5,
             ),
           ),
@@ -135,18 +137,18 @@ class _FormView extends StatelessWidget {
               ),
               onPressed: isLoading ? null : onSend,
               child: isLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
+                        color: colorScheme.onPrimary,
                         strokeWidth: 2.5,
                       ),
                     )
                   : Text(
                       'Bağlantı Gönder',
                       style: GoogleFonts.nunito(
-                        color: Colors.white,
+                        color: colorScheme.onPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -164,6 +166,8 @@ class _SuccessView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -174,7 +178,7 @@ class _SuccessView extends StatelessWidget {
           style: GoogleFonts.nunito(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 12),
@@ -183,7 +187,7 @@ class _SuccessView extends StatelessWidget {
           textAlign: TextAlign.center,
           style: GoogleFonts.dmSans(
             fontSize: 14,
-            color: AppColors.textSecondary,
+            color: colorScheme.onSurfaceVariant,
             height: 1.6,
           ),
         ),

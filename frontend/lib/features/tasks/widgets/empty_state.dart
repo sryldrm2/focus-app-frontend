@@ -9,6 +9,8 @@ class TasksEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -20,13 +22,13 @@ class TasksEmptyState extends StatelessWidget {
             style: GoogleFonts.nunito(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'Görev ekleyerek çalışmana başla!',
-            style: GoogleFonts.dmSans(color: AppColors.textSecondary),
+            style: GoogleFonts.dmSans(color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -36,11 +38,11 @@ class TasksEmptyState extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
-            icon: const Icon(Icons.add, color: Colors.white),
+            icon: Icon(Icons.add, color: colorScheme.onPrimary),
             label: Text(
               'Görev Ekle',
               style: GoogleFonts.nunito(
-                  color: Colors.white, fontWeight: FontWeight.w700),
+                  color: colorScheme.onPrimary, fontWeight: FontWeight.w700),
             ),
           ),
         ],

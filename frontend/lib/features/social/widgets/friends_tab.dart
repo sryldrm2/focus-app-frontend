@@ -100,6 +100,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
     final social = ref.watch(socialStateProvider);
     final myUserId =
         ref.watch(authNotifierProvider).state.user?.userId ?? '';
@@ -142,7 +144,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                       'Arkadaş listesi için giriş yapman gerekir.',
                       style: GoogleFonts.dmSans(
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -207,7 +209,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                         style: GoogleFonts.nunito(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -217,7 +219,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.textSecondary.withOpacity(0.25),
+                          color: colorScheme.onSurfaceVariant.withOpacity(0.25),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -225,7 +227,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                           style: GoogleFonts.nunito(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -236,7 +238,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                     'Karşı taraf kabul edene kadar burada görünür.',
                     style: GoogleFonts.dmSans(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -247,14 +249,14 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: AppColors.primary.withOpacity(0.15),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -274,14 +276,14 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                                     style: GoogleFonts.nunito(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
+                                      color: colorScheme.onSurface,
                                     ),
                                   ),
                                   Text(
                                     '@${ui.username} · ${ui.sentAt}',
                                     style: GoogleFonts.dmSans(
                                       fontSize: 12,
-                                      color: AppColors.textSecondary,
+                                      color: colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ],
@@ -322,7 +324,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                         style: GoogleFonts.nunito(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -340,7 +342,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                           style: GoogleFonts.nunito(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: colorScheme.onPrimary,
                           ),
                         ),
                       ),
@@ -369,7 +371,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                       style: GoogleFonts.nunito(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -377,7 +379,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                       '${friends.length}',
                       style: GoogleFonts.dmSans(
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -397,7 +399,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                             style: GoogleFonts.nunito(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -405,7 +407,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                             'Arkadaş ekleyerek birlikte çalışabilirsin',
                             style: GoogleFonts.dmSans(
                               fontSize: 13,
-                              color: AppColors.textSecondary,
+                              color: colorScheme.onSurfaceVariant,
                             ),
                             textAlign: TextAlign.center,
                           ),

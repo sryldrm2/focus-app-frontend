@@ -18,6 +18,9 @@ class StatsSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -25,12 +28,12 @@ class StatsSummaryCard extends StatelessWidget {
           vertical: 16,
         ),
         decoration: BoxDecoration(
-          color: AppColors.cardLight,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.black.withOpacity(0.04)),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.035),
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.035),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -57,7 +60,7 @@ class StatsSummaryCard extends StatelessWidget {
                     title,
                     style: GoogleFonts.dmSans(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -67,7 +70,7 @@ class StatsSummaryCard extends StatelessWidget {
                     style: GoogleFonts.nunito(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ],

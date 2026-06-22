@@ -12,6 +12,8 @@ class StatsInsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -34,7 +36,7 @@ class StatsInsightCard extends StatelessWidget {
               style: GoogleFonts.dmSans(
                 fontSize: 13,
                 height: 1.5,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
           ),

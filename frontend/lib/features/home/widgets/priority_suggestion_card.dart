@@ -12,6 +12,7 @@ class PrioritySuggestionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
     final state = ref.watch(taskNotifierProvider).state;
 
     final tasks = state.todayTasks
@@ -42,7 +43,7 @@ class PrioritySuggestionCard extends ConsumerWidget {
                 style: GoogleFonts.dmSans(
                   fontSize: 13,
                   height: 1.4,
-                  color: AppColors.textSecondary,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -68,7 +69,7 @@ class PrioritySuggestionCard extends ConsumerWidget {
                   style: GoogleFonts.nunito(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -77,7 +78,7 @@ class PrioritySuggestionCard extends ConsumerWidget {
                   style: GoogleFonts.dmSans(
                     fontSize: 13,
                     height: 1.4,
-                    color: AppColors.textSecondary,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -145,7 +146,7 @@ class _PriorityChip extends StatelessWidget {
     }
   }
 
-  Color get color {
+  Color color(BuildContext context) {
     switch (priority) {
       case 1:
         return AppColors.error;
@@ -154,16 +155,18 @@ class _PriorityChip extends StatelessWidget {
       case 3:
         return AppColors.success;
       default:
-        return AppColors.textSecondary;
+        return Theme.of(context).colorScheme.onSurfaceVariant;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final chipColor = color(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: chipColor.withOpacity(0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -171,7 +174,7 @@ class _PriorityChip extends StatelessWidget {
         style: GoogleFonts.dmSans(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: color,
+          color: chipColor,
         ),
       ),
     );

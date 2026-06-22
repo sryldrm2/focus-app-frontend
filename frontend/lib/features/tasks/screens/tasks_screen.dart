@@ -114,11 +114,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final state = ref.watch(taskNotifierProvider).state;
     final tasks = state.tasksForDate(_selectedDate);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -127,7 +127,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           style: GoogleFonts.nunito(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         actions: [
@@ -167,7 +167,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                     const SizedBox(height: 12),
                     Text(
                       state.errorMessage!,
-                      style: GoogleFonts.dmSans(color: AppColors.textSecondary),
+                      style: GoogleFonts.dmSans(color: colorScheme.onSurfaceVariant),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -183,7 +183,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       child: Text(
                         'Tekrar Dene',
                         style: GoogleFonts.nunito(
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -220,11 +220,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           : FloatingActionButton.extended(
               onPressed: _showAddSheet,
               backgroundColor: AppColors.primary,
-              icon: const Icon(Icons.add, color: Colors.white),
+              icon: Icon(Icons.add, color: colorScheme.onPrimary),
               label: Text(
                 'Görev Ekle',
                 style: GoogleFonts.nunito(
-                  color: Colors.white,
+                  color: colorScheme.onPrimary,
                   fontWeight: FontWeight.w700,
                 ),
               ),

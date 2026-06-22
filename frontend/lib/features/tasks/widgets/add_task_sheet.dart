@@ -134,6 +134,8 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         24,
@@ -141,9 +143,9 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
         24,
         MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -155,7 +157,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: colorScheme.outline.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -167,7 +169,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
               style: GoogleFonts.nunito(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 20),
@@ -249,7 +251,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.backgroundLight,
+                  color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -264,7 +266,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                       _dueDate != null
                           ? '${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year}'
                           : 'Tarih seç',
-                      style: GoogleFonts.dmSans(color: AppColors.textPrimary),
+                      style: GoogleFonts.dmSans(color: colorScheme.onSurface),
                     ),
                   ],
                 ),
@@ -287,7 +289,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                     decoration: BoxDecoration(
                       color: isSel
                           ? _selectedColor
-                          : AppColors.backgroundLight,
+                          : colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
@@ -297,8 +299,8 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: isSel
-                              ? Colors.white
-                              : AppColors.textSecondary,
+                              ? colorScheme.onPrimary
+                              : colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -340,18 +342,18 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                 ),
                 onPressed: _isLoading ? null : _submit,
                 child: _isLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                           strokeWidth: 2.5,
                         ),
                       )
                     : Text(
                         widget.isEditing ? 'Değişiklikleri Kaydet' : 'Görevi Kaydet',
                         style: GoogleFonts.nunito(
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
@@ -370,17 +372,21 @@ class _Label extends StatelessWidget {
   const _Label(this.text);
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(
-          text,
-          style: GoogleFonts.dmSans(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
-          ),
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: GoogleFonts.dmSans(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurfaceVariant,
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _Field extends StatelessWidget {
@@ -401,17 +407,20 @@ class _Field extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => TextField(
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return TextField(
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
-        style: GoogleFonts.dmSans(color: AppColors.textPrimary),
+        style: GoogleFonts.dmSans(color: colorScheme.onSurface),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.dmSans(color: AppColors.textSecondary),
+          hintStyle: GoogleFonts.dmSans(color: colorScheme.onSurfaceVariant),
           filled: true,
-          fillColor: AppColors.backgroundLight,
+          fillColor: colorScheme.surfaceContainerHighest,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -422,4 +431,5 @@ class _Field extends StatelessWidget {
           ),
         ),
       );
+  }
 }

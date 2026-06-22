@@ -65,11 +65,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final authLoading = ref.watch(authNotifierProvider).state.isLoading;
     final isBusy = _isSubmitting || authLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(backgroundColor: AppColors.primary, toolbarHeight: 4),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
@@ -109,12 +109,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 style: GoogleFonts.nunito(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               Text(
                 "Odaklanma yolculuğuna başla",
-                style: GoogleFonts.dmSans(color: Colors.grey),
+                style: GoogleFonts.dmSans(color: colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
 
@@ -172,7 +172,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     _obscurePassword
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
-                    color: Colors.grey,
+                    color: colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
                   onPressed: () =>
@@ -193,7 +193,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     _obscureConfirm
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
-                    color: Colors.grey,
+                    color: colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
                   onPressed: () =>
@@ -218,25 +218,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   onPressed: isBusy ? null : _onRegister,
                   child: isBusy
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: colorScheme.onPrimary,
                             strokeWidth: 2.5,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           "Kayıt Ol",
                           style: TextStyle(
-                            color: Colors.white,
+                            color: colorScheme.onPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                 ),
               ),
               const SizedBox(height: 24),
-              _buildSocialDivider(),
+              _buildSocialDivider(colorScheme),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -244,6 +244,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     child: _buildSocialButton(
                       label: "Google",
                       icon: Icons.g_mobiledata,
+                      colorScheme: colorScheme,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -251,6 +252,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     child: _buildSocialButton(
                       label: "Apple",
                       icon: Icons.apple,
+                      colorScheme: colorScheme,
                     ),
                   ),
                 ],
@@ -262,25 +264,29 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  Widget _buildSocialDivider() => const Row(
+  Widget _buildSocialDivider(ColorScheme colorScheme) => Row(
     children: [
-      Expanded(child: Divider()),
+      Expanded(child: Divider(color: colorScheme.outline.withOpacity(0.35))),
       Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
           "VEYA ŞUNUNLA DEVAM ET",
-          style: TextStyle(fontSize: 10, color: Colors.grey),
+          style: TextStyle(fontSize: 10, color: colorScheme.onSurfaceVariant),
         ),
       ),
-      Expanded(child: Divider()),
+      Expanded(child: Divider(color: colorScheme.outline.withOpacity(0.35))),
     ],
   );
 
-  Widget _buildSocialButton({required String label, required IconData icon}) =>
+  Widget _buildSocialButton({
+    required String label,
+    required IconData icon,
+    required ColorScheme colorScheme,
+  }) =>
       OutlinedButton.icon(
         onPressed: () {},
-        icon: Icon(icon, color: Colors.black),
-        label: Text(label, style: const TextStyle(color: Colors.black)),
+        icon: Icon(icon, color: colorScheme.onSurface),
+        label: Text(label, style: TextStyle(color: colorScheme.onSurface)),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(

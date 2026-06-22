@@ -16,15 +16,18 @@ class WeeklyFocusChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+
     return Container(
       height: 300,
       padding: const EdgeInsets.fromLTRB(14, 18, 14, 12),
       decoration: BoxDecoration(
-        color: AppColors.cardLight,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.035),
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.035),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -95,7 +98,7 @@ class WeeklyFocusChart extends StatelessWidget {
                             days[index],
                             style: GoogleFonts.dmSans(
                               fontSize: 11,
-                              color: AppColors.textSecondary,
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         );
@@ -199,6 +202,8 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: alignEnd
           ? CrossAxisAlignment.end
@@ -209,7 +214,7 @@ class _MiniStat extends StatelessWidget {
           style: GoogleFonts.nunito(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 2),
@@ -217,7 +222,7 @@ class _MiniStat extends StatelessWidget {
           label,
           style: GoogleFonts.dmSans(
             fontSize: 11,
-            color: AppColors.textSecondary,
+            color: colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w500,
           ),
         ),

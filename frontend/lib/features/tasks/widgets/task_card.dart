@@ -9,7 +9,9 @@ class TaskCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback? onAssignToRoom;
   final VoidCallback? onEdit;
- 
+  final VoidCallback? onFocus;
+  final bool isActiveFocus;
+
   const TaskCard({
     super.key,
     required this.task,
@@ -17,10 +19,15 @@ class TaskCard extends StatelessWidget {
     required this.onDelete,
     this.onAssignToRoom,
     this.onEdit,
+    this.onFocus,
+    this.isActiveFocus = false,
   });
  
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+
     return Dismissible(
       key: Key(task.taskId),
       direction: DismissDirection.endToStart,
@@ -39,11 +46,16 @@ class TaskCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
+          border: isActiveFocus
+              ? Border.all(color: AppColors.primary.withOpacity(0.45), width: 1.5)
+              : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: isActiveFocus
+                  ? AppColors.primary.withOpacity(0.1)
+                  : Colors.black.withOpacity(isDark ? 0.25 : 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -76,8 +88,8 @@ class TaskCard extends StatelessWidget {
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: task.isCompleted
-                          ? AppColors.textSecondary
-                          : AppColors.textPrimary,
+                          ? colorScheme.onSurfaceVariant
+                          : colorScheme.onSurface,
                       decoration: task.isCompleted
                           ? TextDecoration.lineThrough
                           : null,
@@ -89,7 +101,7 @@ class TaskCard extends StatelessWidget {
                       task.description,
                       style: GoogleFonts.dmSans(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -126,6 +138,19 @@ class TaskCard extends StatelessWidget {
                 tooltip: 'Odaya aktar',
                 onPressed: onAssignToRoom,
               ),
+
+            if (onFocus != null && !task.isCompleted)
+              IconButton(
+                icon: Icon(
+                  isActiveFocus
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.play_circle_outline_rounded,
+                  size: 22,
+                ),
+                color: isActiveFocus ? AppColors.primary : colorScheme.onSurfaceVariant,
+                tooltip: isActiveFocus ? 'Aktif görev' : 'Odak görevi seç',
+                onPressed: onFocus,
+              ),
  
             // Tamamlama butonu
             GestureDetector(
@@ -142,7 +167,7 @@ class TaskCard extends StatelessWidget {
                   border: Border.all(
                     color: task.isCompleted
                         ? AppColors.success
-                        : Colors.grey.shade300,
+                        : colorScheme.outline,
                     width: 2,
                   ),
                 ),
@@ -163,29 +188,31 @@ class _StatusChip extends StatelessWidget {
   final TaskStatus status;
   const _StatusChip({required this.status});
  
-  Color get _color {
+  Color _color(BuildContext context) {
     switch (status) {
       case TaskStatus.completed:  return AppColors.success;
       case TaskStatus.inProgress: return AppColors.primary;
       case TaskStatus.cancelled:  return AppColors.error;
       case TaskStatus.onHold:     return AppColors.warning;
-      case TaskStatus.notStarted: return AppColors.textSecondary;
+      case TaskStatus.notStarted: return Theme.of(context).colorScheme.onSurfaceVariant;
     }
   }
  
   @override
   Widget build(BuildContext context) {
+    final chipColor = _color(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: _color.withOpacity(0.1),
+        color: chipColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         status.label,
         style: GoogleFonts.dmSans(
           fontSize: 10,
-          color: _color,
+          color: chipColor,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -199,16 +226,18 @@ class _PriorityChip extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.flag_outlined, size: 11, color: AppColors.textSecondary),
+        Icon(Icons.flag_outlined, size: 11, color: muted),
         const SizedBox(width: 2),
         Text(
           'P$priority',
           style: GoogleFonts.dmSans(
             fontSize: 10,
-            color: AppColors.textSecondary,
+            color: muted,
           ),
         ),
       ],
@@ -222,17 +251,19 @@ class _DateChip extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(Icons.calendar_today_outlined,
-            size: 11, color: AppColors.textSecondary),
+            size: 11, color: muted),
         const SizedBox(width: 2),
         Text(
           '${date.day}/${date.month}',
           style: GoogleFonts.dmSans(
             fontSize: 10,
-            color: AppColors.textSecondary,
+            color: muted,
           ),
         ),
       ],
@@ -246,16 +277,18 @@ class _PomodoroChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.timer_outlined, size: 11, color: AppColors.textSecondary),
+        Icon(Icons.timer_outlined, size: 11, color: muted),
         const SizedBox(width: 2),
         Text(
           label,
           style: GoogleFonts.dmSans(
             fontSize: 10,
-            color: AppColors.textSecondary,
+            color: muted,
           ),
         ),
       ],

@@ -6,7 +6,7 @@ import 'package:focus_app/features/pomodoro/models/pomodoro_model.dart';
 import 'package:focus_app/features/pomodoro/providers/pomodoro_provider.dart';
 import 'package:focus_app/features/pomodoro/notifiers/pomodoro_notifier.dart';
 import 'package:focus_app/features/pomodoro/network/pomodoro_service.dart';
-import 'package:focus_app/features/pomodoro/widgets/settings_sheet.dart';
+import 'package:focus_app/features/pomodoro/widgets/duration_settings_bar.dart';
 import 'package:focus_app/features/pomodoro/widgets/timer_display.dart';
 import 'package:focus_app/features/pomodoro/widgets/task_selector.dart';
 import 'package:focus_app/features/pomodoro/widgets/session_controls.dart';
@@ -23,16 +23,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 class _PomodoroAppBar extends StatelessWidget {
   final int completedSessions;
   final TimerStatus status;
-  final VoidCallback onSettings;
 
   const _PomodoroAppBar({
     required this.completedSessions,
     required this.status,
-    required this.onSettings,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
@@ -45,14 +45,14 @@ class _PomodoroAppBar extends StatelessWidget {
                 style: GoogleFonts.nunito(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               Text(
                 _statusText(),
                 style: GoogleFonts.dmSans(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -79,18 +79,7 @@ class _PomodoroAppBar extends StatelessWidget {
             style: GoogleFonts.dmSans(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: status == TimerStatus.idle ? onSettings : null,
-            child: Icon(
-              Icons.settings_outlined,
-              color: status == TimerStatus.idle
-                  ? AppColors.textPrimary
-                  : AppColors.textSecondary.withOpacity(0.3),
-              size: 22,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -279,6 +268,25 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
       _breakMinutes = prefs.getInt('break_minutes') ?? 5;
       _longBreakMinutes = prefs.getInt('long_break_minutes') ?? 15;
     });
+  }
+
+  Future<void> _saveDurationSettings(int work, int breakMin, int longBreak) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('work_minutes', work);
+    await prefs.setInt('break_minutes', breakMin);
+    await prefs.setInt('long_break_minutes', longBreak);
+  }
+
+  void _onDurationChanged(int work, int breakMin, int longBreak) {
+    if (_status != TimerStatus.idle) return;
+
+    setState(() {
+      _workMinutes = work;
+      _breakMinutes = breakMin;
+      _longBreakMinutes = longBreak;
+      _secondsLeft = workDuration;
+    });
+    _saveDurationSettings(work, breakMin, longBreak);
   }
 
   @override
@@ -576,27 +584,6 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     });
   }
 
-  void _showSettingsSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => SettingsSheet(
-        workMinutes: _workMinutes,
-        breakMinutes: _breakMinutes,
-        longBreakMinutes: _longBreakMinutes,
-        onSave: (work, breakMin, longBreakMin) {
-          setState(() {
-            _workMinutes = work;
-            _breakMinutes = breakMin;
-            _longBreakMinutes = longBreakMin;
-            _secondsLeft = workDuration;
-          });
-        },
-      ),
-    );
-  }
-
   double get _progress {
     final total = _status == TimerStatus.breakTime
         ? breakDuration
@@ -619,7 +606,6 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
 
     if (!_sessionReady) {
       return const Scaffold(
-        backgroundColor: AppColors.backgroundLight,
         body: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
@@ -627,7 +613,6 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     }
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       body: Stack(
         children: [
           SafeArea(
@@ -636,9 +621,16 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
                 _PomodoroAppBar(
                   completedSessions: _completedSessions,
                   status: _status,
-                  onSettings: _showSettingsSheet,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
+                DurationSettingsBar(
+                  workMinutes: _workMinutes,
+                  breakMinutes: _breakMinutes,
+                  longBreakMinutes: _longBreakMinutes,
+                  enabled: _status == TimerStatus.idle && !hasBlocking,
+                  onChanged: _onDurationChanged,
+                ),
+                const SizedBox(height: 20),
                 TaskSelector(
                   tasks: todayTasks,
                   selected: _selectedTask,

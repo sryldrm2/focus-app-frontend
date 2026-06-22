@@ -28,6 +28,7 @@ class TimerDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final size = MediaQuery.of(context).size.width * 0.72;
 
     return SizedBox(
@@ -42,7 +43,7 @@ class TimerDisplay extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white,
+              color: colorScheme.surface,
               boxShadow: [
                 BoxShadow(
                   color: color.withOpacity(0.15),
@@ -93,7 +94,7 @@ class TimerDisplay extends StatelessWidget {
                 style: GoogleFonts.nunito(
                   fontSize: size * 0.18,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                   letterSpacing: -2,
                 ),
               ),
@@ -111,7 +112,7 @@ class TimerDisplay extends StatelessWidget {
                             : task?.title ?? 'Odaklan',
                 style: GoogleFonts.dmSans(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,

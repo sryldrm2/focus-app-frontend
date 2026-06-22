@@ -36,11 +36,13 @@ class _SettingsSheetState extends State<SettingsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -49,7 +51,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
+              color: colorScheme.outline.withOpacity(0.35),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -59,7 +61,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
             style: GoogleFonts.nunito(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 28),
@@ -149,6 +151,8 @@ class SettingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Row(
       children: [
         Text(emoji, style: const TextStyle(fontSize: 20)),
@@ -159,7 +163,7 @@ class SettingRow extends StatelessWidget {
             style: GoogleFonts.dmSans(
               fontSize: 15,
               fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
         ),
@@ -171,13 +175,13 @@ class SettingRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: value > min
                   ? AppColors.primary.withOpacity(0.1)
-                  : Colors.grey.shade100,
+                  : colorScheme.surfaceContainerHighest,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.remove,
               size: 18,
-              color: value > min ? AppColors.primary : Colors.grey.shade400,
+              color: value > min ? AppColors.primary : colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -190,7 +194,7 @@ class SettingRow extends StatelessWidget {
             style: GoogleFonts.nunito(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
         ),
@@ -203,13 +207,13 @@ class SettingRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: value < max
                   ? AppColors.primary.withOpacity(0.1)
-                  : Colors.grey.shade100,
+                  : colorScheme.surfaceContainerHighest,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.add,
               size: 18,
-              color: value < max ? AppColors.primary : Colors.grey.shade400,
+              color: value < max ? AppColors.primary : colorScheme.onSurfaceVariant,
             ),
           ),
         ),

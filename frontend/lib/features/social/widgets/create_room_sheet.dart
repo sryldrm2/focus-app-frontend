@@ -46,6 +46,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isLoading = ref.watch(workspaceStateProvider).isLoading;
 
     return Padding(
@@ -54,9 +55,9 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
       ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -68,7 +69,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: colorScheme.outline.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -81,7 +82,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
                 style: GoogleFonts.nunito(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ),
@@ -92,7 +93,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
                 'En fazla ${WorkspaceModel.maxCapacity} kişi',
                 style: GoogleFonts.dmSans(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -104,13 +105,13 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
               style: GoogleFonts.nunito(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                color: AppColors.backgroundLight,
+                color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextField(
@@ -119,13 +120,13 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
                 cursorColor: AppColors.primary,
                 style: GoogleFonts.dmSans(
                   fontSize: 15,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                   fontWeight: FontWeight.w500,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Örn: Proje Odası',
                   hintStyle: GoogleFonts.dmSans(
-                    color: AppColors.textSecondary.withOpacity(0.65),
+                    color: colorScheme.onSurfaceVariant.withOpacity(0.65),
                     fontSize: 15,
                   ),
                   border: InputBorder.none,
@@ -151,18 +152,18 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
                 ),
                 onPressed: isLoading ? null : _create,
                 child: isLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                           strokeWidth: 2.5,
                         ),
                       )
                     : Text(
                         'Oda Oluştur',
                         style: GoogleFonts.nunito(
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),

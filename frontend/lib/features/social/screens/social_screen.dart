@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/auth/providers/auth_providers.dart';
+import 'package:focus_app/features/social/providers/social_providers.dart';
 import 'package:focus_app/features/social/widgets/friends_tab.dart';
 import 'package:focus_app/features/social/widgets/study_rooms_tab.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,21 +22,45 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    final initialTab = ref.read(socialTabIndexProvider).clamp(0, 1);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: initialTab,
+    );
+    _tabController.addListener(_syncTabToProvider);
+  }
+
+  void _syncTabToProvider() {
+    if (_tabController.indexIsChanging) return;
+    final current = ref.read(socialTabIndexProvider);
+    if (current != _tabController.index) {
+      ref.read(socialTabIndexProvider.notifier).state = _tabController.index;
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_syncTabToProvider);
     _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+
+    ref.listen<int>(socialTabIndexProvider, (previous, next) {
+      final target = next.clamp(0, 1);
+      if (_tabController.index != target) {
+        _tabController.animateTo(target);
+      }
+    });
+
     final nickname = ref.watch(authNotifierProvider).state.user?.nickname ?? '';
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: Column(
           children: [
@@ -50,7 +75,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                     style: GoogleFonts.nunito(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -58,7 +83,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                     'Arkadaşlarınla birlikte çalış',
                     style: GoogleFonts.dmSans(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                   if (nickname.isNotEmpty) ...[
@@ -70,14 +95,14 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: AppColors.primary.withOpacity(0.2),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -95,7 +120,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                                   style: GoogleFonts.dmSans(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textSecondary,
+                                    color: colorScheme.onSurfaceVariant,
                                     letterSpacing: 0.2,
                                   ),
                                 ),
@@ -104,7 +129,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                                   nickname,
                                   style: GoogleFonts.dmMono(
                                     fontSize: 12,
-                                    color: AppColors.textPrimary,
+                                    color: colorScheme.onSurface,
                                     height: 1.35,
                                   ),
                                 ),
@@ -113,7 +138,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                                   'Arkadaş eklerken bunu paylaş.',
                                   style: GoogleFonts.dmSans(
                                     fontSize: 11,
-                                    color: AppColors.textSecondary,
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -155,7 +180,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                       'Kullanıcı adın için giriş yap.',
                       style: GoogleFonts.dmSans(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -170,11 +195,11 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               child: Container(
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withOpacity(isDark ? 0.25 : 0.05),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -188,8 +213,8 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: AppColors.textSecondary,
+                  labelColor: colorScheme.onPrimary,
+                  unselectedLabelColor: colorScheme.onSurfaceVariant,
                   labelStyle: GoogleFonts.nunito(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,

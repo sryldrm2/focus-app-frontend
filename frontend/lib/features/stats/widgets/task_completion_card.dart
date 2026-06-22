@@ -13,16 +13,18 @@ class TaskCompletionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
     final percent = (summary.taskCompletionRate * 100).round();
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardLight,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.035),
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.035),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -36,7 +38,7 @@ class TaskCompletionCard extends StatelessWidget {
             style: GoogleFonts.nunito(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
@@ -44,7 +46,7 @@ class TaskCompletionCard extends StatelessWidget {
             '${summary.completedTasks}/${summary.totalTasks} görev tamamlandı',
             style: GoogleFonts.dmSans(
               fontSize: 13,
-              color: AppColors.textSecondary,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 12),

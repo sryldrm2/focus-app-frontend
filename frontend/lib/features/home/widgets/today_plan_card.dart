@@ -28,6 +28,7 @@ class TodayPlanCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
     final state = ref.watch(taskNotifierProvider).state;
     final today = state.todayTasks;
     final total = today.length;
@@ -45,7 +46,7 @@ class TodayPlanCard extends ConsumerWidget {
                 style: GoogleFonts.nunito(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const Spacer(),
@@ -112,13 +113,15 @@ class _EmptyPlan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: AppColors.backgroundLight,
+          color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.primary.withOpacity(0.2)),
         ),
@@ -129,7 +132,7 @@ class _EmptyPlan extends StatelessWidget {
             Text(
               'Bugün için görev eklenmedi',
               style: GoogleFonts.dmSans(
-                color: AppColors.textSecondary,
+                color: colorScheme.onSurfaceVariant,
                 fontSize: 13,
               ),
             ),
@@ -174,6 +177,8 @@ class _PlanRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: () => openPomodoro(context, ref, taskId: task.taskId),
       child: Padding(
@@ -202,8 +207,8 @@ class _PlanRow extends ConsumerWidget {
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: task.isCompleted
-                                ? AppColors.textSecondary
-                                : AppColors.textPrimary,
+                                ? colorScheme.onSurfaceVariant
+                                : colorScheme.onSurface,
                             decoration: task.isCompleted
                                 ? TextDecoration.lineThrough
                                 : null,
@@ -216,10 +221,10 @@ class _PlanRow extends ConsumerWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.calendar_today_rounded,
                               size: 12,
-                              color: AppColors.textSecondary,
+                              color: colorScheme.onSurfaceVariant,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -227,7 +232,7 @@ class _PlanRow extends ConsumerWidget {
                               style: GoogleFonts.dmSans(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -262,7 +267,7 @@ class _PlanRow extends ConsumerWidget {
                   border: Border.all(
                     color: task.isCompleted
                         ? AppColors.success
-                        : Colors.grey.shade300,
+                        : colorScheme.outline,
                     width: 2,
                   ),
                 ),

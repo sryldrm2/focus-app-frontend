@@ -22,6 +22,8 @@ class SessionControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Row(
@@ -33,8 +35,8 @@ class SessionControls extends StatelessWidget {
               icon: status == TimerStatus.breakTime
                   ? Icons.skip_next_rounded
                   : Icons.refresh_rounded,
-              color: Colors.grey.shade200,
-              iconColor: AppColors.textSecondary,
+              color: colorScheme.surfaceContainerHighest,
+              iconColor: colorScheme.onSurfaceVariant,
               size: 52,
               onTap: status == TimerStatus.breakTime ? onSkip : onReset,
             ),
@@ -47,8 +49,8 @@ class SessionControls extends StatelessWidget {
             const SizedBox(width: 20),
             _CircleButton(
               icon: Icons.skip_next_rounded,
-              color: Colors.grey.shade200,
-              iconColor: AppColors.textSecondary,
+              color: colorScheme.surfaceContainerHighest,
+              iconColor: colorScheme.onSurfaceVariant,
               size: 52,
               onTap: onSkip,
             ),
@@ -77,6 +79,7 @@ class _MainButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isRunning = status == TimerStatus.running;
     final isIdle = status == TimerStatus.idle;
 
@@ -88,7 +91,7 @@ class _MainButton extends StatelessWidget {
         height: 80,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: isRunning ? Colors.white : AppColors.primary,
+          color: isRunning ? colorScheme.surface : AppColors.primary,
           border: isRunning
               ? Border.all(color: AppColors.primary, width: 2.5)
               : null,
@@ -102,7 +105,7 @@ class _MainButton extends StatelessWidget {
         ),
         child: Icon(
           isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
-          color: isRunning ? AppColors.primary : Colors.white,
+          color: isRunning ? AppColors.primary : colorScheme.onPrimary,
           size: 36,
         ),
       ),

@@ -14,6 +14,7 @@ class DateSelector extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final days = List.generate(
       7,
       (i) => DateTime.now().add(Duration(days: i - 2)),
@@ -51,8 +52,8 @@ class DateSelector extends StatelessWidget {
                     style: GoogleFonts.dmSans(
                       fontSize: 11,
                       color: isSelected
-                          ? Colors.white70
-                          : AppColors.textSecondary,
+                          ? colorScheme.onPrimary.withOpacity(0.85)
+                          : colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -62,8 +63,8 @@ class DateSelector extends StatelessWidget {
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: isSelected
-                          ? Colors.white
-                          : AppColors.textPrimary,
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurface,
                     ),
                   ),
                 ],
