@@ -1,11 +1,13 @@
 using AutoMapper;
 using Core.Utilities.Results;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using PomodoraBack.Core.Constants;
 using PomodoraBack.Core.Enums;
 using PomodoraBack.DataAccess.Interfaces;
 using PomodoraBack.DTOs;
 using PomodoraBack.Entities;
+using PomodoraBack.Hubs;
 using PomodoraBack.Services.Interfaces;
 using IResult = Core.Utilities.Results.IResults;
 
@@ -18,24 +20,30 @@ namespace PomodoraBack.Services.Concrete
     {
         private readonly IPomodoroSessionDal _pomodoroSessionDal;
         private readonly IUserDal _userDal;
+        private readonly IPomodoroTaskDal _taskDal;
         private readonly IMapper _mapper;
         private readonly IPomodoroTaskService _taskService;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IHubContext<NotificationHub> _hubContext;
         private readonly ILogger<PomodoroSessionService> _logger;
 
         public PomodoroSessionService(
             IPomodoroSessionDal pomodoroSessionDal,
             IUserDal userDal,
+            IPomodoroTaskDal taskDal,
             IMapper mapper,
             IPomodoroTaskService taskService,
             IServiceScopeFactory scopeFactory,
+            IHubContext<NotificationHub> hubContext,
             ILogger<PomodoroSessionService> logger)
         {
             _pomodoroSessionDal = pomodoroSessionDal;
             _userDal = userDal;
+            _taskDal = taskDal;
             _mapper = mapper;
             _taskService = taskService;
             _scopeFactory = scopeFactory;
+            _hubContext = hubContext;
             _logger = logger;
         }
 
@@ -83,6 +91,37 @@ namespace PomodoraBack.Services.Concrete
             await _pomodoroSessionDal.AddAsync(session);
 
             var sessionDto = _mapper.Map<PomodoroSessionDto>(session);
+
+            // Eğer seans bir göreve bağlıysa ve o görev bir workspace'e aitse,
+            // workspace grubuna WorkspacePomodoroStarted eventi gönder.
+            // IHubContext singleton/thread-safe çalışır, scope sorunu yok.
+            if (!string.IsNullOrWhiteSpace(session.TaskId))
+            {
+                try
+                {
+                    var task = await _taskDal.GetAsync(t =>
+                        t.TaskId == session.TaskId && t.DeletedAt == null);
+
+                    if (task != null && !string.IsNullOrWhiteSpace(task.WorkspaceId))
+                    {
+                        var wsGroup = NotificationHub.GetWorkspaceGroupName(task.WorkspaceId);
+                        await _hubContext.Clients.Group(wsGroup)
+                            .SendAsync("WorkspacePomodoroStarted", sessionDto);
+
+                        _logger.LogInformation(
+                            "[WorkspaceSync] WorkspacePomodoroStarted gönderildi. " +
+                            "WorkspaceId={WorkspaceId}, UserId={UserId}, SessionId={SessionId}",
+                            task.WorkspaceId, userId, session.PomoId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Event gönderilemese bile seans başlatılmıştır, hata yutulur.
+                    _logger.LogWarning(ex,
+                        "[WorkspaceSync] WorkspacePomodoroStarted gönderilemedi. SessionId={SessionId}",
+                        session.PomoId);
+                }
+            }
 
             // Arkadaşlara anlık "odaklanmaya başladı" bildirimi gönder.
             // Ana akışı bloke etmemek için fire-and-forget pattern kullanılır.
