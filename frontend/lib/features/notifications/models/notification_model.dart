@@ -1,10 +1,14 @@
 class NotificationModel {
+  static const int friendStartedFocusType = 3;
+
   final String notificationId;
   final String title;
   final String message;
   final int type;
   final bool isRead;
   final DateTime? createdAt;
+
+  bool get isEphemeral => type == friendStartedFocusType;
 
   const NotificationModel({
     required this.notificationId,
@@ -24,12 +28,29 @@ class NotificationModel {
           .toString(),
       title: (json['title'] ?? json['Title'] ?? 'Bildirim').toString(),
       message: (json['message'] ?? json['Message'] ?? '').toString(),
-      type: json['type'] ?? json['notificationType'] ?? json['NotificationType'] ?? 0,
+      type: _parseType(json),
       isRead: json['isRead'] ?? json['IsRead'] ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
-          : null,
+          : json['CreatedAt'] != null
+              ? DateTime.tryParse(json['CreatedAt'].toString())
+              : null,
     );
+  }
+
+  static int _parseType(Map<String, dynamic> json) {
+    final raw = json['type'] ??
+        json['Type'] ??
+        json['notificationType'] ??
+        json['NotificationType'];
+
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    if (raw is String) {
+      if (raw == 'FriendStartedFocus') return friendStartedFocusType;
+      return int.tryParse(raw) ?? 0;
+    }
+    return 0;
   }
 
   NotificationModel copyWith({

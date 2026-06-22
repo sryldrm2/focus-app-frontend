@@ -14,6 +14,8 @@ import 'package:focus_app/features/pomodoro/screens/pomodoro_screen.dart';
 import 'package:focus_app/features/stats/screens/stats_screen.dart';
 import 'package:focus_app/features/social/screens/social_screen.dart';
 import 'package:focus_app/features/notifications/screens/notifications_screen.dart';
+import 'package:focus_app/features/notifications/network/notification_hub_service.dart';
+import 'package:focus_app/features/notifications/providers/notification_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authNotifierProvider);
@@ -115,24 +117,52 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class MainShell extends StatelessWidget {
+class MainShell extends ConsumerStatefulWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
 
   static const _tabs = ['/home', '/pomodoro', '/stats', '/social', '/profile'];
 
   @override
+  ConsumerState<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends ConsumerState<MainShell> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      ref.read(notificationHubServiceProvider).connect(
+            onReceive: (notification) {
+              if (!mounted) return;
+              ref
+                  .read(notificationNotifierProvider)
+                  .addRealtimeNotification(notification);
+            },
+          );
+    });
+  }
+
+  @override
+  void dispose() {
+    // Logout sonrası hub bağlantısını kapat.
+    ref.read(notificationHubServiceProvider).disconnect();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    final currentIndex = _tabs
+    final currentIndex = MainShell._tabs
         .indexWhere((t) => location.startsWith(t))
         .clamp(0, 4);
 
     return Scaffold(
-      body: child,
+      body: widget.child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
-        onDestinationSelected: (i) => context.go(_tabs[i]),
+        onDestinationSelected: (i) => context.go(MainShell._tabs[i]),
         backgroundColor: Colors.white,
         indicatorColor: const Color(0xFFFFE5D5),
         destinations: const [
