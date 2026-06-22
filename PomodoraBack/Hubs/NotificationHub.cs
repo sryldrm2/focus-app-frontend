@@ -104,6 +104,33 @@ namespace PomodoraBack.Hubs
         }
 
         /// <summary>
+        /// Kullanıcının online iken yeni bir odaya katıldığında (davet kabul etme vb.)
+        /// anlık olarak ilgili odanın SignalR grubuna dahil olmasını sağlar.
+        /// Frontend, odaya başarıyla katıldıktan sonra bu metodu çağırmalıdır.
+        /// </summary>
+        public async Task JoinWorkspaceGroup(string workspaceId)
+        {
+            var wsGroup = $"{WorkspaceIdPrefix}{workspaceId}";
+            await Groups.AddToGroupAsync(Context.ConnectionId, wsGroup);
+            
+            Console.WriteLine(
+                $"[NotificationHub] Dinamik Katılım: ConnectionId={Context.ConnectionId}, Grup={wsGroup}");
+        }
+
+        /// <summary>
+        /// Kullanıcının odadan ayrıldığında anlık olarak ilgili odanın
+        /// SignalR grubundan çıkmasını sağlar.
+        /// </summary>
+        public async Task LeaveWorkspaceGroup(string workspaceId)
+        {
+            var wsGroup = $"{WorkspaceIdPrefix}{workspaceId}";
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, wsGroup);
+            
+            Console.WriteLine(
+                $"[NotificationHub] Dinamik Çıkış: ConnectionId={Context.ConnectionId}, Grup={wsGroup}");
+        }
+
+        /// <summary>
         /// Kullanıcıya ait kişisel SignalR grup adını döndürür.
         /// </summary>
         public static string GetUserGroupName(string userId)
