@@ -1,6 +1,7 @@
 using AutoMapper;
 using Core.Utilities.Results;
 using Microsoft.EntityFrameworkCore;
+using PomodoraBack.Core.Enums;
 using PomodoraBack.DataAccess.Interfaces;
 using PomodoraBack.DTOs;
 using PomodoraBack.Entities;
@@ -15,17 +16,20 @@ namespace PomodoraBack.Services.Concrete
         private readonly IFriendShipDal _friendshipDal;
         private readonly IUserDal _userDal;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
 
         public FriendRequestService(
             IFriendRequestDal friendRequestDal,
             IFriendShipDal friendshipDal,
             IUserDal userDal,
-            IMapper mapper)
+            IMapper mapper,
+            INotificationService notificationService)
         {
             _friendRequestDal = friendRequestDal;
             _friendshipDal = friendshipDal;
             _userDal = userDal;
             _mapper = mapper;
+            _notificationService = notificationService;
         }
 
         /// <summary>
@@ -87,6 +91,25 @@ namespace PomodoraBack.Services.Concrete
             };
 
             await _friendRequestDal.AddAsync(newFriendRequest);
+
+            // Alıcıya anlık + kalıcı (DB'ye kayıtlı) arkadaşlık isteği bildirimi gönder.
+            // Hata oluşsa bile ana akış etkilenmez.
+            try
+            {
+                await _notificationService.CreateNotificationAsync(new CreateNotificationDto
+                {
+                    UserId          = receiverId,
+                    Type            = NotificationTypeEnums.FriendRequest,
+                    Title           = "Yeni arkadaşlık isteği",
+                    Message         = $"{sender.Name} {sender.Surname} sana arkadaşlık isteği gönderdi.",
+                    RelatedEntityId = newFriendRequest.FriendRequestId
+                });
+            }
+            catch (Exception ex)
+            {
+                // Bildirim gönderilemese bile isteğin kendisi başarıyla kaydedildi.
+                Console.WriteLine($"[FriendRequestService] Bildirim gönderilemedi: {ex.Message}");
+            }
 
             var friendRequestDto = _mapper.Map<FriendRequestDto>(newFriendRequest);
             return new SuccessDataResult<FriendRequestDto>(friendRequestDto, "Arkadaş isteği gönderildi.");
