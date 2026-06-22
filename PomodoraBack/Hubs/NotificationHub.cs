@@ -115,5 +115,58 @@ namespace PomodoraBack.Hubs
         /// </summary>
         public static string GetWorkspaceGroupName(string workspaceId)
             => $"{WorkspaceIdPrefix}{workspaceId}";
+
+        /// <summary>
+        /// İstemci tarafından çağrılabilir hub metodu.
+        /// Kullanıcının DB'deki güncel workspace üyeliklerini okuyarak
+        /// bu bağlantıyı ilgili SignalR gruplarıyla senkronize eder.
+        ///
+        /// Kullanım senaryoları:
+        ///   - Kullanıcı online iken yeni bir odaya katıldığında (davet kabul)
+        ///   - Sayfa yenilemek istemeden grup üyeliğini güncellemek istediğinde
+        ///
+        /// Frontend çağrısı (JS/TS):
+        ///   await connection.invoke("SyncWorkspaceGroups");
+        /// </summary>
+        public async Task SyncWorkspaceGroups()
+        {
+            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                      ?? Context.User?.FindFirst("sub")?.Value
+                      ?? Context.UserIdentifier;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                Console.WriteLine("[NotificationHub] SyncWorkspaceGroups: UserId claim yok.");
+                return;
+            }
+
+            try
+            {
+                var workspaceIds = await _workspaceMemberDal.GetUserWorkspaceIdsAsync(userId);
+
+                foreach (var wsId in workspaceIds)
+                {
+                    // SignalR, aynı bağlantıyı aynı gruba tekrar eklemeye izin verir
+                    // (idempotent) — duplıkasyon olmaz.
+                    await Groups.AddToGroupAsync(Context.ConnectionId, $"{WorkspaceIdPrefix}{wsId}");
+                }
+
+                Console.WriteLine(
+                    $"[NotificationHub] SyncWorkspaceGroups: UserId={userId}, " +
+                    $"Senkronize={workspaceIds.Count} grup, ConnectionId={Context.ConnectionId}");
+
+                // İstemciye senkronizasyon tamamlandı bilgisi gönder (opsiyonel)
+                await Clients.Caller.SendAsync("WorkspaceGroupsSynced", new
+                {
+                    WorkspaceIds = workspaceIds,
+                    SyncedAt     = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    $"[NotificationHub] SyncWorkspaceGroups hata: UserId={userId}, {ex.Message}");
+            }
+        }
     }
 }

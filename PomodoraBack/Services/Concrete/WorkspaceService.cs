@@ -1,10 +1,12 @@
 using AutoMapper;
 using Core.Utilities.Results;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using PomodoraBack.Core.Enums;
 using PomodoraBack.DataAccess.Interfaces;
 using PomodoraBack.DTOs;
 using PomodoraBack.Entities;
+using PomodoraBack.Hubs;
 using PomodoraBack.Services.Interfaces;
 using System.Linq;
 
@@ -19,6 +21,7 @@ namespace PomodoraBack.Services.Concrete
         private readonly IUserDal _userDal;
         private readonly IFriendShipDal _friendshipDal;
         private readonly IMapper _mapper;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
         public WorkspaceService(
             IWorkspaceDal workspaceDal,
@@ -26,7 +29,8 @@ namespace PomodoraBack.Services.Concrete
             IWorkspaceInvitationDal workspaceInvitationDal,
             IUserDal userDal,
             IFriendShipDal friendshipDal,
-            IMapper mapper)
+            IMapper mapper,
+            IHubContext<NotificationHub> hubContext)
         {
             _workspaceDal = workspaceDal;
             _workspaceMemberDal = workspaceMemberDal;
@@ -34,6 +38,7 @@ namespace PomodoraBack.Services.Concrete
             _userDal = userDal;
             _friendshipDal = friendshipDal;
             _mapper = mapper;
+            _hubContext = hubContext;
         }
 
         public async Task<IDataResult<WorkspaceDto>> CreateWorkspaceAsync(string ownerId, CreateWorkspaceDto request)
@@ -65,6 +70,20 @@ namespace PomodoraBack.Services.Concrete
             var workspaceDto = _mapper.Map<WorkspaceDto>(workspace);
             workspaceDto.MemberCount = 1;
             workspaceDto.OwnerNickName = owner.Nickname;
+
+            // Oda sahibine kişisel grubuna WorkspaceGroupsUpdated eventi gönder;
+            // frontend bu eventi alınca SyncWorkspaceGroups() çağırarak
+            // yeni workspace_ grubuna otomatik katılır.
+            try
+            {
+                var ownerGroup = NotificationHub.GetUserGroupName(ownerId);
+                await _hubContext.Clients.Group(ownerGroup)
+                    .SendAsync("WorkspaceGroupsUpdated", new { WorkspaceId = workspace.WorkspaceId });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WorkspaceService] WorkspaceGroupsUpdated gönderilemedi: {ex.Message}");
+            }
 
             return new SuccessDataResult<WorkspaceDto>(workspaceDto, "Oda oluşturuldu.");
         }
@@ -179,6 +198,44 @@ namespace PomodoraBack.Services.Concrete
             };
 
             await _workspaceMemberDal.AddAsync(member);
+
+            // 1. Yeni katılan kullanıcıya WorkspaceGroupsUpdated gönder.
+            //    Frontend bu eventi alınca SyncWorkspaceGroups() invoke ederek
+            //    mevcut connection'ını yeni workspace_ grubuna ekletir.
+            //    Reconnect gerekmez.
+            try
+            {
+                var newMemberGroup = NotificationHub.GetUserGroupName(receiverId);
+                await _hubContext.Clients.Group(newMemberGroup)
+                    .SendAsync("WorkspaceGroupsUpdated", new { WorkspaceId = invitation.WorkspaceId });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WorkspaceService] WorkspaceGroupsUpdated gönderilemedi: {ex.Message}");
+            }
+
+            // 2. Odadaki mevcut üyelere WorkspaceMemberJoined eventi gönder.
+            //    Frontend oda listesini güncelleyebilir (ki yeni üye görünsün).
+            try
+            {
+                var joiningUser = await _userDal.GetAsync(u => u.UserId == receiverId);
+                var wsGroup = NotificationHub.GetWorkspaceGroupName(invitation.WorkspaceId);
+                await _hubContext.Clients.Group(wsGroup)
+                    .SendAsync("WorkspaceMemberJoined", new
+                    {
+                        WorkspaceId = invitation.WorkspaceId,
+                        UserId      = receiverId,
+                        Nickname    = joiningUser?.Nickname,
+                        FullName    = joiningUser != null
+                            ? $"{joiningUser.Name} {joiningUser.Surname}"
+                            : null,
+                        JoinedAt    = DateTime.UtcNow
+                    });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WorkspaceService] WorkspaceMemberJoined gönderilemedi: {ex.Message}");
+            }
 
             var invitationDto = _mapper.Map<WorkspaceInvitationDto>(invitation);
             return new SuccessDataResult<WorkspaceInvitationDto>(invitationDto, "Davet kabul edildi.");
