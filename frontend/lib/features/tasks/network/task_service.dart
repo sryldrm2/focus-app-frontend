@@ -10,6 +10,7 @@ class CreateTaskDto {
   final int? priority;
   final DateTime? dueDate;
   final String? workspaceId;
+  final int? pomodoroTargetCount;
 
   const CreateTaskDto({
     required this.title,
@@ -17,6 +18,7 @@ class CreateTaskDto {
     this.priority,
     this.dueDate,
     this.workspaceId,
+    this.pomodoroTargetCount,
   });
 
   Map<String, dynamic> toJson() => {
@@ -27,6 +29,8 @@ class CreateTaskDto {
         if (dueDate != null) 'dueDate': dueDate!.toIso8601String(),
         if (workspaceId != null && workspaceId!.isNotEmpty)
           'workspaceId': workspaceId,
+        if (pomodoroTargetCount != null)
+          'pomodoroTargetCount': pomodoroTargetCount,
       };
 }
 
@@ -36,6 +40,7 @@ class UpdateTaskDto {
   final int? status;
   final int? priority;
   final DateTime? dueDate;
+  final int? pomodoroTargetCount;
 
   const UpdateTaskDto({
     this.title,
@@ -43,6 +48,7 @@ class UpdateTaskDto {
     this.status,
     this.priority,
     this.dueDate,
+    this.pomodoroTargetCount,
   });
 
   Map<String, dynamic> toJson() => {
@@ -51,6 +57,8 @@ class UpdateTaskDto {
         if (status != null) 'status': status,
         if (priority != null) 'priority': priority,
         if (dueDate != null) 'dueDate': dueDate!.toIso8601String(),
+        if (pomodoroTargetCount != null)
+          'pomodoroTargetCount': pomodoroTargetCount,
       };
 }
 

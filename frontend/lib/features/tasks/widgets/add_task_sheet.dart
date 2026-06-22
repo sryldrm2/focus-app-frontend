@@ -1,34 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
+import 'package:focus_app/features/tasks/models/task_model.dart';
 import 'package:focus_app/features/tasks/network/task_service.dart';
 import 'package:google_fonts/google_fonts.dart';
- 
+
 class AddTaskSheet extends StatefulWidget {
   final DateTime initialDate;
-  final Future<bool> Function(CreateTaskDto) onAdd;
+  final Future<bool> Function(CreateTaskDto)? onAdd;
+  final Future<bool> Function(String taskId, UpdateTaskDto)? onUpdate;
+  final TaskModel? taskToEdit;
   final String? workspaceId;
   final String title;
- 
+
   const AddTaskSheet({
     super.key,
     required this.initialDate,
-    required this.onAdd,
+    this.onAdd,
+    this.onUpdate,
+    this.taskToEdit,
     this.workspaceId,
     this.title = 'Yeni Görev',
   });
- 
+
+  bool get isEditing => taskToEdit != null;
+
   @override
   State<AddTaskSheet> createState() => _AddTaskSheetState();
 }
- 
+
 class _AddTaskSheetState extends State<AddTaskSheet> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
+  final _pomodoroController = TextEditingController();
   DateTime? _dueDate;
   Color _selectedColor = const Color(0xFFE85D04);
   int? _priority;
   bool _isLoading = false;
- 
+  String? _pomodoroError;
+
   static const _colors = [
     Color(0xFFE74C3C),
     Color(0xFF3498DB),
@@ -37,35 +47,83 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     Color(0xFFF39C12),
     Color(0xFF1ABC9C),
   ];
- 
+
   @override
   void initState() {
     super.initState();
-    _dueDate = widget.initialDate;
+    final task = widget.taskToEdit;
+    if (task != null) {
+      _titleController.text = task.title;
+      _descController.text = task.description;
+      _dueDate = task.dueDate;
+      _selectedColor = task.color;
+      _priority = task.priority;
+      if (task.pomodoroTargetCount != null) {
+        _pomodoroController.text = '${task.pomodoroTargetCount}';
+      }
+    } else {
+      _dueDate = widget.initialDate;
+    }
   }
- 
+
   @override
   void dispose() {
     _titleController.dispose();
     _descController.dispose();
+    _pomodoroController.dispose();
     super.dispose();
   }
- 
+
+  int? _parsePomodoroTarget() {
+    final text = _pomodoroController.text.trim();
+    if (text.isEmpty) return null;
+    final value = int.tryParse(text);
+    if (value == null || value < 1 || value > 500) {
+      setState(() {
+        _pomodoroError = '1 ile 500 arasında bir sayı girin';
+      });
+      return null;
+    }
+    setState(() => _pomodoroError = null);
+    return value;
+  }
+
   Future<void> _submit() async {
     if (_titleController.text.trim().isEmpty) return;
+    final pomodoroTarget = _parsePomodoroTarget();
+    if (_pomodoroController.text.trim().isNotEmpty &&
+        pomodoroTarget == null) {
+      return;
+    }
+
     setState(() => _isLoading = true);
 
-    final dto = CreateTaskDto(
-      title: _titleController.text.trim(),
-      description: _descController.text.trim().isEmpty
-        ? null
-        : _descController.text.trim(),
-      priority: _priority,
-      dueDate: _dueDate,
-      workspaceId: widget.workspaceId,
-    );
+    final success = widget.isEditing
+        ? await widget.onUpdate!(
+            widget.taskToEdit!.taskId,
+            UpdateTaskDto(
+              title: _titleController.text.trim(),
+              description: _descController.text.trim().isEmpty
+                  ? ''
+                  : _descController.text.trim(),
+              priority: _priority,
+              dueDate: _dueDate,
+              pomodoroTargetCount: pomodoroTarget,
+            ),
+          )
+        : await widget.onAdd!(
+            CreateTaskDto(
+              title: _titleController.text.trim(),
+              description: _descController.text.trim().isEmpty
+                  ? null
+                  : _descController.text.trim(),
+              priority: _priority,
+              dueDate: _dueDate,
+              workspaceId: widget.workspaceId,
+              pomodoroTargetCount: pomodoroTarget,
+            ),
+          );
 
-    final success = await widget.onAdd(dto);
     if (!mounted) return;
     if (success) {
       Navigator.pop(context);
@@ -73,12 +131,14 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
       setState(() => _isLoading = false);
     }
   }
- 
+
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-        24, 20, 24,
+        24,
+        20,
+        24,
         MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       decoration: const BoxDecoration(
@@ -90,10 +150,10 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle
             Center(
               child: Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(2),
@@ -101,9 +161,9 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
               ),
             ),
             const SizedBox(height: 20),
- 
+
             Text(
-              'Yeni Görev',
+              widget.title,
               style: GoogleFonts.nunito(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -111,8 +171,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
               ),
             ),
             const SizedBox(height: 20),
- 
-            // Başlık
+
             _Label('Görev Başlığı *'),
             _Field(
               controller: _titleController,
@@ -120,8 +179,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
               accentColor: _selectedColor,
             ),
             const SizedBox(height: 14),
- 
-            // Açıklama
+
             _Label('Açıklama (opsiyonel)'),
             _Field(
               controller: _descController,
@@ -130,8 +188,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
               maxLines: 2,
             ),
             const SizedBox(height: 14),
- 
-            // Renk
+
             _Label('Renk'),
             Row(
               children: _colors.map((c) {
@@ -141,7 +198,8 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     margin: const EdgeInsets.only(right: 10),
-                    width: 32, height: 32,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: c,
                       shape: BoxShape.circle,
@@ -149,21 +207,23 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                           ? Border.all(color: Colors.white, width: 2.5)
                           : null,
                       boxShadow: isSel
-                          ? [BoxShadow(
-                              color: c.withOpacity(0.5), blurRadius: 6)]
+                          ? [
+                              BoxShadow(
+                                color: c.withOpacity(0.5),
+                                blurRadius: 6,
+                              ),
+                            ]
                           : null,
                     ),
                     child: isSel
-                        ? const Icon(Icons.check,
-                            color: Colors.white, size: 16)
+                        ? const Icon(Icons.check, color: Colors.white, size: 16)
                         : null,
                   ),
                 );
               }).toList(),
             ),
             const SizedBox(height: 14),
- 
-            // Tarih
+
             _Label('Tarih'),
             GestureDetector(
               onTap: () async {
@@ -175,7 +235,8 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                   builder: (ctx, child) => Theme(
                     data: Theme.of(ctx).copyWith(
                       colorScheme: const ColorScheme.light(
-                          primary: AppColors.primary),
+                        primary: AppColors.primary,
+                      ),
                     ),
                     child: child!,
                   ),
@@ -184,42 +245,45 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.backgroundLight,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined,
-                        size: 18, color: AppColors.primary),
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
                     const SizedBox(width: 10),
                     Text(
                       _dueDate != null
                           ? '${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year}'
                           : 'Tarih seç',
-                      style: GoogleFonts.dmSans(
-                          color: AppColors.textPrimary),
+                      style: GoogleFonts.dmSans(color: AppColors.textPrimary),
                     ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 14),
- 
-            // Öncelik
+
             _Label('Öncelik (opsiyonel)'),
             Row(
               children: List.generate(5, (i) {
                 final val = i + 1;
                 final isSel = _priority == val;
                 return GestureDetector(
-                  onTap: () =>
-                      setState(() => _priority = isSel ? null : val),
+                  onTap: () => setState(() => _priority = isSel ? null : val),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     margin: const EdgeInsets.only(right: 8),
-                    width: 40, height: 40,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: isSel
                           ? _selectedColor
@@ -242,9 +306,28 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                 );
               }),
             ),
+            const SizedBox(height: 14),
+
+            _Label('Pomodoro hedefi (opsiyonel)'),
+            _Field(
+              controller: _pomodoroController,
+              hint: 'ör. 4',
+              accentColor: _selectedColor,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+            if (_pomodoroError != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                _pomodoroError!,
+                style: GoogleFonts.dmSans(
+                  fontSize: 12,
+                  color: AppColors.error,
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
- 
-            // Kaydet
+
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -252,17 +335,21 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
                 onPressed: _isLoading ? null : _submit,
                 child: _isLoading
                     ? const SizedBox(
-                        width: 22, height: 22,
+                        width: 22,
+                        height: 22,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2.5),
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
                       )
                     : Text(
-                        'Görevi Kaydet',
+                        widget.isEditing ? 'Değişiklikleri Kaydet' : 'Görevi Kaydet',
                         style: GoogleFonts.nunito(
                           color: Colors.white,
                           fontSize: 16,
@@ -277,11 +364,11 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     );
   }
 }
- 
+
 class _Label extends StatelessWidget {
   final String text;
   const _Label(this.text);
- 
+
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
@@ -295,24 +382,30 @@ class _Label extends StatelessWidget {
         ),
       );
 }
- 
+
 class _Field extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final Color accentColor;
   final int maxLines;
- 
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+
   const _Field({
     required this.controller,
     required this.hint,
     required this.accentColor,
     this.maxLines = 1,
+    this.keyboardType,
+    this.inputFormatters,
   });
- 
+
   @override
   Widget build(BuildContext context) => TextField(
         controller: controller,
         maxLines: maxLines,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         style: GoogleFonts.dmSans(color: AppColors.textPrimary),
         decoration: InputDecoration(
           hintText: hint,

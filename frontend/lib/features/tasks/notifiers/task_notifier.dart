@@ -95,6 +95,29 @@ class TaskNotifier extends ChangeNotifier {
     }
   }
  
+  // ─── Görevi güncelle ────────────────────────────────────
+  Future<bool> updateTask(String taskId, UpdateTaskDto dto) async {
+    _emit(_state.copyWith(isLoading: true));
+    try {
+      final token = await TokenStorage.getAccessToken();
+      if (token == null) throw Exception('Oturum bulunamadı.');
+      final updated = await _service.updateTask(token, taskId, dto);
+      _emit(_state.copyWith(
+        tasks: _state.tasks
+            .map((t) => t.taskId == taskId ? updated : t)
+            .toList(),
+        isLoading: false,
+      ));
+      return true;
+    } catch (e) {
+      _emit(_state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      ));
+      return false;
+    }
+  }
+
   // ─── Görevi tamamla / geri al ───────────────────────────
   Future<void> toggleComplete(TaskModel task) async {
     final newStatus = task.isCompleted

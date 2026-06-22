@@ -190,4 +190,25 @@ class SocialService {
     }
     throw _exceptionFromResult(json, response);
   }
+
+  Future<ApiResult<List<FriendLeaderboardModel>>> getFriendLeaderboard() async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/Friendship/leaderboard'),
+      headers: await _authHeaders(),
+    );
+    final json = _decodeBody(response);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return ApiResult.fromJson(json, (raw) {
+        final list = (raw as List<dynamic>? ?? const []);
+        return list
+            .map(
+              (e) => FriendLeaderboardModel.fromJson(
+                e as Map<String, dynamic>,
+              ),
+            )
+            .toList();
+      });
+    }
+    throw _exceptionFromResult(json, response);
+  }
 }

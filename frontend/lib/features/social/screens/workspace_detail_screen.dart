@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/social/models/workspace_model.dart';
 import 'package:focus_app/features/social/providers/workspace_provider.dart';
-import 'package:focus_app/features/tasks/network/task_service.dart';
+import 'package:focus_app/features/tasks/models/task_model.dart';
 import 'package:focus_app/features/tasks/widgets/add_task_sheet.dart';
 import 'package:focus_app/features/tasks/widgets/task_card.dart';
 class WorkspaceDetailScreen extends ConsumerStatefulWidget {
@@ -32,6 +32,21 @@ class _WorkspaceDetailScreenState extends ConsumerState<WorkspaceDetailScreen> {
         workspaceId: widget.workspace.workspaceId,
         title: 'Oda görevi ekle',
         onAdd: (dto) => ref.read(workspaceTaskNotifierProvider).addTask(dto),
+      ),
+    );
+  }
+
+  void _showEditTask(TaskModel task) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddTaskSheet(
+        initialDate: DateTime.now(),
+        title: 'Görevi Düzenle',
+        taskToEdit: task,
+        onUpdate: (taskId, dto) =>
+            ref.read(workspaceTaskNotifierProvider).updateTask(taskId, dto),
       ),
     );
   }
@@ -91,6 +106,7 @@ class _WorkspaceDetailScreenState extends ConsumerState<WorkspaceDetailScreen> {
                       task: task,
                       onToggle: () => notifier.toggleComplete(task),
                       onDelete: () => notifier.deleteTask(task.taskId),
+                      onEdit: () => _showEditTask(task),
                     );
                   },
                 ),

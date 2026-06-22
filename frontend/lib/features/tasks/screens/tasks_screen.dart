@@ -40,6 +40,21 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     );
   }
 
+  void _showEditSheet(TaskModel task) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddTaskSheet(
+        initialDate: _selectedDate,
+        title: 'Görevi Düzenle',
+        taskToEdit: task,
+        onUpdate: (taskId, dto) =>
+            ref.read(taskNotifierProvider).updateTask(taskId, dto),
+      ),
+    );
+  }
+
   Future<void> _assignToRoom(TaskModel task) async {
     await ref.read(workspaceNotifierProvider).init();
     final rooms = ref.read(workspaceStateProvider).myWorkspaces;
@@ -191,6 +206,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   onDelete: () => ref
                       .read(taskNotifierProvider)
                       .deleteTask(tasks[i].taskId),
+                  onEdit: () => _showEditSheet(tasks[i]),
                   onAssignToRoom: tasks[i].isPersonal
                       ? () => _assignToRoom(tasks[i])
                       : null,

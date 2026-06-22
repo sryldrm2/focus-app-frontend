@@ -7,6 +7,7 @@ import 'package:focus_app/features/social/models/friend_models.dart';
 import 'package:focus_app/features/social/providers/social_providers.dart';
 import 'package:focus_app/features/social/widgets/add_friend_sheet.dart';
 import 'package:focus_app/features/social/widgets/friend_card.dart';
+import 'package:focus_app/features/social/widgets/friend_leaderboard_section.dart';
 import 'package:focus_app/features/social/widgets/friend_request_card.dart';
 
 class FriendsTab extends ConsumerStatefulWidget {
@@ -21,7 +22,9 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(socialNotifierProvider).loadAll();
+      final notifier = ref.read(socialNotifierProvider);
+      notifier.loadAll();
+      notifier.loadLeaderboard();
     });
   }
 
@@ -109,7 +112,10 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
         .toList();
 
     return RefreshIndicator(
-      onRefresh: () => notifier.loadAll(),
+      onRefresh: () async {
+        await notifier.loadAll();
+        await notifier.loadLeaderboard();
+      },
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
@@ -181,6 +187,14 @@ class _FriendsTabState extends ConsumerState<FriendsTab> {
                       ],
                     ),
                   ),
+                ),
+                const SizedBox(height: 20),
+
+                FriendLeaderboardSection(
+                  entries: social.leaderboard,
+                  isLoading: social.isLeaderboardLoading,
+                  errorMessage: social.leaderboardError,
+                  onRetry: () => notifier.loadLeaderboard(),
                 ),
                 const SizedBox(height: 20),
 

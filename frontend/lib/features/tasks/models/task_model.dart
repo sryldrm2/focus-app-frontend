@@ -36,6 +36,8 @@ class TaskModel {
   final DateTime createdAt;
   final DateTime? dueDate;
   final Color color;
+  final int? pomodoroTargetCount;
+  final int completedPomodoroCount;
  
   const TaskModel({
     required this.taskId,
@@ -47,11 +49,23 @@ class TaskModel {
     required this.createdAt,
     this.dueDate,
     this.color = const Color(0xFFE85D04),
+    this.pomodoroTargetCount,
+    this.completedPomodoroCount = 0,
   });
  
   bool get isCompleted => status == TaskStatus.completed;
   bool get isPersonal => 
       workspaceId == null || workspaceId!.isEmpty;
+
+  String? get pomodoroLabel {
+    if (pomodoroTargetCount != null) {
+      return '$completedPomodoroCount / $pomodoroTargetCount Pomodoro';
+    }
+    if (completedPomodoroCount > 0) {
+      return '$completedPomodoroCount Pomodoro tamamlandı';
+    }
+    return null;
+  }
 
   factory TaskModel.fromJson(Map<String, dynamic> json) => TaskModel(
         taskId:      json['taskId'] as String,
@@ -64,9 +78,17 @@ class TaskModel {
         dueDate:     json['dueDate'] != null
             ? DateTime.parse(json['dueDate'] as String)
             : null,
+        pomodoroTargetCount: json['pomodoroTargetCount'] as int?,
+        completedPomodoroCount:
+            json['completedPomodoroCount'] as int? ?? 0,
       );
  
-  TaskModel copyWith({TaskStatus? status, Color? color}) => TaskModel(
+  TaskModel copyWith({
+    TaskStatus? status,
+    Color? color,
+    int? pomodoroTargetCount,
+    int? completedPomodoroCount,
+  }) => TaskModel(
         taskId:      taskId,
         workspaceId: workspaceId ?? this.workspaceId,
         title:       title,
@@ -76,6 +98,10 @@ class TaskModel {
         createdAt:   createdAt,
         dueDate:     dueDate,
         color:       color ?? this.color,
+        pomodoroTargetCount:
+            pomodoroTargetCount ?? this.pomodoroTargetCount,
+        completedPomodoroCount:
+            completedPomodoroCount ?? this.completedPomodoroCount,
       );
 }
  

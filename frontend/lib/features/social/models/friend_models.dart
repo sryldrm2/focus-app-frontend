@@ -72,3 +72,38 @@ class FriendshipModel {
     return firstUser;
   }
 }
+
+class FriendLeaderboardModel {
+  final int rank;
+  final String userId;
+  final String fullName;
+  final String nickname;
+  final int totalPoints;
+  final bool isCurrentUser;
+
+  const FriendLeaderboardModel({
+    required this.rank,
+    required this.userId,
+    required this.fullName,
+    required this.nickname,
+    required this.totalPoints,
+    required this.isCurrentUser,
+  });
+
+  factory FriendLeaderboardModel.fromJson(Map<String, dynamic> json) {
+    return FriendLeaderboardModel(
+      rank: json['rank'] as int? ?? 0,
+      userId: json['userId'] as String? ?? '',
+      fullName: json['fullName'] as String? ?? '',
+      nickname: json['nickname'] as String? ?? '',
+      totalPoints: json['totalPoints'] as int? ?? 0,
+      isCurrentUser: json['isCurrentUser'] as bool? ?? false,
+    );
+  }
+
+  String get displayName {
+    final name = fullName.trim();
+    if (name.isNotEmpty) return name;
+    return nickname;
+  }
+}

@@ -89,4 +89,24 @@ class SocialNotifier extends ChangeNotifier {
       ));
     }
   }
+
+  Future<void> loadLeaderboard() async {
+    _emit(_state.copyWith(
+      isLeaderboardLoading: true,
+      clearLeaderboardError: true,
+    ));
+    try {
+      final result = await _service.getFriendLeaderboard();
+      _emit(_state.copyWith(
+        isLeaderboardLoading: false,
+        leaderboard: result.data ?? const [],
+      ));
+    } catch (e) {
+      _emit(_state.copyWith(
+        isLeaderboardLoading: false,
+        leaderboardError:
+            e.toString().replaceFirst('Exception: ', ''),
+      ));
+    }
+  }
 }
