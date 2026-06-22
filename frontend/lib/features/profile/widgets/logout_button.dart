@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:focus_app/core/theme/app_colors.dart';
 import 'package:focus_app/features/auth/providers/auth_providers.dart';
+import 'package:focus_app/features/notifications/network/notification_hub_service.dart';
 import 'package:focus_app/features/pomodoro/providers/pomodoro_provider.dart';
 import 'package:focus_app/features/profile/providers/profile_providers.dart';
 import 'package:focus_app/features/social/providers/social_providers.dart';
 import 'package:focus_app/features/social/providers/workspace_provider.dart';
+import 'package:focus_app/features/notifications/providers/notification_provider.dart';
 import 'package:focus_app/features/stats/providers/stats_provider.dart';
 import 'package:focus_app/features/tasks/providers/task_provider.dart';
 
@@ -91,6 +93,9 @@ class LogoutButton extends ConsumerWidget {
                           onPressed: () async {
                             Navigator.pop(dialogContext);
 
+                            // SignalR bağlantısını kapat ve real-time notifier'ı sıfırla.
+                            await ref.read(notificationHubServiceProvider).disconnect();
+
                             ref.invalidate(taskNotifierProvider);
                             ref.invalidate(pomodoroNotifierProvider);
                             ref.invalidate(statsNotifierProvider);
@@ -98,6 +103,7 @@ class LogoutButton extends ConsumerWidget {
                             ref.invalidate(workspaceNotifierProvider);
                             ref.invalidate(workspaceTaskNotifierProvider);
                             ref.invalidate(profileNotifierProvider);
+                            ref.invalidate(notificationNotifierProvider);
 
                             await ref.read(authNotifierProvider).logout();
                           },

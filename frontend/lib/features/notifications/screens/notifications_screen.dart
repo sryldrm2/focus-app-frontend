@@ -49,7 +49,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             ),
         ],
       ),
-      body: state.isLoading
+      body: state.isLoading && state.notifications.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : state.notifications.isEmpty
           ? Center(
