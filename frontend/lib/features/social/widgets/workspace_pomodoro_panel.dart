@@ -9,6 +9,7 @@ import 'package:focus_app/features/pomodoro/providers/pomodoro_provider.dart';
 import 'package:focus_app/features/pomodoro/widgets/pomodoro_models.dart';
 import 'package:focus_app/features/pomodoro/widgets/session_controls.dart';
 import 'package:focus_app/features/social/providers/workspace_provider.dart';
+import 'package:focus_app/features/social/utils/workspace_realtime_sync.dart';
 import 'package:focus_app/features/tasks/models/task_model.dart';
 import 'package:focus_app/features/tasks/notifiers/workspace_task_notifier.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,9 +17,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Oda içi pomodoro paneli.
 ///
-/// NOT: Backend'de odaya görev eklendiğinde veya başka üyenin görev oluşturduğunda
-/// tetiklenen bir SignalR/workspace event'i yok. Yalnızca [WorkspaceTaskNotifier.addTask]
-/// API response'u ve [WorkspaceTaskNotifier.loadTasks] ile senkronize edilir.
+/// Görev listesi [WorkspaceTaskNotifier.handleRealtimeTaskCreated] ile,
+/// uzaktan başlatılan pomodoro ise [workspacePomodoroRealtimeProvider] ile senkronize edilir.
 class WorkspacePomodoroPanel extends ConsumerStatefulWidget {
   final String workspaceId;
 
@@ -35,6 +35,7 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
   int _secondsLeft = 25 * 60;
   Timer? _timer;
   bool _sessionReady = false;
+  String? _syncedPomoId;
 
   int get _workDuration => _workMinutes * 60;
 
@@ -93,10 +94,51 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
     _status = pomState.localTimerStatus == TimerStatus.paused
         ? TimerStatus.paused
         : TimerStatus.running;
+    _syncedPomoId = session.pomoId;
 
     if (_status == TimerStatus.running) {
       _tick();
     }
+  }
+
+  void _syncFromRemoteSession(PomodoroSessionModel session) {
+    if (!session.isOngoing) return;
+
+    final wsState = ref.read(workspaceTaskStateProvider);
+    final taskId = session.taskId;
+    if (taskId == null) return;
+    if (!wsState.tasks.any((t) => t.taskId == taskId)) return;
+
+    final pomState = ref.read(pomodoroNotifierProvider).state;
+    if (pomState.currentSession?.pomoId == session.pomoId &&
+        (_status == TimerStatus.running || _status == TimerStatus.paused)) {
+      return;
+    }
+    if (_syncedPomoId == session.pomoId &&
+        (_status == TimerStatus.running || _status == TimerStatus.paused)) {
+      return;
+    }
+
+    ref.read(workspaceTaskNotifierProvider).setActiveTask(taskId);
+
+    _syncedPomoId = session.pomoId;
+    _workMinutes = session.durationMinute;
+    _secondsLeft = session.remainingSeconds;
+    _status = TimerStatus.running;
+
+    debugPrint(
+      '[WorkspaceSync] panel timer started pomoId=${session.pomoId} '
+      'secondsLeft=$_secondsLeft workMinutes=$_workMinutes',
+    );
+
+    ref.read(pomodoroNotifierProvider).setLocalTimer(
+          TimerStatus.running,
+          pomoId: session.pomoId,
+          secondsLeft: _secondsLeft,
+        );
+
+    _tick();
+    if (mounted) setState(() {});
   }
 
   void _persistLocalTimer(TimerStatus status, {int? secondsLeft}) {
@@ -159,6 +201,9 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
       return;
     }
 
+    _syncedPomoId =
+        ref.read(pomodoroNotifierProvider).state.currentSession?.pomoId;
+
     setState(() {
       _status = TimerStatus.running;
       _secondsLeft = _workDuration;
@@ -188,6 +233,7 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
 
   Future<void> _reset() async {
     _timer?.cancel();
+    _syncedPomoId = null;
     await ref.read(pomodoroNotifierProvider).cancelSession();
     setState(() {
       _status = TimerStatus.idle;
@@ -219,6 +265,8 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
     final task = _activeTask(ref.read(workspaceTaskStateProvider));
     await ref.read(pomodoroNotifierProvider).completeSession();
     ref.read(pomodoroNotifierProvider).clearSession();
+    _syncedPomoId = null;
+    ref.read(workspacePomodoroRealtimeNotifierProvider).clear();
 
     await ref
         .read(workspaceTaskNotifierProvider)
@@ -261,6 +309,18 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
         _syncFromGlobalSession();
         if (mounted) setState(() {});
       }
+    });
+
+    ref.listen(workspacePomodoroRealtimeProvider, (previous, next) {
+      if (next.workspaceId != widget.workspaceId) return;
+      final session = next.session;
+      if (session == null) return;
+      _syncFromRemoteSession(session);
+    });
+
+    ref.listen(workspaceTaskStateProvider, (previous, next) {
+      if (next.workspaceId != widget.workspaceId) return;
+      applyPendingWorkspacePomodoro(ref);
     });
 
     final wsState = ref.watch(workspaceTaskStateProvider);

@@ -70,25 +70,81 @@ class PomodoroSessionModel {
 
   factory PomodoroSessionModel.fromJson(Map<String, dynamic> json) =>
       PomodoroSessionModel(
-        pomoId: json['pomoId'] as String,
-        userId: json['userId'] as String,
-        taskId: json['taskId'] as String?,
+        pomoId: _string(json, 'pomoId', 'PomoId'),
+        userId: _string(json, 'userId', 'UserId'),
+        taskId: _optionalString(json, 'taskId', 'TaskId'),
         sessionType: PomodoroType.values.firstWhere(
-          (e) => e.value == (json['sessionType'] as int? ?? 0),
+          (e) => e.value == _int(json, 'sessionType', 'SessionType'),
           orElse: () => PomodoroType.workSession,
         ),
-        durationMinute: json['durationMinute'] as int,
-        pointsEarned: json['pointsEarned'] as int? ?? 0,
-        notes: json['notes'] as String?,
-        breakCount: json['breakCount'] as int? ?? 0,
-        startedAt: DateTime.parse(json['startedAt'] as String),
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        updatedAt: json['updatedAt'] != null
-            ? DateTime.parse(json['updatedAt'] as String)
-            : null,
-        completedAt: json['completedAt'] != null
-            ? DateTime.parse(json['completedAt'] as String)
-            : null,
-        status: SessionStatus.fromInt(json['status'] as int? ?? 0),
+        durationMinute: _int(json, 'durationMinute', 'DurationMinute'),
+        pointsEarned: _int(json, 'pointsEarned', 'PointsEarned'),
+        notes: _optionalString(json, 'notes', 'Notes'),
+        breakCount: _int(json, 'breakCount', 'BreakCount'),
+        startedAt: DateTime.parse(_string(json, 'startedAt', 'StartedAt')),
+        createdAt: DateTime.parse(_string(json, 'createdAt', 'CreatedAt')),
+        updatedAt: _optionalDate(json, 'updatedAt', 'UpdatedAt'),
+        completedAt: _optionalDate(json, 'completedAt', 'CompletedAt'),
+        status: _parseStatus(json['status'] ?? json['Status']),
       );
+
+  static String _string(
+    Map<String, dynamic> json,
+    String camel,
+    String pascal,
+  ) =>
+      (json[camel] ?? json[pascal] ?? '').toString();
+
+  static String? _optionalString(
+    Map<String, dynamic> json,
+    String camel,
+    String pascal,
+  ) {
+    final value = json[camel] ?? json[pascal];
+    if (value == null) return null;
+    final text = value.toString();
+    return text.isEmpty ? null : text;
+  }
+
+  static int _int(Map<String, dynamic> json, String camel, String pascal) {
+    final raw = json[camel] ?? json[pascal];
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw?.toString() ?? '') ?? 0;
+  }
+
+  static DateTime? _optionalDate(
+    Map<String, dynamic> json,
+    String camel,
+    String pascal,
+  ) {
+    final raw = json[camel] ?? json[pascal];
+    if (raw == null) return null;
+    return DateTime.tryParse(raw.toString());
+  }
+
+  static SessionStatus _parseStatus(dynamic raw) {
+    if (raw is int) return SessionStatus.fromInt(raw);
+    if (raw is num) return SessionStatus.fromInt(raw.toInt());
+    if (raw is String) {
+      switch (raw) {
+        case 'OnGoing':
+        case 'onGoing':
+          return SessionStatus.onGoing;
+        case 'Successful':
+        case 'successful':
+          return SessionStatus.successful;
+        case 'Incomplete':
+        case 'incomplete':
+          return SessionStatus.incomplete;
+        case 'Cancelled':
+        case 'cancelled':
+          return SessionStatus.cancelled;
+      }
+      return int.tryParse(raw) != null
+          ? SessionStatus.fromInt(int.parse(raw))
+          : SessionStatus.onGoing;
+    }
+    return SessionStatus.onGoing;
+  }
 }
