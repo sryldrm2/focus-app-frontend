@@ -16,6 +16,7 @@ import 'package:focus_app/features/social/screens/social_screen.dart';
 import 'package:focus_app/features/notifications/screens/notifications_screen.dart';
 import 'package:focus_app/features/notifications/network/notification_hub_service.dart';
 import 'package:focus_app/features/notifications/providers/notification_provider.dart';
+import 'package:focus_app/core/notifications/local_notification_service.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authNotifierProvider);
@@ -139,6 +140,9 @@ class _MainShellState extends ConsumerState<MainShell> {
               ref
                   .read(notificationNotifierProvider)
                   .addRealtimeNotification(notification);
+              ref
+                  .read(localNotificationServiceProvider)
+                  .showNotification(notification);
             },
           );
     });

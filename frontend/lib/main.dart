@@ -1,11 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
+import 'core/notifications/local_notification_service.dart';
 import 'app/router.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: FocusApp()));
+
+  final localNotificationService = LocalNotificationService();
+  await localNotificationService.initialize();
+  await localNotificationService.requestPermission();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        localNotificationServiceProvider.overrideWithValue(
+          localNotificationService,
+        ),
+      ],
+      child: const FocusApp(),
+    ),
+  );
 }
 
 class FocusApp extends ConsumerWidget {
