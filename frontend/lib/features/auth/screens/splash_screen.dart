@@ -32,7 +32,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             const Text('🍅', style: TextStyle(fontSize: 80)),
             const SizedBox(height: 24),
             Text(
-              'Fokus',
+              'Focus',
               style: GoogleFonts.nunito(
                 fontSize: 44,
                 fontWeight: FontWeight.w800,

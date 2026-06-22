@@ -83,7 +83,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    'Fokus',
+                    'Focus',
                     style: GoogleFonts.nunito(
                       fontSize: 30,
                       fontWeight: FontWeight.w800,

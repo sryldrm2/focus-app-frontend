@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -32,12 +33,15 @@ class NotificationHubService {
     await _openConnection();
   }
 
-  /// Yeni workspace üyeliği sonrası grup listesini güncellemek için hub'ı yeniden bağlar.
+  /// Hub bağlantısını kesip yeniden kurar. Callback'ler korunur.
   Future<void> reconnect() async {
     if (_onReceive == null) return;
-    await disconnect();
+    await _stopConnection();
     await _openConnection();
   }
+
+  /// Backend'deki workspace SignalR gruplarını DB üyeliklerine göre senkronize eder.
+  Future<void> syncWorkspaceGroups() => _invokeSyncWorkspaceGroups();
 
   Future<void> _openConnection() async {
     if (_connection != null || _connecting) return;
@@ -62,71 +66,21 @@ class NotificationHubService {
           .withAutomaticReconnect()
           .build();
 
+      _registerEventHandlers(connection);
+
       connection.onclose(({error}) {
         debugPrint('SignalR disconnected: ${error ?? 'unknown'}');
       });
 
-      connection.on('ReceiveNotification', (args) {
-        try {
-          debugPrint('ReceiveNotification geldi');
-          final payload = _extractFirstArg(args);
-          final json = _asJsonMap(payload);
-          if (json == null) {
-            debugPrint('ReceiveNotification parse: payload map degil');
-            return;
-          }
-
-          final notification = NotificationModel.fromJson(json);
-          _onReceive?.call(notification);
-        } catch (e) {
-          debugPrint('SignalR ReceiveNotification parse error: $e');
-        }
-      });
-
-      connection.on('WorkspaceTaskCreated', (args) {
-        if (_onWorkspaceTaskCreated == null) return;
-        try {
-          debugPrint('WorkspaceTaskCreated geldi');
-          final payload = _extractFirstArg(args);
-          final json = _asJsonMap(payload);
-          if (json == null) {
-            debugPrint('WorkspaceTaskCreated parse: payload map degil');
-            return;
-          }
-
-          final task = TaskModel.fromJson(json);
-          _onWorkspaceTaskCreated?.call(task);
-        } catch (e) {
-          debugPrint('SignalR WorkspaceTaskCreated parse error: $e');
-        }
-      });
-
-      connection.on('WorkspacePomodoroStarted', (args) {
-        if (_onWorkspacePomodoroStarted == null) return;
-        try {
-          debugPrint('WorkspacePomodoroStarted geldi');
-          final payload = _extractFirstArg(args);
-          final json = _asJsonMap(payload);
-          if (json == null) {
-            debugPrint('WorkspacePomodoroStarted parse: payload map degil');
-            return;
-          }
-
-          debugPrint('[WorkspaceSync] WorkspacePomodoroStarted raw payload: $json');
-
-          final session = PomodoroSessionModel.fromJson(json);
-          final handler = _onWorkspacePomodoroStarted;
-          if (handler != null) {
-            handler(session);
-          }
-        } catch (e) {
-          debugPrint('SignalR WorkspacePomodoroStarted parse error: $e');
-        }
+      connection.onreconnected(({connectionId}) {
+        debugPrint('SignalR reconnected: $connectionId');
+        unawaited(_invokeSyncWorkspaceGroups(connection));
       });
 
       _connection = connection;
       await _connection!.start();
       debugPrint('SignalR connected');
+      await _invokeSyncWorkspaceGroups(_connection!);
     } catch (e) {
       debugPrint('SignalR connection error: $e');
       try {
@@ -138,12 +92,96 @@ class NotificationHubService {
     }
   }
 
-  Future<void> disconnect() async {
-    // Callback'leri önce temizle; dispose sonrası SignalR event'i widget ref'ine ulaşmasın.
-    _onReceive = null;
-    _onWorkspaceTaskCreated = null;
-    _onWorkspacePomodoroStarted = null;
+  void _registerEventHandlers(HubConnection connection) {
+    connection.on('ReceiveNotification', (args) {
+      try {
+        debugPrint('ReceiveNotification geldi');
+        final payload = _extractFirstArg(args);
+        final json = _asJsonMap(payload);
+        if (json == null) {
+          debugPrint('ReceiveNotification parse: payload map degil');
+          return;
+        }
 
+        final notification = NotificationModel.fromJson(json);
+        _onReceive?.call(notification);
+      } catch (e) {
+        debugPrint('SignalR ReceiveNotification parse error: $e');
+      }
+    });
+
+    connection.on('WorkspaceGroupsUpdated', (args) {
+      debugPrint('WorkspaceGroupsUpdated geldi');
+      unawaited(_invokeSyncWorkspaceGroups(connection));
+    });
+
+    connection.on('WorkspaceTaskCreated', (args) {
+      if (_onWorkspaceTaskCreated == null) return;
+      try {
+        debugPrint('WorkspaceTaskCreated geldi');
+        final payload = _extractFirstArg(args);
+        final json = _asJsonMap(payload);
+        if (json == null) {
+          debugPrint('WorkspaceTaskCreated parse: payload map degil');
+          return;
+        }
+
+        final task = TaskModel.fromJson(json);
+        _onWorkspaceTaskCreated?.call(task);
+      } catch (e) {
+        debugPrint('SignalR WorkspaceTaskCreated parse error: $e');
+      }
+    });
+
+    connection.on('WorkspacePomodoroStarted', (args) {
+      try {
+        final payload = _extractFirstArg(args);
+        debugPrint(
+          '[WorkspaceSync] WorkspacePomodoroStarted raw payload: $payload',
+        );
+
+        if (_onWorkspacePomodoroStarted == null) {
+          debugPrint('WorkspacePomodoroStarted: handler kayıtlı değil');
+          return;
+        }
+
+        debugPrint('WorkspacePomodoroStarted geldi');
+        final json = _asJsonMap(payload);
+        if (json == null) {
+          debugPrint('WorkspacePomodoroStarted parse: payload map degil');
+          return;
+        }
+
+        final session = PomodoroSessionModel.fromJson(json);
+        _onWorkspacePomodoroStarted?.call(session);
+      } catch (e) {
+        debugPrint('SignalR WorkspacePomodoroStarted parse error: $e');
+      }
+    });
+  }
+
+  Future<void> _invokeSyncWorkspaceGroups([HubConnection? connection]) async {
+    final conn = connection ?? _connection;
+    if (conn == null) {
+      debugPrint('SyncWorkspaceGroups: bağlantı yok');
+      return;
+    }
+    if (conn.state != HubConnectionState.Connected) {
+      debugPrint(
+        'SyncWorkspaceGroups: bağlantı hazır değil (state=${conn.state})',
+      );
+      return;
+    }
+
+    try {
+      await conn.invoke('SyncWorkspaceGroups');
+      debugPrint('[WorkspaceSync] SyncWorkspaceGroups tamamlandı');
+    } catch (e) {
+      debugPrint('SyncWorkspaceGroups hatası: $e');
+    }
+  }
+
+  Future<void> _stopConnection() async {
     final connection = _connection;
     _connection = null;
 
@@ -153,8 +191,17 @@ class NotificationHubService {
       await connection.stop();
       debugPrint('SignalR stop edildi');
     } catch (e) {
-      debugPrint('SignalR disconnect error: $e');
+      debugPrint('SignalR stop error: $e');
     }
+  }
+
+  Future<void> disconnect() async {
+    // Callback'leri önce temizle; dispose sonrası SignalR event'i widget ref'ine ulaşmasın.
+    _onReceive = null;
+    _onWorkspaceTaskCreated = null;
+    _onWorkspacePomodoroStarted = null;
+
+    await _stopConnection();
   }
 
   String _buildHubUrlWithToken({
@@ -202,4 +249,3 @@ class NotificationHubService {
     return null;
   }
 }
-

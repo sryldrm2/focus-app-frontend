@@ -26,8 +26,8 @@ class _WorkspaceDetailScreenState extends ConsumerState<WorkspaceDetailScreen> {
   void initState() {
     super.initState();
     Future.microtask(() async {
-      // Yeni oda üyeliği / workspace grupları için hub'ı tazele.
-      await ref.read(notificationHubServiceProvider).reconnect();
+      // Workspace SignalR gruplarını DB üyeliklerine göre senkronize et.
+      await ref.read(notificationHubServiceProvider).syncWorkspaceGroups();
 
       await ref
           .read(workspaceTaskNotifierProvider)

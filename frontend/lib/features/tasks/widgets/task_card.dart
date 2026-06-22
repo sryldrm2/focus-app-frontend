@@ -94,6 +94,8 @@ class TaskCard extends StatelessWidget {
                           ? TextDecoration.lineThrough
                           : null,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (task.description.isNotEmpty) ...[
                     const SizedBox(height: 2),
@@ -108,21 +110,17 @@ class TaskCard extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 6),
-                  Row(
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
                     children: [
                       _StatusChip(status: task.status),
-                      if (task.priority != null) ...[
-                        const SizedBox(width: 6),
+                      if (task.priority != null)
                         _PriorityChip(priority: task.priority!),
-                      ],
-                      if (task.dueDate != null) ...[
-                        const SizedBox(width: 6),
+                      if (task.dueDate != null)
                         _DateChip(date: task.dueDate!),
-                      ],
-                      if (task.pomodoroLabel != null) ...[
-                        const SizedBox(width: 6),
+                      if (task.pomodoroLabel != null)
                         _PomodoroChip(label: task.pomodoroLabel!),
-                      ],
                     ],
                   ),
                 ],
@@ -150,6 +148,9 @@ class TaskCard extends StatelessWidget {
                 color: isActiveFocus ? AppColors.primary : colorScheme.onSurfaceVariant,
                 tooltip: isActiveFocus ? 'Aktif görev' : 'Odak görevi seç',
                 onPressed: onFocus,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                visualDensity: VisualDensity.compact,
               ),
  
             // Tamamlama butonu

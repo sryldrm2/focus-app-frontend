@@ -94,7 +94,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    "Fokus",
+                    "Focus",
                     style: GoogleFonts.nunito(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
