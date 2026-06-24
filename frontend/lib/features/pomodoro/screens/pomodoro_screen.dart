@@ -382,28 +382,14 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
       return;
     }
 
-    if (_selectedTask == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Lütfen önce bir görev seç 📚'),
-          backgroundColor: AppColors.primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-      return;
-    }
-
-    // Backend'e oturum başlat
+    // Backend'e oturum başlat (görev opsiyonel)
     final success = await ref
         .read(pomodoroNotifierProvider)
         .startSession(
           CreatePomodoroSessionDto(
             sessionType: PomodoroType.workSession,
             durationMinute: _workMinutes,
-            taskId: _selectedTask!.taskId,
+            taskId: _selectedTask?.taskId,
           ),
         );
 

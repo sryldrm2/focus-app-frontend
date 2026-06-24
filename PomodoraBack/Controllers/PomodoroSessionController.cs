@@ -181,5 +181,69 @@ namespace PomodoraBack.Controllers
 
             return Ok(result);
         }
+
+        /// <summary>
+        /// Oda pomodoro duraklatmayı tüm oda üyelerine senkronize eder.
+        /// </summary>
+        [HttpPost("{pomoId}/workspace-pause")]
+        public async Task<IActionResult> SyncWorkspacePause(
+            string pomoId,
+            [FromBody] WorkspacePomodoroSyncDto request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Kullanıcı kimliği bulunamadı.");
+
+            var result = await _pomodoroSessionService.SyncWorkspacePauseAsync(
+                userId,
+                pomoId,
+                request.SecondsLeft);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Oda pomodoro devam ettirmeyi tüm oda üyelerine senkronize eder.
+        /// </summary>
+        [HttpPost("{pomoId}/workspace-resume")]
+        public async Task<IActionResult> SyncWorkspaceResume(
+            string pomoId,
+            [FromBody] WorkspacePomodoroSyncDto request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Kullanıcı kimliği bulunamadı.");
+
+            var result = await _pomodoroSessionService.SyncWorkspaceResumeAsync(
+                userId,
+                pomoId,
+                request.SecondsLeft);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Oda pomodoro iptalini tüm oda üyelerine senkronize eder.
+        /// </summary>
+        [HttpPost("{pomoId}/workspace-cancel")]
+        public async Task<IActionResult> SyncWorkspaceCancel(string pomoId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("Kullanıcı kimliği bulunamadı.");
+
+            var result = await _pomodoroSessionService.SyncWorkspaceCancelAsync(userId, pomoId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
     }
 }

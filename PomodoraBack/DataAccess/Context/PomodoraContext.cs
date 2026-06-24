@@ -26,7 +26,7 @@ namespace PomodoraBack.DataAccess.Context
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlServer(@"Server=(localdb)\MSSQLLocalDB;Database=PomodoroDB;Trusted_Connection=true");
+                optionsBuilder.UseSqlServer(@"Server=localhost\SQLEXPRESS;Database=FocusDb;Trusted_Connection=true;TrustServerCertificate=true");
             }
         }
 

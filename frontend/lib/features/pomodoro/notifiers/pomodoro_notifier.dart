@@ -236,6 +236,50 @@ class PomodoroNotifier extends ChangeNotifier {
     } catch (_) {}
   }
 
+  // ─── Oda pomodoro senkronizasyonu ─────────────────────
+  Future<bool> syncWorkspacePause(String pomoId, int secondsLeft) async {
+    try {
+      final token = await TokenStorage.getAccessToken();
+      if (token == null) throw Exception('Oturum bulunamadı.');
+      await _service.workspacePause(token, pomoId, secondsLeft);
+      return true;
+    } catch (e) {
+      _emit(_state.copyWith(
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      ));
+      return false;
+    }
+  }
+
+  Future<bool> syncWorkspaceResume(String pomoId, int secondsLeft) async {
+    try {
+      final token = await TokenStorage.getAccessToken();
+      if (token == null) throw Exception('Oturum bulunamadı.');
+      await _service.workspaceResume(token, pomoId, secondsLeft);
+      return true;
+    } catch (e) {
+      _emit(_state.copyWith(
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      ));
+      return false;
+    }
+  }
+
+  Future<bool> syncWorkspaceCancel(String pomoId) async {
+    try {
+      final token = await TokenStorage.getAccessToken();
+      if (token == null) throw Exception('Oturum bulunamadı.');
+      await _service.workspaceCancel(token, pomoId);
+      _emit(_state.copyWith(clearSession: true, clearLocalTimer: true));
+      return true;
+    } catch (e) {
+      _emit(_state.copyWith(
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      ));
+      return false;
+    }
+  }
+
   // ─── Session bitti, state'i temizle ───────────────────
   void clearSession() {
     _emit(_state.copyWith(clearSession: true, clearLocalTimer: true));

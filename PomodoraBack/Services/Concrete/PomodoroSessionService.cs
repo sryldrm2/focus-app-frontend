@@ -7,6 +7,7 @@ using PomodoraBack.DTOs;
 using PomodoraBack.Entities;
 using PomodoraBack.Services.Interfaces;
 using IResult = Core.Utilities.Results.IResults;
+using Task = System.Threading.Tasks.Task;
 
 namespace PomodoraBack.Services.Concrete
 {
@@ -19,17 +20,29 @@ namespace PomodoraBack.Services.Concrete
         private readonly IUserDal _userDal;
         private readonly IMapper _mapper;
         private readonly IPomodoroTaskService _taskService;
+        private readonly IPomodoroTaskDal _taskDal;
+        private readonly IWorkspaceDal _workspaceDal;
+        private readonly IWorkspaceMemberDal _workspaceMemberDal;
+        private readonly IWorkspaceRealtimeService _workspaceRealtimeService;
 
         public PomodoroSessionService(
             IPomodoroSessionDal pomodoroSessionDal,
             IUserDal userDal,
             IMapper mapper,
-            IPomodoroTaskService taskService)
+            IPomodoroTaskService taskService,
+            IPomodoroTaskDal taskDal,
+            IWorkspaceDal workspaceDal,
+            IWorkspaceMemberDal workspaceMemberDal,
+            IWorkspaceRealtimeService workspaceRealtimeService)
         {
             _pomodoroSessionDal = pomodoroSessionDal;
             _userDal = userDal;
             _mapper = mapper;
             _taskService = taskService;
+            _taskDal = taskDal;
+            _workspaceDal = workspaceDal;
+            _workspaceMemberDal = workspaceMemberDal;
+            _workspaceRealtimeService = workspaceRealtimeService;
         }
 
         /// <summary>
@@ -57,6 +70,11 @@ namespace PomodoraBack.Services.Concrete
                 return new ErrorDataResult<PomodoroSessionDto>(
                     PomodoroConstants.ERROR_INVALID_DURATION);
 
+            var workspaceOwnerError =
+                await ValidateWorkspaceOwnerCanStartAsync(userId, request.TaskId);
+            if (workspaceOwnerError != null)
+                return workspaceOwnerError;
+
             // 4. Yeni seans oluştur
             var session = new PomodoroSession
             {
@@ -76,6 +94,28 @@ namespace PomodoraBack.Services.Concrete
             await _pomodoroSessionDal.AddAsync(session);
 
             var sessionDto = _mapper.Map<PomodoroSessionDto>(session);
+
+            if (!string.IsNullOrWhiteSpace(request.TaskId))
+            {
+                var task = await _taskDal.GetAsync(t =>
+                    t.TaskId == request.TaskId && t.DeletedAt == null);
+
+                if (!string.IsNullOrWhiteSpace(task?.WorkspaceId))
+                {
+                    try
+                    {
+                        await _workspaceRealtimeService.BroadcastPomodoroStartedAsync(
+                            task.WorkspaceId,
+                            sessionDto);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(
+                            $"[PomodoroSessionService] WorkspacePomodoroStarted gönderilemedi: {ex.Message}");
+                    }
+                }
+            }
+
             return new SuccessDataResult<PomodoroSessionDto>(
                 sessionDto, 
                 PomodoroConstants.SUCCESS_SESSION_STARTED);
@@ -263,6 +303,168 @@ namespace PomodoraBack.Services.Concrete
             return new SuccessDataResult<PomodoroSessionDto>(
                 sessionDto, 
                 $"Ara verildi. Toplam ara: {session.BreakCount}");
+        }
+
+        public async Task<IResult> SyncWorkspacePauseAsync(
+            string userId,
+            string pomoId,
+            int secondsLeft)
+        {
+            var session = await _pomodoroSessionDal.GetAsync(s => s.PomoId == pomoId);
+            if (session == null)
+                return new ErrorResult(PomodoroConstants.ERROR_SESSION_NOT_FOUND);
+
+            if (session.Status != SessionStatusEnums.OnGoing)
+                return new ErrorResult("Sadece devam eden seanslar duraklatılabilir.");
+
+            var workspaceId = await GetWorkspaceIdForSessionAsync(session);
+            if (workspaceId == null)
+                return new ErrorResult("Bu seans bir oda görevine bağlı değil.");
+
+            if (!await IsWorkspaceMemberAsync(userId, workspaceId))
+                return new ErrorResult("Oda üyesi değilsiniz.");
+
+            if (session.UserId == userId)
+            {
+                session.BreakCount++;
+                session.UpdatedAt = DateTime.UtcNow;
+                await _pomodoroSessionDal.UpdateAsync(session);
+            }
+
+            await BroadcastWorkspaceSyncAsync(
+                workspaceId,
+                session,
+                secondsLeft,
+                _workspaceRealtimeService.BroadcastPomodoroPausedAsync);
+
+            return new SuccessResult("Duraklatma senkronize edildi.");
+        }
+
+        public async Task<IResult> SyncWorkspaceResumeAsync(
+            string userId,
+            string pomoId,
+            int secondsLeft)
+        {
+            var session = await _pomodoroSessionDal.GetAsync(s => s.PomoId == pomoId);
+            if (session == null)
+                return new ErrorResult(PomodoroConstants.ERROR_SESSION_NOT_FOUND);
+
+            if (session.Status != SessionStatusEnums.OnGoing)
+                return new ErrorResult("Sadece devam eden seanslar devam ettirilebilir.");
+
+            var workspaceId = await GetWorkspaceIdForSessionAsync(session);
+            if (workspaceId == null)
+                return new ErrorResult("Bu seans bir oda görevine bağlı değil.");
+
+            if (!await IsWorkspaceMemberAsync(userId, workspaceId))
+                return new ErrorResult("Oda üyesi değilsiniz.");
+
+            await BroadcastWorkspaceSyncAsync(
+                workspaceId,
+                session,
+                secondsLeft,
+                _workspaceRealtimeService.BroadcastPomodoroResumedAsync);
+
+            return new SuccessResult("Devam ettirme senkronize edildi.");
+        }
+
+        public async Task<IResult> SyncWorkspaceCancelAsync(string userId, string pomoId)
+        {
+            var session = await _pomodoroSessionDal.GetAsync(s => s.PomoId == pomoId);
+            if (session == null)
+                return new ErrorResult(PomodoroConstants.ERROR_SESSION_NOT_FOUND);
+
+            if (session.Status != SessionStatusEnums.OnGoing)
+                return new ErrorResult("Bu seans zaten tamamlanmış veya iptal edilmiş.");
+
+            var workspaceId = await GetWorkspaceIdForSessionAsync(session);
+            if (workspaceId == null)
+                return new ErrorResult("Bu seans bir oda görevine bağlı değil.");
+
+            if (!await IsWorkspaceMemberAsync(userId, workspaceId))
+                return new ErrorResult("Oda üyesi değilsiniz.");
+
+            session.Status = SessionStatusEnums.Cancelled;
+            session.UpdatedAt = DateTime.UtcNow;
+            await _pomodoroSessionDal.UpdateAsync(session);
+
+            await BroadcastWorkspaceSyncAsync(
+                workspaceId,
+                session,
+                0,
+                _workspaceRealtimeService.BroadcastPomodoroCancelledAsync);
+
+            return new SuccessResult(PomodoroConstants.SUCCESS_SESSION_CANCELLED);
+        }
+
+        private async Task<ErrorDataResult<PomodoroSessionDto>?> ValidateWorkspaceOwnerCanStartAsync(
+            string userId,
+            string? taskId)
+        {
+            if (string.IsNullOrWhiteSpace(taskId))
+                return null;
+
+            var task = await _taskDal.GetAsync(t =>
+                t.TaskId == taskId && t.DeletedAt == null);
+            if (task == null)
+                return new ErrorDataResult<PomodoroSessionDto>("Görev bulunamadı.");
+
+            if (string.IsNullOrWhiteSpace(task.WorkspaceId))
+                return null;
+
+            var workspace = await _workspaceDal.GetAsync(w =>
+                w.WorkspaceId == task.WorkspaceId);
+            if (workspace == null)
+                return new ErrorDataResult<PomodoroSessionDto>("Oda bulunamadı.");
+
+            if (workspace.OwnerId != userId)
+                return new ErrorDataResult<PomodoroSessionDto>(
+                    "Oda pomodoro'sunu yalnızca oda sahibi başlatabilir.");
+
+            return null;
+        }
+
+        private async Task<string?> GetWorkspaceIdForSessionAsync(PomodoroSession session)
+        {
+            if (string.IsNullOrWhiteSpace(session.TaskId))
+                return null;
+
+            var task = await _taskDal.GetAsync(t =>
+                t.TaskId == session.TaskId && t.DeletedAt == null);
+
+            return string.IsNullOrWhiteSpace(task?.WorkspaceId) ? null : task.WorkspaceId;
+        }
+
+        private async Task<bool> IsWorkspaceMemberAsync(string userId, string workspaceId)
+        {
+            var membership = await _workspaceMemberDal.GetAsync(m =>
+                m.WorkspaceId == workspaceId && m.UserId == userId);
+
+            return membership != null;
+        }
+
+        private async Task BroadcastWorkspaceSyncAsync(
+            string workspaceId,
+            PomodoroSession session,
+            int secondsLeft,
+            Func<string, WorkspacePomodoroSyncEventDto, Task> broadcast)
+        {
+            var payload = new WorkspacePomodoroSyncEventDto
+            {
+                PomoId = session.PomoId,
+                TaskId = session.TaskId,
+                SecondsLeft = secondsLeft,
+            };
+
+            try
+            {
+                await broadcast(workspaceId, payload);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    $"[PomodoroSessionService] Workspace pomodoro sync gönderilemedi: {ex.Message}");
+            }
         }
     }
 }

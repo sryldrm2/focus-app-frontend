@@ -208,6 +208,18 @@ class _MainShellState extends ConsumerState<MainShell> {
               );
               dispatchWorkspacePomodoroStarted(ref, session);
             },
+            onWorkspacePomodoroPaused: (event) {
+              if (!mounted) return;
+              dispatchWorkspacePomodoroPaused(ref, event);
+            },
+            onWorkspacePomodoroResumed: (event) {
+              if (!mounted) return;
+              dispatchWorkspacePomodoroResumed(ref, event);
+            },
+            onWorkspacePomodoroCancelled: (event) {
+              if (!mounted) return;
+              dispatchWorkspacePomodoroCancelled(ref, event);
+            },
           );
 
       if (!mounted) return;

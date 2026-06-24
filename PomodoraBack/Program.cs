@@ -20,7 +20,7 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSetting
 // DbContext
 builder.Services.AddDbContext<PomodoroContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") 
-        ?? @"Server=(localdb)\MSSQLLocalDB;Database=PomodoroDB;Trusted_Connection=true"));
+        ?? @"Server=localhost\SQLEXPRESS;Database=FocusDb;Trusted_Connection=true;TrustServerCertificate=true"));
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
@@ -46,6 +46,7 @@ builder.Services.AddScoped<IPomodoroSessionService, PomodoroSessionService>();
 builder.Services.AddScoped<IPomodoroTaskService, PomodoroTaskService>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IWorkspaceRealtimeService, WorkspaceRealtimeService>();
 
 // Background Services
 builder.Services.AddHostedService<TaskDueDateReminderWorker>();
@@ -68,6 +69,23 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings?.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtSettings?.SecretKey ?? "DefaultSecretKey"))
+    };
+
+    // SignalR WebSocket bağlantıları access_token query parametresi ile kimlik doğrular.
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                path.StartsWithSegments("/notificationHub"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
     };
 });
 

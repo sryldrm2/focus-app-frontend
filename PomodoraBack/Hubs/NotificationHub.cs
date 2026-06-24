@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using PomodoraBack.Services.Interfaces;
 using System.Security.Claims;
 
 namespace PomodoraBack.Hubs
@@ -6,6 +7,37 @@ namespace PomodoraBack.Hubs
     public class NotificationHub : Hub
     {
         private const string UserIdPrefix = "user_";
+        private const string WorkspaceIdPrefix = "workspace_";
+
+        private readonly IWorkspaceRealtimeService _workspaceRealtimeService;
+
+        public NotificationHub(IWorkspaceRealtimeService workspaceRealtimeService)
+        {
+            _workspaceRealtimeService = workspaceRealtimeService;
+        }
+
+        public static string GetWorkspaceGroupName(string workspaceId)
+        {
+            return $"{WorkspaceIdPrefix}{workspaceId}";
+        }
+
+        /// <summary>
+        /// Kullanıcının üye olduğu tüm workspace SignalR gruplarına bağlantıyı ekler.
+        /// </summary>
+        public async Task SyncWorkspaceGroups()
+        {
+            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                Console.WriteLine(
+                    $"[NotificationHub] SyncWorkspaceGroups: yetkisiz bağlantı {Context.ConnectionId}");
+                return;
+            }
+
+            await _workspaceRealtimeService.SyncConnectionWorkspaceGroupsAsync(
+                Context.ConnectionId,
+                userId);
+        }
 
         public override async Task OnConnectedAsync()
         {
@@ -20,6 +52,10 @@ namespace PomodoraBack.Hubs
 
                 // Debug/logging amaçlı
                 Console.WriteLine($"[NotificationHub] Kullanıcı bağlandı: UserId={userId}, ConnectionId={Context.ConnectionId}, Grup={userGroup}");
+
+                await _workspaceRealtimeService.SyncConnectionWorkspaceGroupsAsync(
+                    Context.ConnectionId,
+                    userId);
             }
             else
             {

@@ -1,5 +1,6 @@
 using Core.Utilities.Results;
 using PomodoraBack.DTOs;
+using IResult = Core.Utilities.Results.IResults;
 
 namespace PomodoraBack.Services.Interfaces
 {
@@ -85,5 +86,20 @@ namespace PomodoraBack.Services.Interfaces
         /// <param name="pomoId">Seans ID'si</param>
         /// <returns>Güncellenen seans</returns>
         Task<IDataResult<PomodoroSessionDto>> IncrementBreakCountAsync(string pomoId);
+
+        /// <summary>
+        /// Oda pomodoro duraklatmayı odadaki tüm üyelere senkronize eder.
+        /// </summary>
+        Task<IResult> SyncWorkspacePauseAsync(string userId, string pomoId, int secondsLeft);
+
+        /// <summary>
+        /// Oda pomodoro devam ettirmeyi odadaki tüm üyelere senkronize eder.
+        /// </summary>
+        Task<IResult> SyncWorkspaceResumeAsync(string userId, string pomoId, int secondsLeft);
+
+        /// <summary>
+        /// Oda pomodoro iptalini odadaki tüm üyelere senkronize eder.
+        /// </summary>
+        Task<IResult> SyncWorkspaceCancelAsync(string userId, string pomoId);
     }
 }

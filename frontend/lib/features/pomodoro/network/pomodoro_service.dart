@@ -86,6 +86,43 @@ class PomodoroService {
     _handleResponse(res);
   }
 
+  // ─── POST /api/PomodoroSession/{pomoId}/workspace-pause ─
+  Future<void> workspacePause(
+    String token,
+    String pomoId,
+    int secondsLeft,
+  ) async {
+    final res = await http.post(
+      Uri.parse('$_baseUrl/PomodoroSession/$pomoId/workspace-pause'),
+      headers: _headers(token),
+      body: jsonEncode({'secondsLeft': secondsLeft}),
+    );
+    _handleResponse(res);
+  }
+
+  // ─── POST /api/PomodoroSession/{pomoId}/workspace-resume
+  Future<void> workspaceResume(
+    String token,
+    String pomoId,
+    int secondsLeft,
+  ) async {
+    final res = await http.post(
+      Uri.parse('$_baseUrl/PomodoroSession/$pomoId/workspace-resume'),
+      headers: _headers(token),
+      body: jsonEncode({'secondsLeft': secondsLeft}),
+    );
+    _handleResponse(res);
+  }
+
+  // ─── POST /api/PomodoroSession/{pomoId}/workspace-cancel
+  Future<void> workspaceCancel(String token, String pomoId) async {
+    final res = await http.post(
+      Uri.parse('$_baseUrl/PomodoroSession/$pomoId/workspace-cancel'),
+      headers: _headers(token),
+    );
+    _handleResponse(res);
+  }
+
   // ─── GET /api/PomodoroSession/ongoing ─────────────────
   Future<PomodoroSessionModel?> getOngoing(String token) async {
     final res = await http.get(

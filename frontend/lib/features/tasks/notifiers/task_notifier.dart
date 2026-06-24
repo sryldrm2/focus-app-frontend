@@ -41,6 +41,22 @@ class TaskState {
         t.dueDate!.month == date.month &&
         t.dueDate!.day == date.day;
   }).toList();
+
+  /// Hızlı başlat için: bugünkü tamamlanmamış görevler arasından
+  /// önceliğe göre sıralanmış en fazla 3 görev.
+  List<TaskModel> get quickStartTasks {
+    final tasks = todayTasks.where((t) => !t.isCompleted).toList()
+      ..sort((a, b) {
+        final aPriority = a.priority ?? 99;
+        final bPriority = b.priority ?? 99;
+        final priorityCompare = aPriority.compareTo(bPriority);
+        if (priorityCompare != 0) return priorityCompare;
+
+        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      });
+
+    return tasks.take(3).toList();
+  }
 }
 
 // ── Notifier ───────────────────────────────────────────────

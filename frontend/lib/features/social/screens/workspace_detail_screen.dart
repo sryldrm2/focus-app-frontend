@@ -117,6 +117,7 @@ class _WorkspaceDetailScreenState extends ConsumerState<WorkspaceDetailScreen> {
               children: [
                 WorkspacePomodoroPanel(
                   workspaceId: widget.workspace.workspaceId,
+                  isRoomOwner: isRoomOwner,
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),

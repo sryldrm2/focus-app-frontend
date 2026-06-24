@@ -19,6 +19,7 @@ namespace PomodoraBack.Services.Concrete
         private readonly IUserDal _userDal;
         private readonly IFriendShipDal _friendshipDal;
         private readonly IMapper _mapper;
+        private readonly IWorkspaceRealtimeService _workspaceRealtimeService;
 
         public WorkspaceService(
             IWorkspaceDal workspaceDal,
@@ -26,7 +27,8 @@ namespace PomodoraBack.Services.Concrete
             IWorkspaceInvitationDal workspaceInvitationDal,
             IUserDal userDal,
             IFriendShipDal friendshipDal,
-            IMapper mapper)
+            IMapper mapper,
+            IWorkspaceRealtimeService workspaceRealtimeService)
         {
             _workspaceDal = workspaceDal;
             _workspaceMemberDal = workspaceMemberDal;
@@ -34,6 +36,7 @@ namespace PomodoraBack.Services.Concrete
             _userDal = userDal;
             _friendshipDal = friendshipDal;
             _mapper = mapper;
+            _workspaceRealtimeService = workspaceRealtimeService;
         }
 
         public async Task<IDataResult<WorkspaceDto>> CreateWorkspaceAsync(string ownerId, CreateWorkspaceDto request)
@@ -179,6 +182,16 @@ namespace PomodoraBack.Services.Concrete
             };
 
             await _workspaceMemberDal.AddAsync(member);
+
+            try
+            {
+                await _workspaceRealtimeService.NotifyWorkspaceGroupsUpdatedAsync(receiverId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    $"[WorkspaceService] WorkspaceGroupsUpdated gönderilemedi: {ex.Message}");
+            }
 
             var invitationDto = _mapper.Map<WorkspaceInvitationDto>(invitation);
             return new SuccessDataResult<WorkspaceInvitationDto>(invitationDto, "Davet kabul edildi.");

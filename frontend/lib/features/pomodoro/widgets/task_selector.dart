@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 class TaskSelector extends StatelessWidget {
   final List<TaskModel> tasks;
   final TaskModel? selected;
-  final ValueChanged<TaskModel> onSelect;
+  final ValueChanged<TaskModel?> onSelect;
   final bool enabled;
 
   const TaskSelector({
@@ -39,10 +39,66 @@ class TaskSelector extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: tasks.length,
+        itemCount: tasks.length + 1,
         separatorBuilder: (_,__) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
-          final task = tasks[i];
+          if (i == 0) {
+            final isSelected = selected == null;
+            return GestureDetector(
+              onTap: enabled ? () => onSelect(null) : null,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primary
+                      : colorScheme.surface,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.primary
+                        : colorScheme.outline.withOpacity(0.5),
+                    width: 1.5,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.timer_outlined,
+                      size: 14,
+                      color: isSelected
+                          ? Colors.white
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Görevsiz',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? Colors.white
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final task = tasks[i - 1];
           final isSelected = selected?.taskId == task.taskId;
 
           return GestureDetector(

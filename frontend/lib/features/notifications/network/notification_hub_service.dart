@@ -9,6 +9,7 @@ import 'package:focus_app/core/network/api_base_url.dart';
 import 'package:focus_app/core/network/token_storage.dart';
 import 'package:focus_app/features/notifications/models/notification_model.dart';
 import 'package:focus_app/features/pomodoro/models/pomodoro_model.dart';
+import 'package:focus_app/features/social/models/workspace_pomodoro_sync_event.dart';
 import 'package:focus_app/features/tasks/models/task_model.dart';
 
 final notificationHubServiceProvider =
@@ -21,15 +22,24 @@ class NotificationHubService {
   void Function(NotificationModel notification)? _onReceive;
   void Function(TaskModel task)? _onWorkspaceTaskCreated;
   void Function(PomodoroSessionModel session)? _onWorkspacePomodoroStarted;
+  void Function(WorkspacePomodoroSyncEvent event)? _onWorkspacePomodoroPaused;
+  void Function(WorkspacePomodoroSyncEvent event)? _onWorkspacePomodoroResumed;
+  void Function(WorkspacePomodoroSyncEvent event)? _onWorkspacePomodoroCancelled;
 
   Future<void> connect({
     required void Function(NotificationModel notification) onReceive,
     void Function(TaskModel task)? onWorkspaceTaskCreated,
     void Function(PomodoroSessionModel session)? onWorkspacePomodoroStarted,
+    void Function(WorkspacePomodoroSyncEvent event)? onWorkspacePomodoroPaused,
+    void Function(WorkspacePomodoroSyncEvent event)? onWorkspacePomodoroResumed,
+    void Function(WorkspacePomodoroSyncEvent event)? onWorkspacePomodoroCancelled,
   }) async {
     _onReceive = onReceive;
     _onWorkspaceTaskCreated = onWorkspaceTaskCreated;
     _onWorkspacePomodoroStarted = onWorkspacePomodoroStarted;
+    _onWorkspacePomodoroPaused = onWorkspacePomodoroPaused;
+    _onWorkspacePomodoroResumed = onWorkspacePomodoroResumed;
+    _onWorkspacePomodoroCancelled = onWorkspacePomodoroCancelled;
     await _openConnection();
   }
 
@@ -158,6 +168,56 @@ class NotificationHubService {
         debugPrint('SignalR WorkspacePomodoroStarted parse error: $e');
       }
     });
+
+    connection.on('WorkspacePomodoroPaused', (args) {
+      _handleWorkspacePomodoroSyncEvent(
+        args,
+        'WorkspacePomodoroPaused',
+        _onWorkspacePomodoroPaused,
+      );
+    });
+
+    connection.on('WorkspacePomodoroResumed', (args) {
+      _handleWorkspacePomodoroSyncEvent(
+        args,
+        'WorkspacePomodoroResumed',
+        _onWorkspacePomodoroResumed,
+      );
+    });
+
+    connection.on('WorkspacePomodoroCancelled', (args) {
+      _handleWorkspacePomodoroSyncEvent(
+        args,
+        'WorkspacePomodoroCancelled',
+        _onWorkspacePomodoroCancelled,
+      );
+    });
+  }
+
+  void _handleWorkspacePomodoroSyncEvent(
+    dynamic args,
+    String eventName,
+    void Function(WorkspacePomodoroSyncEvent event)? handler,
+  ) {
+    try {
+      if (handler == null) {
+        debugPrint('$eventName: handler kayıtlı değil');
+        return;
+      }
+
+      final payload = _extractFirstArg(args);
+      debugPrint('[WorkspaceSync] $eventName raw payload: $payload');
+
+      final json = _asJsonMap(payload);
+      if (json == null) {
+        debugPrint('$eventName parse: payload map degil');
+        return;
+      }
+
+      handler(WorkspacePomodoroSyncEvent.fromJson(json));
+    } catch (e) {
+      debugPrint('SignalR $eventName parse error: $e');
+    }
   }
 
   Future<void> _invokeSyncWorkspaceGroups([HubConnection? connection]) async {
@@ -200,6 +260,9 @@ class NotificationHubService {
     _onReceive = null;
     _onWorkspaceTaskCreated = null;
     _onWorkspacePomodoroStarted = null;
+    _onWorkspacePomodoroPaused = null;
+    _onWorkspacePomodoroResumed = null;
+    _onWorkspacePomodoroCancelled = null;
 
     await _stopConnection();
   }

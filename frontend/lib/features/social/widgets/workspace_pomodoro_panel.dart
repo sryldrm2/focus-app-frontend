@@ -8,6 +8,7 @@ import 'package:focus_app/features/pomodoro/network/pomodoro_service.dart';
 import 'package:focus_app/features/pomodoro/providers/pomodoro_provider.dart';
 import 'package:focus_app/features/pomodoro/widgets/pomodoro_models.dart';
 import 'package:focus_app/features/pomodoro/widgets/session_controls.dart';
+import 'package:focus_app/features/social/notifiers/workspace_pomodoro_realtime_notifier.dart';
 import 'package:focus_app/features/social/providers/workspace_provider.dart';
 import 'package:focus_app/features/social/utils/workspace_realtime_sync.dart';
 import 'package:focus_app/features/tasks/models/task_model.dart';
@@ -21,8 +22,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// uzaktan başlatılan pomodoro ise [workspacePomodoroRealtimeProvider] ile senkronize edilir.
 class WorkspacePomodoroPanel extends ConsumerStatefulWidget {
   final String workspaceId;
+  final bool isRoomOwner;
 
-  const WorkspacePomodoroPanel({super.key, required this.workspaceId});
+  const WorkspacePomodoroPanel({
+    super.key,
+    required this.workspaceId,
+    required this.isRoomOwner,
+  });
 
   @override
   ConsumerState<WorkspacePomodoroPanel> createState() =>
@@ -38,6 +44,17 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
   String? _syncedPomoId;
 
   int get _workDuration => _workMinutes * 60;
+
+  String? get _activePomoId {
+    final current = ref.read(pomodoroNotifierProvider).state.currentSession?.pomoId;
+    return current ?? _syncedPomoId;
+  }
+
+  bool _matchesSyncedSession(String pomoId) {
+    if (pomoId == _syncedPomoId) return true;
+    return ref.read(pomodoroNotifierProvider).state.currentSession?.pomoId ==
+        pomoId;
+  }
 
   @override
   void initState() {
@@ -141,17 +158,85 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
     if (mounted) setState(() {});
   }
 
+  void _syncFromRemotePause(String pomoId, int secondsLeft) {
+    if (_syncedPomoId != null && !_matchesSyncedSession(pomoId)) return;
+    if (_status == TimerStatus.paused &&
+        _syncedPomoId == pomoId &&
+        _secondsLeft == secondsLeft) {
+      return;
+    }
+
+    _timer?.cancel();
+    _syncedPomoId = pomoId;
+    _secondsLeft = secondsLeft;
+    _status = TimerStatus.paused;
+
+    debugPrint(
+      '[WorkspaceSync] panel paused pomoId=$pomoId secondsLeft=$secondsLeft',
+    );
+
+    _persistLocalTimer(TimerStatus.paused, secondsLeft: secondsLeft);
+    if (mounted) setState(() {});
+  }
+
+  void _syncFromRemoteResume(String pomoId, int secondsLeft) {
+    if (_syncedPomoId != null && !_matchesSyncedSession(pomoId)) return;
+    if (_status == TimerStatus.running &&
+        _syncedPomoId == pomoId &&
+        _secondsLeft == secondsLeft) {
+      return;
+    }
+
+    _syncedPomoId = pomoId;
+    _secondsLeft = secondsLeft;
+    _status = TimerStatus.running;
+
+    debugPrint(
+      '[WorkspaceSync] panel resumed pomoId=$pomoId secondsLeft=$secondsLeft',
+    );
+
+    _persistLocalTimer(TimerStatus.running, secondsLeft: secondsLeft);
+    _tick();
+    if (mounted) setState(() {});
+  }
+
+  void _syncFromRemoteCancel(String pomoId) {
+    if (_syncedPomoId != null && !_matchesSyncedSession(pomoId)) return;
+    if (_status == TimerStatus.idle) return;
+
+    _timer?.cancel();
+    _syncedPomoId = null;
+    ref.read(pomodoroNotifierProvider).clearSession();
+
+    debugPrint('[WorkspaceSync] panel cancelled pomoId=$pomoId');
+
+    if (!mounted) return;
+    setState(() {
+      _status = TimerStatus.idle;
+      _secondsLeft = _workDuration;
+    });
+  }
+
   void _persistLocalTimer(TimerStatus status, {int? secondsLeft}) {
     final pomState = ref.read(pomodoroNotifierProvider).state;
+    final pomoId = pomState.currentSession?.pomoId ?? _syncedPomoId;
     ref.read(pomodoroNotifierProvider).setLocalTimer(
           status,
-          pomoId: pomState.currentSession?.pomoId,
+          pomoId: pomoId,
           secondsLeft: secondsLeft ?? _secondsLeft,
         );
   }
 
   Future<void> _start() async {
     if (!_sessionReady) return;
+
+    if (!widget.isRoomOwner) {
+      _showSnack(
+        'Pomodoro\'yu yalnızca oda sahibi başlatabilir.',
+        isError: true,
+      );
+      return;
+    }
 
     final task = _activeTask(ref.read(workspaceTaskStateProvider));
     if (task == null || task.isCompleted) {
@@ -212,14 +297,27 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
     _tick();
   }
 
-  void _pause() {
+  Future<void> _pause() async {
+    final pomoId = _activePomoId;
+    if (pomoId == null) return;
+
     _timer?.cancel();
     setState(() => _status = TimerStatus.paused);
     _persistLocalTimer(TimerStatus.paused, secondsLeft: _secondsLeft);
-    ref.read(pomodoroNotifierProvider).addBreak();
+
+    final success = await ref
+        .read(pomodoroNotifierProvider)
+        .syncWorkspacePause(pomoId, _secondsLeft);
+    if (!success && mounted) {
+      final error = ref.read(pomodoroNotifierProvider).state.errorMessage;
+      _showSnack(error ?? 'Duraklatma senkronize edilemedi.', isError: true);
+    }
   }
 
-  void _resume() {
+  Future<void> _resume() async {
+    final pomoId = _activePomoId;
+    if (pomoId == null) return;
+
     final pomState = ref.read(pomodoroNotifierProvider).state;
     final session = pomState.currentSession;
     if (session != null && session.isOngoing) {
@@ -229,12 +327,35 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
     setState(() => _status = TimerStatus.running);
     _persistLocalTimer(TimerStatus.running, secondsLeft: _secondsLeft);
     _tick();
+
+    final success = await ref
+        .read(pomodoroNotifierProvider)
+        .syncWorkspaceResume(pomoId, _secondsLeft);
+    if (!success && mounted) {
+      final error = ref.read(pomodoroNotifierProvider).state.errorMessage;
+      _showSnack(error ?? 'Devam ettirme senkronize edilemedi.', isError: true);
+    }
   }
 
   Future<void> _reset() async {
+    final pomoId = _activePomoId;
+    if (pomoId == null) return;
+
     _timer?.cancel();
+
+    final success = await ref
+        .read(pomodoroNotifierProvider)
+        .syncWorkspaceCancel(pomoId);
+    if (!success && mounted) {
+      final error = ref.read(pomodoroNotifierProvider).state.errorMessage;
+      _showSnack(error ?? 'Oturum iptal edilemedi.', isError: true);
+      return;
+    }
+
     _syncedPomoId = null;
-    await ref.read(pomodoroNotifierProvider).cancelSession();
+    ref.read(workspacePomodoroRealtimeNotifierProvider).clear();
+
+    if (!mounted) return;
     setState(() {
       _status = TimerStatus.idle;
       _secondsLeft = _workDuration;
@@ -313,9 +434,30 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
 
     ref.listen(workspacePomodoroRealtimeProvider, (previous, next) {
       if (next.workspaceId != widget.workspaceId) return;
-      final session = next.session;
-      if (session == null) return;
-      _syncFromRemoteSession(session);
+
+      switch (next.action) {
+        case WorkspacePomodoroRemoteAction.started:
+          if (next.session != null) _syncFromRemoteSession(next.session!);
+          break;
+        case WorkspacePomodoroRemoteAction.paused:
+          if (next.eventPomoId != null && next.secondsLeft != null) {
+            _syncFromRemotePause(next.eventPomoId!, next.secondsLeft!);
+          }
+          break;
+        case WorkspacePomodoroRemoteAction.resumed:
+          if (next.eventPomoId != null && next.secondsLeft != null) {
+            _syncFromRemoteResume(next.eventPomoId!, next.secondsLeft!);
+          }
+          break;
+        case WorkspacePomodoroRemoteAction.cancelled:
+          if (next.eventPomoId != null) {
+            _syncFromRemoteCancel(next.eventPomoId!);
+          }
+          ref.read(workspacePomodoroRealtimeNotifierProvider).clear();
+          break;
+        case null:
+          break;
+      }
     });
 
     ref.listen(workspaceTaskStateProvider, (previous, next) {
@@ -493,14 +635,25 @@ class _WorkspacePomodoroPanelState extends ConsumerState<WorkspacePomodoroPanel>
               ),
             ),
             const SizedBox(height: 12),
-            SessionControls(
-              status: _status,
-              onStart: _start,
-              onPause: _pause,
-              onResume: _resume,
-              onReset: _reset,
-              onSkip: _completeEarly,
-            ),
+            if (!widget.isRoomOwner && _status == TimerStatus.idle)
+              Text(
+                'Pomodoro\'yu oda sahibi başlatır. Başladığında burada senkronize görünür.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.dmSans(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              )
+            else
+              SessionControls(
+                status: _status,
+                onStart: _start,
+                onPause: _pause,
+                onResume: _resume,
+                onReset: _reset,
+                onSkip: _completeEarly,
+              ),
           ],
         ],
       ),

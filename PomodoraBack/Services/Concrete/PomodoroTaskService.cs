@@ -16,19 +16,22 @@ namespace PomodoraBack.Services.Concrete
         private readonly IWorkspaceDal _workspaceDal;
         private readonly IWorkspaceMemberDal _workspaceMemberDal;
         private readonly IMapper _mapper;
+        private readonly IWorkspaceRealtimeService _workspaceRealtimeService;
 
         public PomodoroTaskService(
             IPomodoroTaskDal taskDal,
             IUserDal userDal,
             IWorkspaceDal workspaceDal,
             IWorkspaceMemberDal workspaceMemberDal,
-            IMapper mapper)
+            IMapper mapper,
+            IWorkspaceRealtimeService workspaceRealtimeService)
         {
             _taskDal = taskDal;
             _userDal = userDal;
             _workspaceDal = workspaceDal;
             _workspaceMemberDal = workspaceMemberDal;
             _mapper = mapper;
+            _workspaceRealtimeService = workspaceRealtimeService;
         }
 
         public async Task<IDataResult<TaskDto>> GetByIdAsync(string userId, string taskId)
@@ -78,6 +81,22 @@ namespace PomodoraBack.Services.Concrete
             await _taskDal.AddAsync(task);
 
             var createdDto = _mapper.Map<TaskDto>(task);
+
+            if (!string.IsNullOrWhiteSpace(taskDto.WorkspaceId))
+            {
+                try
+                {
+                    await _workspaceRealtimeService.BroadcastTaskCreatedAsync(
+                        taskDto.WorkspaceId,
+                        createdDto);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(
+                        $"[PomodoroTaskService] WorkspaceTaskCreated gönderilemedi: {ex.Message}");
+                }
+            }
+
             return new SuccessDataResult<TaskDto>(createdDto, "Görev oluşturuldu.");
         }
 
