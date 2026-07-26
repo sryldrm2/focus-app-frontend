@@ -219,7 +219,7 @@ class _StudyRoomsTabState extends ConsumerState<StudyRoomsTab> {
                                   if (ok) {
                                     await ref
                                         .read(notificationHubServiceProvider)
-                                        .reconnect();
+                                        .syncWorkspaceGroups();
                                   }
 
                                   if (!mounted) return;

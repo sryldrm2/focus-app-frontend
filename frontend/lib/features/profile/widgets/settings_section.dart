@@ -111,7 +111,7 @@ class _SettingsSectionState extends ConsumerState<SettingsSection> {
                       const Text('🍅', style: TextStyle(fontSize: 48)),
                       const SizedBox(height: 12),
                       Text(
-                        'Fokus',
+                        'Focus',
                         style: GoogleFonts.nunito(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
