@@ -160,29 +160,26 @@ namespace PomodoraBack.Services.Concrete
         /// </summary>
         public async Task<IDataResult<PomodoroSessionDto>> CompleteSessionAsync(string pomoId)
         {
-            // 1. Seans bul
+            
             var session = await _pomodoroSessionDal.GetAsync(s => s.PomoId == pomoId);
             if (session == null)
                 return new ErrorDataResult<PomodoroSessionDto>(
                     PomodoroConstants.ERROR_SESSION_NOT_FOUND);
-
-            // 2. Seans durumu kontrol et (OnGoing olmalı)
+        
             if (session.Status != SessionStatusEnums.OnGoing)
                 return new ErrorDataResult<PomodoroSessionDto>(
-                    "Bu seans zaten tamamlanmış veya iptal edilmiş.");
-
-            // 3. Puan hesapla (her 1 dakika = 1 puan)
+                    "Bu seans zaten tamamlanmış veya iptal edilmiş.");     
             int points = PomodoroConstants.CalculatePoints(
                 session.DurationMinute, 
                 session.SessionType);
 
-            // 4. Seansı güncelle
+          
             session.Status = SessionStatusEnums.Successful;
             session.CompletedAt = DateTime.UtcNow;
             session.UpdatedAt = DateTime.UtcNow;
             session.PointsEarned = points;
 
-            // 5. Kullanıcının toplam puanını güncelle
+            
             var user = await _userDal.GetAsync(u => u.UserId == session.UserId);
             if (user != null)
             {
@@ -190,11 +187,7 @@ namespace PomodoraBack.Services.Concrete
                 await _userDal.UpdateAsync(user);
             }
 
-            // 6. Seansı kaydet
             await _pomodoroSessionDal.UpdateAsync(session);
-
-            // 7. İlişkili bir görev varsa Pomodoro sayacını artır
-            //    (Yalnızca WorkSession tipindeki seanslar görev sayacını etkiler)
             if (!string.IsNullOrWhiteSpace(session.TaskId) &&
                 session.SessionType == PomodoroTypeEnums.WorkSession)
             {

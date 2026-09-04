@@ -37,12 +37,9 @@ namespace PomodoraBack.Services.Concrete
         /// </summary>
         public async Task<IDataResult<FriendRequestDto>> SendFriendRequestAsync(string senderId, SendFriendRequestDto friendRequest)
         {
-            // Gönderici var mı kontrol et
             var sender = await _userDal.GetAsync(u => u.UserId == senderId);
             if (sender == null)
                 return new ErrorDataResult<FriendRequestDto>("Gönderici kullanıcı bulunamadı.");
-
-            // Alıcıyı ID veya Nickname ile bul
             User receiver = null;
             
             if (!string.IsNullOrEmpty(friendRequest.ReceiverId))
@@ -56,15 +53,11 @@ namespace PomodoraBack.Services.Concrete
             
             if (receiver == null)
                 return new ErrorDataResult<FriendRequestDto>("Alıcı kullanıcı bulunamadı.");
-
-            // ReceiverId'yi belirle
-            var receiverId = receiver.UserId;
-
-            // Aynı kişiye istek gönderemez
+           
+            var receiverId = receiver.UserId;         
             if (senderId == receiverId)
                 return new ErrorDataResult<FriendRequestDto>("Kendinize arkadaş isteği gönderemezsiniz.");
 
-            // Zaten arkadaş mı kontrol et (soft delete kontrolü ile)
             var existingFriendship = await _friendshipDal.GetAsync(f =>
                 ((f.FirstUserId == senderId && f.SecondUserId == receiverId) ||
                 (f.FirstUserId == receiverId && f.SecondUserId == senderId)) && f.DeletedAt == null);
@@ -72,7 +65,6 @@ namespace PomodoraBack.Services.Concrete
             if (existingFriendship != null)
                 return new ErrorDataResult<FriendRequestDto>("Zaten bu kullanıcının arkadaşısınız.");
 
-            // Zaten beklemede bir istek var mı kontrol et
             var existingRequest = await _friendRequestDal.GetAsync(fr =>
                 (fr.ConsignerId == senderId && fr.ReceiverId == receiverId && !fr.Status) ||
                 (fr.ConsignerId == receiverId && fr.ReceiverId == senderId && !fr.Status));
@@ -89,11 +81,7 @@ namespace PomodoraBack.Services.Concrete
                 Status = false,
                 CreatedAt = DateTime.UtcNow
             };
-
             await _friendRequestDal.AddAsync(newFriendRequest);
-
-            // Alıcıya anlık + kalıcı (DB'ye kayıtlı) arkadaşlık isteği bildirimi gönder.
-            // Hata oluşsa bile ana akış etkilenmez.
             try
             {
                 await _notificationService.CreateNotificationAsync(new CreateNotificationDto
